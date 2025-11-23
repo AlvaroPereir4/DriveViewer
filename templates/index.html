@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive Viewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Drive Viewer</h1>
+        </header>
+        <main>
+            <div id="video-player-container">
+                <video id="video-player" controls autoplay>
+                    <!-- O vídeo será carregado aqui -->
+                </video>
+            </div>
+            <div id="file-list-container">
+                <h2>Meus Vídeos</h2>
+                <ul id="file-list">
+                    <!-- A lista de arquivos do Drive aparecerá aqui -->
+                </ul>
+            </div>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
