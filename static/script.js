@@ -1,137 +1,182 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Vistas principais
     const browserView = document.getElementById('browser-view');
     const videoView = document.getElementById('video-view');
-    const playerContainer = document.getElementById('player-container');
+    const detailsView = document.getElementById('details-view');
+
+    // Elementos do Navegador
     const fileBrowser = document.getElementById('file-browser');
     const breadcrumb = document.getElementById('breadcrumb');
     const backToBrowserBtn = document.getElementById('back-to-browser-btn');
 
+    // Elementos da Tela de Detalhes
+    const closeDetailsBtn = detailsView.querySelector('.close-btn');
+    const detailsTitle = document.getElementById('details-title');
+    const detailsSynopsis = document.getElementById('details-synopsis');
+    const detailsActionBtn = document.getElementById('details-action-btn');
+
+    // Player de Vídeo
+    const playerContainer = document.getElementById('player-container');
+
     const navigationHistory = [];
 
-    const showBrowser = () => {
-        videoView.classList.add('hidden');
-        browserView.classList.remove('hidden');
-        // Limpa o iframe para parar o vídeo
-        playerContainer.innerHTML = '';
-    };
-
-    const showPlayer = () => {
+    // --- Funções de Exibição de Telas (LÓGICA CORRIGIDA) ---
+    const showView = (viewId) => {
+        // Esconde todas as telas primeiro
         browserView.classList.add('hidden');
-        videoView.classList.remove('hidden');
+        videoView.classList.add('hidden');
+        detailsView.classList.add('hidden');
+
+        // Mostra apenas a tela desejada
+        if (viewId === 'browser') {
+            browserView.classList.remove('hidden');
+        } else if (viewId === 'video') {
+            videoView.classList.remove('hidden');
+        } else if (viewId === 'details') {
+            detailsView.classList.remove('hidden');
+        }
     };
 
-    const updateBreadcrumb = () => {
-        breadcrumb.innerHTML = '';
-        navigationHistory.forEach((item, index) => {
-            const link = document.createElement('a');
-            link.href = '#';
-            link.textContent = item.name;
-            link.dataset.folderId = item.id;
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                navigationHistory.splice(index + 1);
-                browse(item.id);
-            });
-            breadcrumb.appendChild(link);
-            if (index < navigationHistory.length - 1) {
-                breadcrumb.appendChild(document.createElement('span')).textContent = '>';
-            }
+    const showBrowser = () => {
+        showView('browser');
+        if (playerContainer.innerHTML !== '') playerContainer.innerHTML = '';
+    };
+
+    // --- Funções de Navegação e Busca de Dados ---
+    const browse = async (folderId, folderName) => {
+        navigationHistory.push({ id: folderId, name: folderName });
+        updateBreadcrumb();
+        fileBrowser.innerHTML = '<p>Carregando...</p>';
+        try {
+            const response = await fetch(`/api/browse/${folderId}`);
+            const items = await response.json();
+            renderItems(items, false);
+        } catch (error) {
+            console.error('Erro ao buscar itens da pasta:', error);
+            fileBrowser.innerHTML = '<p>Não foi possível carregar o conteúdo da pasta.</p>';
+        }
+    };
+
+    const loadHomePage = async () => {
+        navigationHistory.splice(0, navigationHistory.length);
+        updateBreadcrumb();
+        fileBrowser.innerHTML = '<p>Carregando catálogo...</p>';
+        try {
+            const response = await fetch('/api/home');
+            const homeItems = await response.json();
+            renderItems(homeItems, true);
+        } catch (error) {
+            console.error('Erro ao carregar a página inicial:', error);
+            fileBrowser.innerHTML = '<p>Não foi possível carregar o catálogo.</p>';
+        }
+    };
+
+    // --- Funções de Renderização ---
+    const renderItems = (items, isHomePage) => {
+        fileBrowser.innerHTML = '';
+        if (items.length === 0) {
+            fileBrowser.innerHTML = isHomePage ? '<p>Nenhum item no catálogo.</p>' : '<p>Esta pasta está vazia.</p>';
+            return;
+        }
+        const sortedItems = items.sort((a, b) => {
+            const typeA = a.type || a.mimeType;
+            const typeB = b.type || b.mimeType;
+            if (typeA.includes('folder') && !typeB.includes('folder')) return -1;
+            if (!typeA.includes('folder') && typeB.includes('folder')) return 1;
+            return (a.title || a.name).localeCompare(b.title || b.name);
         });
+        sortedItems.forEach(item => fileBrowser.appendChild(createBrowserItem(item, isHomePage)));
     };
 
-    const playVideo = (videoId) => {
-        console.log(`Tocando vídeo com ID: ${videoId}`);
-        showPlayer();
-        
-        // Limpa qualquer player antigo
-        playerContainer.innerHTML = '';
-
-        // Cria um novo iframe
-        const iframe = document.createElement('iframe');
-        
-        // Usa a URL de "embed" do Google Drive, que é feita para iframes
-        const embedUrl = `https://drive.google.com/file/d/${videoId}/preview`;
-        
-        iframe.src = embedUrl;
-        iframe.setAttribute('allowfullscreen', '');
-        iframe.setAttribute('allow', 'autoplay'); // Tenta permitir autoplay
-        
-        playerContainer.appendChild(iframe);
-    };
-
-    const createBrowserItem = (item) => {
+    const createBrowserItem = (item, isHomePage) => {
         const div = document.createElement('div');
         div.className = 'browser-item';
-        div.dataset.id = item.id;
-        div.dataset.name = item.name;
-
         const iconDiv = document.createElement('div');
         iconDiv.className = 'item-icon';
         const icon = document.createElement('i');
         icon.className = 'fas';
-
-        if (item.mimeType === 'application/vnd.google-apps.folder') {
-            icon.classList.add('fa-folder');
-            div.addEventListener('click', () => {
-                navigationHistory.push({ id: item.id, name: item.name });
-                browse(item.id);
-            });
-        } else if (item.mimeType.startsWith('video/')) { // Verifica se é um tipo de vídeo
-            icon.classList.add('fa-file-video');
-            div.addEventListener('click', () => playVideo(item.id));
-        } else {
-            // Para outros tipos de arquivo, podemos usar um ícone genérico e não fazer nada ao clicar
-            icon.classList.add('fa-file');
-            div.style.cursor = 'default'; 
-        }
-        
-        iconDiv.appendChild(icon);
-
         const nameDiv = document.createElement('div');
         nameDiv.className = 'item-name';
-        nameDiv.textContent = item.name;
+        nameDiv.textContent = item.title || item.name;
+        const itemType = isHomePage ? item.type : (item.mimeType.includes('folder') ? 'folder' : 'video');
 
+        if (itemType === 'folder') icon.classList.add('fa-folder');
+        else icon.classList.add('fa-file-video');
+        
+        if (isHomePage) {
+            div.addEventListener('click', () => showDetails(item));
+        } else {
+            if (itemType === 'folder') {
+                div.addEventListener('click', () => browse(item.id, item.name));
+            } else {
+                div.addEventListener('click', () => playVideo(item.id));
+            }
+        }
+        iconDiv.appendChild(icon);
         div.appendChild(iconDiv);
         div.appendChild(nameDiv);
         return div;
     };
 
-    const browse = async (folderId) => {
-        console.log(`Navegando para a pasta: ${folderId}`);
-        fileBrowser.innerHTML = '<p>Carregando...</p>';
-        updateBreadcrumb();
-
-        try {
-            const response = await fetch(`/api/browse/${folderId}`);
-            if (!response.ok) {
-                throw new Error(`Erro na API: ${response.statusText}`);
-            }
-            const items = await response.json();
-            fileBrowser.innerHTML = '';
-
-            if (items.length === 0) {
-                fileBrowser.innerHTML = '<p>Esta pasta está vazia.</p>';
-                return;
-            }
-
-            items
-                .sort((a, b) => {
-                    if (a.mimeType.includes('folder') && !b.mimeType.includes('folder')) return -1;
-                    if (!a.mimeType.includes('folder') && b.mimeType.includes('folder')) return 1;
-                    return a.name.localeCompare(b.name);
-                })
-                .forEach(item => {
-                    fileBrowser.appendChild(createBrowserItem(item));
-                });
-
-        } catch (error) {
-            console.error('Erro ao buscar itens:', error);
-            fileBrowser.innerHTML = '<p>Não foi possível carregar os itens. Verifique o console.</p>';
+    const updateBreadcrumb = () => {
+        breadcrumb.innerHTML = '';
+        if (navigationHistory.length === 0) {
+            breadcrumb.style.display = 'none';
+            return;
         }
+        breadcrumb.style.display = 'block';
+        const homeLink = document.createElement('a');
+        homeLink.href = '#';
+        homeLink.textContent = 'Início';
+        homeLink.addEventListener('click', (e) => { e.preventDefault(); loadHomePage(); });
+        breadcrumb.appendChild(homeLink);
+        navigationHistory.forEach((item, index) => {
+            breadcrumb.appendChild(document.createElement('span')).textContent = '>';
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = item.name;
+            if (index < navigationHistory.length - 1) {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigationHistory.splice(index + 1);
+                    browse(item.id, item.name);
+                });
+            }
+            breadcrumb.appendChild(link);
+        });
     };
 
-    backToBrowserBtn.addEventListener('click', showBrowser);
+    // --- Funções da Tela de Detalhes e Player ---
+    const showDetails = (item) => {
+        detailsTitle.textContent = item.title;
+        detailsSynopsis.textContent = item.synopsis;
+        detailsActionBtn.textContent = item.type === 'folder' ? 'Abrir Pasta' : 'Assistir Agora';
+        const newBtn = detailsActionBtn.cloneNode(true);
+        detailsActionBtn.parentNode.replaceChild(newBtn, detailsActionBtn);
+        
+        newBtn.addEventListener('click', () => {
+            if (item.type === 'folder') {
+                showView('browser');
+                browse(item.id, item.title);
+            } else {
+                playVideo(item.id);
+            }
+        });
+        showView('details');
+    };
 
-    navigationHistory.push({ id: ROOT_FOLDER_ID, name: 'Início' });
-    browse(ROOT_FOLDER_ID);
+    const playVideo = (videoId) => {
+        showView('video');
+        playerContainer.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://drive.google.com/file/d/${videoId}/preview`;
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('allow', 'autoplay');
+        playerContainer.appendChild(iframe);
+    };
+
+    // --- Inicialização ---
+    closeDetailsBtn.addEventListener('click', () => showView('browser'));
+    backToBrowserBtn.addEventListener('click', showBrowser);
+    loadHomePage();
 });

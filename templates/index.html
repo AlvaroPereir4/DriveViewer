@@ -8,27 +8,33 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="main-container">
-        <div id="video-view" class="hidden">
-            <button id="back-to-browser-btn"><i class="fas fa-arrow-left"></i> Voltar</button>
-            <!-- O player (iframe) será inserido aqui pelo JavaScript -->
-            <div id="player-container"></div>
-        </div>
+    <!-- Tela principal do navegador de arquivos -->
+    <div id="browser-view">
+        <header>
+            <h1>Drive Viewer</h1>
+            <nav id="breadcrumb"></nav>
+        </header>
+        <main id="file-browser">
+            <!-- Catálogo principal e arquivos da pasta serão inseridos aqui -->
+        </main>
+    </div>
 
-        <div id="browser-view">
-            <header>
-                <h1>Drive Viewer</h1>
-                <nav id="breadcrumb"></nav>
-            </header>
-            <main id="file-browser">
-                <!-- Ícones de pastas e arquivos serão inseridos aqui -->
-            </main>
+    <!-- Tela de sobreposição para detalhes do item -->
+    <div id="details-view" class="hidden">
+        <div class="details-content">
+            <button class="close-btn">&times;</button>
+            <h2 id="details-title"></h2>
+            <p id="details-synopsis"></p>
+            <button id="details-action-btn">Assistir</button>
         </div>
     </div>
 
-    <script>
-        const ROOT_FOLDER_ID = "{{ root_folder_id }}";
-    </script>
+    <!-- Tela de visualização do vídeo -->
+    <div id="video-view" class="hidden">
+        <button id="back-to-browser-btn"><i class="fas fa-arrow-left"></i> Voltar</button>
+        <div id="player-container"></div>
+    </div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

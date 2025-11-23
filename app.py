@@ -1,15 +1,14 @@
 import os
 import re
+import json
 from flask import Flask, jsonify, render_template
-
-# --- IMPORTAÇÕES DA API DO GOOGLE ---
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# O arquivo de credenciais da Conta de Serviço
 SERVICE_ACCOUNT_FILE = 'api_key.json'
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+DATA_FILE = os.path.join('data', 'links.json')
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
@@ -19,63 +18,81 @@ def get_drive_service():
         creds = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=SCOPES)
         service = build('drive', 'v3', credentials=creds)
-        print("Serviço do Google Drive conectado com sucesso usando Conta de Serviço.")
+        print("Serviço do Google Drive conectado com sucesso.")
         return service
-    except FileNotFoundError:
-        print(f"ERRO: Arquivo de Conta de Serviço '{SERVICE_ACCOUNT_FILE}' não encontrado.")
     except Exception as e:
-        print(f"Ocorreu um erro ao conectar com o Google Drive: {e}")
+        print(f"ERRO ao conectar com o Google Drive: {e}")
     return None
 
-def get_root_folder_id():
-    """Lê data/links.txt e extrai o ID da pasta raiz do Google Drive."""
-    try:
-        with open(os.path.join('data', 'links.txt'), 'r') as f:
-            link = f.readline().strip()
-            match = re.search(r'(?:folders/|id=)([a-zA-Z0-9_-]+)', link)
-            if match:
-                return match.group(1)
-    except FileNotFoundError:
-        print("AVISO: Arquivo 'data/links.txt' não encontrado.")
+def extract_id_from_link(link):
+    """Extrai o ID de um link do Google Drive (pasta ou arquivo)."""
+    if not link: return None
+    match = re.search(r'(?:folders/|file/d/|id=)([a-zA-Z0-9_-]{28,})', link)
+    if match:
+        return match.group(1)
     return None
+
+def get_home_items():
+    """Lê o data/links.json e prepara a lista de itens para a página inicial."""
+    home_items = []
+    try:
+        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        for item_type, item_list in data.items():
+            for item in item_list:
+                drive_id = extract_id_from_link(item.get('link'))
+                title = item.get('tittle', 'Título Desconhecido')
+                if drive_id:
+                    home_items.append({
+                        "id": drive_id,
+                        "title": title,
+                        "synopsis": item.get('sinopse', 'Sem sinopse disponível.'),
+                        "type": "folder" if item_type == "drive_folders" else "video"
+                    })
+                else:
+                    # AVISO ADICIONADO AQUI!
+                    print(f"AVISO: Não foi possível extrair um ID de Drive válido do link para '{title}'. Link: {item.get('link')}")
+
+    except FileNotFoundError:
+        print(f"ERRO: Arquivo de dados '{DATA_FILE}' não encontrado.")
+    except json.JSONDecodeError:
+        print(f"ERRO: O arquivo '{DATA_FILE}' não é um JSON válido.")
+    
+    return home_items
 
 def get_drive_items(service, folder_id):
-    """Busca arquivos e pastas de uma pasta do Google Drive."""
-    if not service:
-        return []
+    """Busca o conteúdo de uma pasta específica no Drive."""
+    if not service: return []
     try:
         query = f"'{folder_id}' in parents and trashed=false"
         fields = "files(id, name, mimeType)"
-        results = service.files().list(
-            q=query,
-            pageSize=200,
-            fields=fields,
-            supportsAllDrives=True, # Necessário para Contas de Serviço
-            includeItemsFromAllDrives=True
-        ).execute()
-        items = results.get('files', [])
-        return items
+        results = service.files().list(q=query, pageSize=200, fields=fields, supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
+        return results.get('files', [])
     except HttpError as error:
         print(f"Ocorreu um erro ao buscar itens do Drive: {error}")
         return []
 
-# --- Rotas da Aplicação ---
+# --- Endpoints da API e Rotas ---
 
 DRIVE_SERVICE = get_drive_service()
-ROOT_FOLDER_ID = get_root_folder_id()
 
 @app.route('/')
 def index():
     """Serve a página principal da aplicação."""
-    if not ROOT_FOLDER_ID:
-        return "Erro: Pasta raiz do Google Drive não foi encontrada ou configurada em 'data/links.txt'.", 500
-    if not DRIVE_SERVICE:
-        return "Erro: Não foi possível conectar à API do Google Drive. Verifique o arquivo de credenciais e o console do servidor.", 500
-    return render_template('index.html', root_folder_id=ROOT_FOLDER_ID)
+    return render_template('index.html')
+
+@app.route('/api/home')
+def home_content():
+    """Endpoint que retorna o catálogo principal construído a partir do JSON."""
+    items = get_home_items()
+    return jsonify(items)
 
 @app.route('/api/browse/<path:folder_id>')
 def browse_folder(folder_id):
-    """Endpoint da API que lista o conteúdo de uma pasta do Drive."""
+    """Endpoint que lista o conteúdo de uma pasta específica do Drive."""
+    if not DRIVE_SERVICE:
+        return jsonify({"error": "Serviço do Drive não está disponível."}), 500
     items = get_drive_items(DRIVE_SERVICE, folder_id)
     return jsonify(items)
 
