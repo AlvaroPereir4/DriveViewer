@@ -1,74 +1,140 @@
+:root {
+    --primary-bg: #141414;
+    --secondary-bg: #1F1F1F;
+    --text-color: #E5E5E5;
+    --text-muted: #A0A0A0;
+    --accent-color: #E50914;
+}
+
 body {
-    font-family: sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     margin: 0;
-    background-color: #f0f2f5;
-    color: #333;
+    background-color: var(--primary-bg);
+    color: var(--text-color);
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+.hidden {
+    display: none !important;
 }
 
-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-h1 {
-    color: #4a4a4a;
-}
-
-main {
+/* --- Visualização do Player de Vídeo --- */
+#video-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    z-index: 100;
     display: flex;
-    gap: 20px;
-}
-
-#video-player-container {
-    flex-grow: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 #video-player {
     width: 100%;
-    border-radius: 8px;
+    max-width: 90vw;
+    height: auto;
+    max-height: 85vh;
 }
 
-#file-list-container {
-    width: 300px;
-    background-color: #fff;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-h2 {
-    margin-top: 0;
-    color: #4a4a4a;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-}
-
-#file-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-#file-list li {
-    padding: 10px;
+#back-to-browser-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(30, 30, 30, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-color);
+    font-size: 1.2rem;
+    padding: 10px 15px;
+    border-radius: 50px;
     cursor: pointer;
-    border-bottom: 1px solid #eee;
     transition: background-color 0.2s;
 }
 
-#file-list li:hover {
-    background-color: #f5f5f5;
+#back-to-browser-btn:hover {
+    background: rgba(50, 50, 50, 0.9);
 }
 
-#file-list li.active {
-    background-color: #e0e0e0;
-    font-weight: bold;
+/* --- Visualização do Navegador de Arquivos --- */
+#browser-view {
+    padding: 20px 40px;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#breadcrumb {
+    margin-bottom: 30px;
+    color: var(--text-muted);
+}
+
+#breadcrumb a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+#breadcrumb a:hover {
+    color: var(--text-color);
+}
+
+#breadcrumb span {
+    margin: 0 10px;
+}
+
+#file-browser {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 25px;
+}
+
+.browser-item {
+    background-color: var(--secondary-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    aspect-ratio: 2 / 3; /* Proporção de pôster */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.browser-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+}
+
+.item-icon {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: var(--text-muted);
+}
+
+.item-icon .fa-folder {
+    color: #FFCA28; /* Amarelo para pastas */
+}
+
+.item-icon .fa-file-video {
+    color: #4FC3F7; /* Azul para vídeos */
+}
+
+.item-name {
+    padding: 15px;
+    text-align: center;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: rgba(0,0,0,0.3);
 }

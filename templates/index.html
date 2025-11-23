@@ -4,27 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drive Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Drive Viewer</h1>
-        </header>
-        <main>
-            <div id="video-player-container">
-                <video id="video-player" controls autoplay>
-                    <!-- O vídeo será carregado aqui -->
-                </video>
-            </div>
-            <div id="file-list-container">
-                <h2>Meus Vídeos</h2>
-                <ul id="file-list">
-                    <!-- A lista de arquivos do Drive aparecerá aqui -->
-                </ul>
-            </div>
-        </main>
+    <div class="main-container">
+        <div id="video-view" class="hidden">
+            <button id="back-to-browser-btn"><i class="fas fa-arrow-left"></i> Voltar</button>
+            <video id="video-player" controls autoplay></video>
+        </div>
+
+        <div id="browser-view">
+            <header>
+                <h1>Drive Viewer</h1>
+                <nav id="breadcrumb"></nav>
+            </header>
+            <main id="file-browser">
+                <!-- Ícones de pastas e arquivos serão inseridos aqui pelo JavaScript -->
+            </main>
+        </div>
     </div>
+
+    <!-- Passa o ID da pasta raiz do Flask para o JavaScript -->
+    <script>
+        const ROOT_FOLDER_ID = "{{ root_folder_id }}";
+    </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
