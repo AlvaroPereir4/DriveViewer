@@ -32,11 +32,15 @@ body {
     justify-content: center;
 }
 
-#video-player {
+#player-container {
+    width: 90vw;
+    height: 85vh;
+}
+
+#player-container iframe {
     width: 100%;
-    max-width: 90vw;
-    height: auto;
-    max-height: 85vh;
+    height: 100%;
+    border: none;
 }
 
 #back-to-browser-btn {

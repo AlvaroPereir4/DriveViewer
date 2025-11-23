@@ -11,7 +11,8 @@
     <div class="main-container">
         <div id="video-view" class="hidden">
             <button id="back-to-browser-btn"><i class="fas fa-arrow-left"></i> Voltar</button>
-            <video id="video-player" controls autoplay></video>
+            <!-- O player (iframe) será inserido aqui pelo JavaScript -->
+            <div id="player-container"></div>
         </div>
 
         <div id="browser-view">
@@ -20,12 +21,11 @@
                 <nav id="breadcrumb"></nav>
             </header>
             <main id="file-browser">
-                <!-- Ícones de pastas e arquivos serão inseridos aqui pelo JavaScript -->
+                <!-- Ícones de pastas e arquivos serão inseridos aqui -->
             </main>
         </div>
     </div>
 
-    <!-- Passa o ID da pasta raiz do Flask para o JavaScript -->
     <script>
         const ROOT_FOLDER_ID = "{{ root_folder_id }}";
     </script>

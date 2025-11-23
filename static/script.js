@@ -1,19 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     const browserView = document.getElementById('browser-view');
     const videoView = document.getElementById('video-view');
+    const playerContainer = document.getElementById('player-container');
     const fileBrowser = document.getElementById('file-browser');
-    const videoPlayer = document.getElementById('video-player');
     const breadcrumb = document.getElementById('breadcrumb');
     const backToBrowserBtn = document.getElementById('back-to-browser-btn');
 
-    // Pilha para gerenciar o histórico de navegação (para o "voltar")
     const navigationHistory = [];
 
     const showBrowser = () => {
         videoView.classList.add('hidden');
         browserView.classList.remove('hidden');
-        videoPlayer.pause();
-        videoPlayer.src = '';
+        // Limpa o iframe para parar o vídeo
+        playerContainer.innerHTML = '';
     };
 
     const showPlayer = () => {
@@ -30,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
             link.dataset.folderId = item.id;
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                // Remove todos os itens da pilha a partir do clicado
                 navigationHistory.splice(index + 1);
                 browse(item.id);
             });
@@ -44,9 +42,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const playVideo = (videoId) => {
         console.log(`Tocando vídeo com ID: ${videoId}`);
         showPlayer();
+        
+        // Limpa qualquer player antigo
+        playerContainer.innerHTML = '';
+
+        // Cria um novo iframe
+        const iframe = document.createElement('iframe');
+        
+        // Usa a URL de "embed" do Google Drive, que é feita para iframes
         const embedUrl = `https://drive.google.com/file/d/${videoId}/preview`;
-        videoPlayer.src = embedUrl;
-        videoPlayer.play().catch(e => console.error("Erro ao tocar vídeo:", e));
+        
+        iframe.src = embedUrl;
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('allow', 'autoplay'); // Tenta permitir autoplay
+        
+        playerContainer.appendChild(iframe);
     };
 
     const createBrowserItem = (item) => {
@@ -66,9 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 navigationHistory.push({ id: item.id, name: item.name });
                 browse(item.id);
             });
-        } else {
+        } else if (item.mimeType.startsWith('video/')) { // Verifica se é um tipo de vídeo
             icon.classList.add('fa-file-video');
             div.addEventListener('click', () => playVideo(item.id));
+        } else {
+            // Para outros tipos de arquivo, podemos usar um ícone genérico e não fazer nada ao clicar
+            icon.classList.add('fa-file');
+            div.style.cursor = 'default'; 
         }
         
         iconDiv.appendChild(icon);
@@ -101,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             items
-                .sort((a, b) => { // Ordena: pastas primeiro, depois por nome
+                .sort((a, b) => {
                     if (a.mimeType.includes('folder') && !b.mimeType.includes('folder')) return -1;
                     if (!a.mimeType.includes('folder') && b.mimeType.includes('folder')) return 1;
                     return a.name.localeCompare(b.name);
@@ -116,10 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Event Listeners
     backToBrowserBtn.addEventListener('click', showBrowser);
 
-    // Início da aplicação
     navigationHistory.push({ id: ROOT_FOLDER_ID, name: 'Início' });
     browse(ROOT_FOLDER_ID);
 });
