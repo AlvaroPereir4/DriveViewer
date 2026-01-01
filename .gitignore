@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# IDE settings (PyCharm, VS Code)
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# --- Project Specific ---
+
+# Credentials (CRITICAL)
+api_key.json
+
+# Data
+data/links.json

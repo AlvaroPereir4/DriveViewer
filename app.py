@@ -13,7 +13,6 @@ DATA_FILE = os.path.join('data', 'links.json')
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
 def get_drive_service():
-    """Cria um objeto de serviço do Drive usando uma Conta de Serviço."""
     try:
         creds = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=SCOPES)
@@ -25,7 +24,6 @@ def get_drive_service():
     return None
 
 def extract_id_from_link(link):
-    """Extrai o ID de um link do Google Drive (pasta ou arquivo)."""
     if not link: return None
     match = re.search(r'(?:folders/|file/d/|id=)([a-zA-Z0-9_-]{28,})', link)
     if match:
@@ -33,7 +31,6 @@ def extract_id_from_link(link):
     return None
 
 def get_home_items():
-    """Lê o data/links.json e prepara a lista de itens para a página inicial."""
     home_items = []
     try:
         with open(DATA_FILE, 'r', encoding='utf-8') as f:
@@ -48,10 +45,10 @@ def get_home_items():
                         "id": drive_id,
                         "title": title,
                         "synopsis": item.get('sinopse', 'Sem sinopse disponível.'),
-                        "type": "folder" if item_type == "drive_folders" else "video"
+                        "type": "folder" if item_type == "drive_folders" else "video",
+                        "tag": item.get('tag', 'outros')
                     })
                 else:
-                    # AVISO ADICIONADO AQUI!
                     print(f"AVISO: Não foi possível extrair um ID de Drive válido do link para '{title}'. Link: {item.get('link')}")
 
     except FileNotFoundError:
@@ -62,7 +59,6 @@ def get_home_items():
     return home_items
 
 def get_drive_items(service, folder_id):
-    """Busca o conteúdo de uma pasta específica no Drive."""
     if not service: return []
     try:
         query = f"'{folder_id}' in parents and trashed=false"
@@ -79,18 +75,15 @@ DRIVE_SERVICE = get_drive_service()
 
 @app.route('/')
 def index():
-    """Serve a página principal da aplicação."""
     return render_template('index.html')
 
 @app.route('/api/home')
 def home_content():
-    """Endpoint que retorna o catálogo principal construído a partir do JSON."""
     items = get_home_items()
     return jsonify(items)
 
 @app.route('/api/browse/<path:folder_id>')
 def browse_folder(folder_id):
-    """Endpoint que lista o conteúdo de uma pasta específica do Drive."""
     if not DRIVE_SERVICE:
         return jsonify({"error": "Serviço do Drive não está disponível."}), 500
     items = get_drive_items(DRIVE_SERVICE, folder_id)

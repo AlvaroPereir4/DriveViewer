@@ -1,182 +1,207 @@
+const appContainer = document.getElementById('app-container');
+const breadcrumbsContainer = document.getElementById('breadcrumbs');
+const modal = document.getElementById('video-modal');
+const videoFrame = document.getElementById('video-frame');
+const modalTitle = document.getElementById('modal-title');
+const searchInput = document.getElementById('search-input');
+const itemsCountLabel = document.getElementById('items-count');
+const searchContainer = document.querySelector('.search-container');
+
+// Estado da navegação
+let navigationStack = [];
+let allHomeData = []; // Armazena todos os dados da home para filtrar sem recarregar
+let currentList = []; // Lista sendo exibida atualmente (para busca funcionar)
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Vistas principais
-    const browserView = document.getElementById('browser-view');
-    const videoView = document.getElementById('video-view');
-    const detailsView = document.getElementById('details-view');
-
-    // Elementos do Navegador
-    const fileBrowser = document.getElementById('file-browser');
-    const breadcrumb = document.getElementById('breadcrumb');
-    const backToBrowserBtn = document.getElementById('back-to-browser-btn');
-
-    // Elementos da Tela de Detalhes
-    const closeDetailsBtn = detailsView.querySelector('.close-btn');
-    const detailsTitle = document.getElementById('details-title');
-    const detailsSynopsis = document.getElementById('details-synopsis');
-    const detailsActionBtn = document.getElementById('details-action-btn');
-
-    // Player de Vídeo
-    const playerContainer = document.getElementById('player-container');
-
-    const navigationHistory = [];
-
-    // --- Funções de Exibição de Telas (LÓGICA CORRIGIDA) ---
-    const showView = (viewId) => {
-        // Esconde todas as telas primeiro
-        browserView.classList.add('hidden');
-        videoView.classList.add('hidden');
-        detailsView.classList.add('hidden');
-
-        // Mostra apenas a tela desejada
-        if (viewId === 'browser') {
-            browserView.classList.remove('hidden');
-        } else if (viewId === 'video') {
-            videoView.classList.remove('hidden');
-        } else if (viewId === 'details') {
-            detailsView.classList.remove('hidden');
-        }
-    };
-
-    const showBrowser = () => {
-        showView('browser');
-        if (playerContainer.innerHTML !== '') playerContainer.innerHTML = '';
-    };
-
-    // --- Funções de Navegação e Busca de Dados ---
-    const browse = async (folderId, folderName) => {
-        navigationHistory.push({ id: folderId, name: folderName });
-        updateBreadcrumb();
-        fileBrowser.innerHTML = '<p>Carregando...</p>';
-        try {
-            const response = await fetch(`/api/browse/${folderId}`);
-            const items = await response.json();
-            renderItems(items, false);
-        } catch (error) {
-            console.error('Erro ao buscar itens da pasta:', error);
-            fileBrowser.innerHTML = '<p>Não foi possível carregar o conteúdo da pasta.</p>';
-        }
-    };
-
-    const loadHomePage = async () => {
-        navigationHistory.splice(0, navigationHistory.length);
-        updateBreadcrumb();
-        fileBrowser.innerHTML = '<p>Carregando catálogo...</p>';
-        try {
-            const response = await fetch('/api/home');
-            const homeItems = await response.json();
-            renderItems(homeItems, true);
-        } catch (error) {
-            console.error('Erro ao carregar a página inicial:', error);
-            fileBrowser.innerHTML = '<p>Não foi possível carregar o catálogo.</p>';
-        }
-    };
-
-    // --- Funções de Renderização ---
-    const renderItems = (items, isHomePage) => {
-        fileBrowser.innerHTML = '';
-        if (items.length === 0) {
-            fileBrowser.innerHTML = isHomePage ? '<p>Nenhum item no catálogo.</p>' : '<p>Esta pasta está vazia.</p>';
-            return;
-        }
-        const sortedItems = items.sort((a, b) => {
-            const typeA = a.type || a.mimeType;
-            const typeB = b.type || b.mimeType;
-            if (typeA.includes('folder') && !typeB.includes('folder')) return -1;
-            if (!typeA.includes('folder') && typeB.includes('folder')) return 1;
-            return (a.title || a.name).localeCompare(b.title || b.name);
-        });
-        sortedItems.forEach(item => fileBrowser.appendChild(createBrowserItem(item, isHomePage)));
-    };
-
-    const createBrowserItem = (item, isHomePage) => {
-        const div = document.createElement('div');
-        div.className = 'browser-item';
-        const iconDiv = document.createElement('div');
-        iconDiv.className = 'item-icon';
-        const icon = document.createElement('i');
-        icon.className = 'fas';
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'item-name';
-        nameDiv.textContent = item.title || item.name;
-        const itemType = isHomePage ? item.type : (item.mimeType.includes('folder') ? 'folder' : 'video');
-
-        if (itemType === 'folder') icon.classList.add('fa-folder');
-        else icon.classList.add('fa-file-video');
-        
-        if (isHomePage) {
-            div.addEventListener('click', () => showDetails(item));
-        } else {
-            if (itemType === 'folder') {
-                div.addEventListener('click', () => browse(item.id, item.name));
-            } else {
-                div.addEventListener('click', () => playVideo(item.id));
-            }
-        }
-        iconDiv.appendChild(icon);
-        div.appendChild(iconDiv);
-        div.appendChild(nameDiv);
-        return div;
-    };
-
-    const updateBreadcrumb = () => {
-        breadcrumb.innerHTML = '';
-        if (navigationHistory.length === 0) {
-            breadcrumb.style.display = 'none';
-            return;
-        }
-        breadcrumb.style.display = 'block';
-        const homeLink = document.createElement('a');
-        homeLink.href = '#';
-        homeLink.textContent = 'Início';
-        homeLink.addEventListener('click', (e) => { e.preventDefault(); loadHomePage(); });
-        breadcrumb.appendChild(homeLink);
-        navigationHistory.forEach((item, index) => {
-            breadcrumb.appendChild(document.createElement('span')).textContent = '>';
-            const link = document.createElement('a');
-            link.href = '#';
-            link.textContent = item.name;
-            if (index < navigationHistory.length - 1) {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    navigationHistory.splice(index + 1);
-                    browse(item.id, item.name);
-                });
-            }
-            breadcrumb.appendChild(link);
-        });
-    };
-
-    // --- Funções da Tela de Detalhes e Player ---
-    const showDetails = (item) => {
-        detailsTitle.textContent = item.title;
-        detailsSynopsis.textContent = item.synopsis;
-        detailsActionBtn.textContent = item.type === 'folder' ? 'Abrir Pasta' : 'Assistir Agora';
-        const newBtn = detailsActionBtn.cloneNode(true);
-        detailsActionBtn.parentNode.replaceChild(newBtn, detailsActionBtn);
-        
-        newBtn.addEventListener('click', () => {
-            if (item.type === 'folder') {
-                showView('browser');
-                browse(item.id, item.title);
-            } else {
-                playVideo(item.id);
-            }
-        });
-        showView('details');
-    };
-
-    const playVideo = (videoId) => {
-        showView('video');
-        playerContainer.innerHTML = '';
-        const iframe = document.createElement('iframe');
-        iframe.src = `https://drive.google.com/file/d/${videoId}/preview`;
-        iframe.setAttribute('allowfullscreen', '');
-        iframe.setAttribute('allow', 'autoplay');
-        playerContainer.appendChild(iframe);
-    };
-
-    // --- Inicialização ---
-    closeDetailsBtn.addEventListener('click', () => showView('browser'));
-    backToBrowserBtn.addEventListener('click', showBrowser);
-    loadHomePage();
+    loadHome();
+    
+    // Evento de busca
+    searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = currentList.filter(item => item.title.toLowerCase().includes(term));
+        renderGrid(filtered);
+    });
 });
+
+async function loadHome() {
+    navigationStack = [{ name: 'Início', id: 'home', type: 'root' }];
+    renderBreadcrumbs();
+    searchInput.value = '';
+    searchContainer.style.display = 'none'; // Oculta a busca na home
+    
+    try {
+        const response = await fetch('/api/home');
+        allHomeData = await response.json();
+        renderCategories(allHomeData);
+    } catch (error) {
+        console.error('Erro ao carregar home:', error);
+        appContainer.innerHTML = '<p>Erro ao carregar conteúdo.</p>';
+    }
+}
+
+function renderCategories(items) {
+    appContainer.innerHTML = '';
+    itemsCountLabel.innerText = ''; // Limpa contador na home
+
+    // Filtra e conta
+    const movies = items.filter(i => i.tag === 'movie');
+    const series = items.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
+
+    const categories = [
+        { title: 'Filmes', count: movies.length, type: 'category', filter: 'movie' },
+        { title: 'Séries', count: series.length, type: 'category', filter: 'series' }
+    ];
+
+    categories.forEach(cat => {
+        const card = document.createElement('div');
+        card.className = 'card category-card';
+        card.innerHTML = `
+            <div class="card-content" style="text-align: center; background: none;">
+                <div class="card-title">${cat.title}</div>
+                <div class="card-type">${cat.count} Títulos</div>
+            </div>
+        `;
+        card.onclick = () => loadCategory(cat.title, cat.filter);
+        appContainer.appendChild(card);
+    });
+}
+
+function loadCategory(name, filterTag) {
+    navigationStack.push({ name: name, id: filterTag, type: 'category' });
+    renderBreadcrumbs();
+    
+    // Filtra os dados já carregados
+    if (filterTag === 'movie') {
+        currentList = allHomeData.filter(i => i.tag === 'movie');
+    } else {
+        currentList = allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
+    }
+    
+    searchContainer.style.display = 'block'; // Exibe a busca
+    renderGrid(currentList);
+}
+
+async function loadFolder(folderId, folderName) {
+    // Atualiza histórico
+    navigationStack.push({ name: folderName, id: folderId, type: 'folder' });
+    renderBreadcrumbs();
+    searchInput.value = '';
+    searchContainer.style.display = 'block';
+    
+    appContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center;">Carregando...</div>';
+
+    try {
+        const response = await fetch(`/api/browse/${folderId}`);
+        const items = await response.json();
+        
+        // Normaliza os dados vindos do Drive API para o formato da nossa UI
+        currentList = items.map(item => ({
+            id: item.id,
+            title: item.name,
+            type: item.mimeType === 'application/vnd.google-apps.folder' ? 'folder' : 'video',
+            mimeType: item.mimeType
+        }));
+
+        renderGrid(currentList);
+    } catch (error) {
+        console.error('Erro ao carregar pasta:', error);
+        appContainer.innerHTML = '<p>Erro ao carregar pasta.</p>';
+    }
+}
+
+function renderGrid(items) {
+    appContainer.innerHTML = '';
+    
+    // Atualiza contador
+    itemsCountLabel.innerText = `Exibindo ${items.length} iten(s)`;
+
+    if (items.length === 0) {
+        appContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">Pasta vazia.</p>';
+        return;
+    }
+
+    items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        
+        // Ícone visual baseado no tipo
+        const icon = item.type === 'folder' ? '📁' : '▶️';
+        
+        card.innerHTML = `
+            <div class="folder-icon">${icon}</div>
+            <div class="card-content">
+                <div class="card-title">${item.title}</div>
+                <div class="card-type">${item.type === 'folder' ? 'Pasta' : 'Vídeo'}</div>
+            </div>
+        `;
+
+        card.onclick = () => handleItemClick(item);
+        appContainer.appendChild(card);
+    });
+}
+
+function handleItemClick(item) {
+    if (item.type === 'folder' || item.type === 'drive_folders') {
+        loadFolder(item.id, item.title);
+    } else {
+        openVideo(item.id, item.title);
+    }
+}
+
+function openVideo(fileId, title) {
+    // Usa a URL de preview do Google Drive para embed
+    const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+    videoFrame.src = embedUrl;
+    modalTitle.innerText = title;
+    modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    modal.classList.add('hidden');
+    videoFrame.src = ''; // Para o vídeo
+}
+
+// Fecha modal ao clicar fora
+window.onclick = function(event) {
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+
+function renderBreadcrumbs() {
+    breadcrumbsContainer.innerHTML = '';
+    
+    navigationStack.forEach((crumb, index) => {
+        const span = document.createElement('span');
+        span.className = 'breadcrumb-item';
+        span.innerText = crumb.name;
+        
+        span.onclick = () => {
+            // Lógica simples para voltar: recarrega home se for o primeiro, ou implementa voltar
+            if (index === 0) {
+                loadHome();
+            } else if (navigationStack[index].type === 'category') {
+                // Se clicar na categoria (ex: Filmes), recarrega a categoria
+                // Para simplificar, vamos reconstruir a stack até este ponto
+                while(navigationStack.length > index + 1) { navigationStack.pop(); }
+                renderBreadcrumbs();
+                // Recarrega a lista baseada no ID da categoria (movie/series)
+                loadCategory(navigationStack[index].name, navigationStack[index].id);
+                // Nota: loadCategory empilha, então precisamos ajustar a lógica se quisermos voltar perfeitamente,
+                // mas para simplificar, clicar no breadcrumb recarrega o estado.
+                // Uma correção rápida para evitar loop:
+                navigationStack.pop(); // Remove o que acabamos de adicionar no loadCategory
+            }
+            // Para navegação mais complexa de voltar, precisaríamos refazer a stack
+        };
+
+        breadcrumbsContainer.appendChild(span);
+        
+        if (index < navigationStack.length - 1) {
+            const separator = document.createElement('span');
+            separator.className = 'breadcrumb-separator';
+            separator.innerText = '/';
+            breadcrumbsContainer.appendChild(separator);
+        }
+    });
+}

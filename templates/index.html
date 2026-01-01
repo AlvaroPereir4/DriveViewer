@@ -3,36 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive Viewer</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>DriveViewer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Tela principal do navegador de arquivos -->
-    <div id="browser-view">
-        <header>
-            <h1>Drive Viewer</h1>
-            <nav id="breadcrumb"></nav>
-        </header>
-        <main id="file-browser">
-            <!-- Catálogo principal e arquivos da pasta serão inseridos aqui -->
-        </main>
-    </div>
 
-    <!-- Tela de sobreposição para detalhes do item -->
-    <div id="details-view" class="hidden">
-        <div class="details-content">
-            <button class="close-btn">&times;</button>
-            <h2 id="details-title"></h2>
-            <p id="details-synopsis"></p>
-            <button id="details-action-btn">Assistir</button>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo" onclick="loadHome()">DriveViewer</div>
+        <div id="breadcrumbs" class="breadcrumbs"></div>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Buscar..." disabled>
         </div>
-    </div>
+    </nav>
 
-    <!-- Tela de visualização do vídeo -->
-    <div id="video-view" class="hidden">
-        <button id="back-to-browser-btn"><i class="fas fa-arrow-left"></i> Voltar</button>
-        <div id="player-container"></div>
+    <!-- Main Content -->
+    <div id="items-count" class="items-count"></div>
+    <main id="app-container" class="content-grid">
+        <!-- O conteúdo será injetado aqui via JS -->
+    </main>
+
+    <!-- Video Modal -->
+    <div id="video-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div class="video-wrapper">
+                <iframe id="video-frame" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            </div>
+            <h2 id="modal-title"></h2>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
