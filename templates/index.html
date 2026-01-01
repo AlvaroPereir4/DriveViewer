@@ -13,8 +13,11 @@
     <nav class="navbar">
         <div class="logo" onclick="loadHome()">DriveViewer</div>
         <div id="breadcrumbs" class="breadcrumbs"></div>
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Buscar..." disabled>
+        <div class="nav-actions">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Buscar..." disabled>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Sair</a>
         </div>
     </nav>
 

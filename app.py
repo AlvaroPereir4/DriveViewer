@@ -1,16 +1,22 @@
 import os
 import re
 import json
-from flask import Flask, jsonify, render_template
+from datetime import timedelta
+from functools import wraps
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from werkzeug.security import check_password_hash, generate_password_hash
 
 SERVICE_ACCOUNT_FILE = 'api_key.json'
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 DATA_FILE = os.path.join('data', 'links.json')
+USERS_FILE = 'users.json'
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
+app.secret_key = os.environ.get('SECRET_KEY', 'chave_nova_para_forcar_logout_v2') # Alterado para invalidar sessões anteriores
+app.permanent_session_lifetime = timedelta(hours=2) # Define a duração da sessão para 2 horas
 
 def get_drive_service():
     try:
@@ -69,20 +75,60 @@ def get_drive_items(service, folder_id):
         print(f"Ocorreu um erro ao buscar itens do Drive: {error}")
         return []
 
+def load_users():
+    if not os.path.exists(USERS_FILE):
+        return {}
+    with open(USERS_FILE, 'r') as f:
+        return json.load(f)
+
+# --- Decorator de Login ---
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # --- Endpoints da API e Rotas ---
 
 DRIVE_SERVICE = get_drive_service()
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        users = load_users()
+        
+        if username in users and check_password_hash(users[username], password):
+            session.permanent = True  # Ativa a expiração definida em permanent_session_lifetime
+            session['user'] = username
+            return redirect(url_for('index'))
+        else:
+            flash('Usuário ou senha inválidos', 'error')
+            
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
 @app.route('/api/home')
+@login_required
 def home_content():
     items = get_home_items()
     return jsonify(items)
 
 @app.route('/api/browse/<path:folder_id>')
+@login_required
 def browse_folder(folder_id):
     if not DRIVE_SERVICE:
         return jsonify({"error": "Serviço do Drive não está disponível."}), 500
