@@ -20,8 +20,16 @@ app.permanent_session_lifetime = timedelta(hours=2) # Define a duração da sess
 
 def get_drive_service():
     try:
-        creds = service_account.Credentials.from_service_account_file(
-            SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        # Tenta ler do arquivo local primeiro, se não existir, tenta da variável de ambiente
+        if os.path.exists(SERVICE_ACCOUNT_FILE):
+            creds = service_account.Credentials.from_service_account_file(
+                SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        else:
+            # Lê do Vercel Environment Variable
+            creds_json = json.loads(os.environ.get('GOOGLE_CREDENTIALS_JSON'))
+            creds = service_account.Credentials.from_service_account_info(
+                creds_json, scopes=SCOPES)
+
         service = build('drive', 'v3', credentials=creds)
         print("Serviço do Google Drive conectado com sucesso.")
         return service
@@ -39,8 +47,13 @@ def extract_id_from_link(link):
 def get_home_items():
     home_items = []
     try:
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        # Tenta ler arquivo local, senão lê da variável de ambiente
+        if os.path.exists(DATA_FILE):
+            with open(DATA_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        else:
+            # Lê do Vercel Environment Variable
+            data = json.loads(os.environ.get('LINKS_DATA_JSON', '{}'))
 
         for item_type, item_list in data.items():
             for item in item_list:
@@ -76,10 +89,17 @@ def get_drive_items(service, folder_id):
         return []
 
 def load_users():
-    if not os.path.exists(USERS_FILE):
-        return {}
-    with open(USERS_FILE, 'r') as f:
-        return json.load(f)
+    # Tenta ler arquivo local
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, 'r') as f:
+            return json.load(f)
+    
+    # Se não existir, tenta ler da variável de ambiente
+    users_env = os.environ.get('USERS_JSON')
+    if users_env:
+        return json.loads(users_env)
+    
+    return {}
 
 # --- Decorator de Login ---
 def login_required(f):
