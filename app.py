@@ -22,13 +22,20 @@ def get_drive_service():
     try:
         # Tenta ler do arquivo local primeiro, se não existir, tenta da variável de ambiente
         if os.path.exists(SERVICE_ACCOUNT_FILE):
+            print(f"DEBUG: Usando arquivo local em: {os.path.abspath(SERVICE_ACCOUNT_FILE)}")
             creds = service_account.Credentials.from_service_account_file(
                 SERVICE_ACCOUNT_FILE, scopes=SCOPES)
         else:
             # Lê do Vercel Environment Variable
-            creds_json = json.loads(os.environ.get('GOOGLE_CREDENTIALS_JSON'))
-            creds = service_account.Credentials.from_service_account_info(
-                creds_json, scopes=SCOPES)
+            env_creds = os.environ.get('api_key')
+            if env_creds:
+                creds_json = json.loads(env_creds)
+                creds = service_account.Credentials.from_service_account_info(
+                    creds_json, scopes=SCOPES)
+                print("DEBUG: Usando Variáveis de Ambiente (Vercel/Sistema)")
+            else:
+                print("ERRO CRÍTICO: Arquivo 'api_key.json' não encontrado e variável de ambiente não definida.")
+                return None
 
         service = build('drive', 'v3', credentials=creds)
         print("Serviço do Google Drive conectado com sucesso.")
@@ -53,7 +60,7 @@ def get_home_items():
                 data = json.load(f)
         else:
             # Lê do Vercel Environment Variable
-            data = json.loads(os.environ.get('LINKS_DATA_JSON', '{}'))
+            data = json.loads(os.environ.get('links', '{}'))
 
         for item_type, item_list in data.items():
             for item in item_list:
@@ -95,7 +102,7 @@ def load_users():
             return json.load(f)
     
     # Se não existir, tenta ler da variável de ambiente
-    users_env = os.environ.get('USERS_JSON')
+    users_env = os.environ.get('users')
     if users_env:
         return json.loads(users_env)
     
