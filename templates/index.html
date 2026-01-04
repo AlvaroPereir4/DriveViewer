@@ -15,7 +15,7 @@
         <div id="breadcrumbs" class="breadcrumbs"></div>
         <div class="nav-actions">
             <div class="search-container">
-                <input type="text" id="search-input" placeholder="Buscar..." disabled>
+                <input type="text" id="search-input" placeholder="Buscar...">
             </div>
             <a href="{{ url_for('logout') }}" class="logout-btn">Sair</a>
         </div>
@@ -37,6 +37,10 @@
             <h2 id="modal-title"></h2>
         </div>
     </div>
+
+    <footer class="app-footer">
+        <p>v{{ version }} | Developing in: <a href="{{ github_url }}" target="_blank">GitHub</a></p>
+    </footer>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

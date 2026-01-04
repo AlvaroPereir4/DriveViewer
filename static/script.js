@@ -67,7 +67,11 @@ function renderCategories(items) {
 }
 
 function loadCategory(name, filterTag) {
-    navigationStack.push({ name: name, id: filterTag, type: 'category' });
+    // Evita duplicar a categoria no stack se já estivermos nela
+    const lastItem = navigationStack[navigationStack.length - 1];
+    if (!lastItem || lastItem.id !== filterTag) {
+        navigationStack.push({ name: name, id: filterTag, type: 'category' });
+    }
     renderBreadcrumbs();
     
     // Filtra os dados já carregados
@@ -78,6 +82,7 @@ function loadCategory(name, filterTag) {
     }
     
     searchContainer.style.display = 'block'; // Exibe a busca
+    searchInput.disabled = false;
     renderGrid(currentList);
 }
 
@@ -87,6 +92,7 @@ async function loadFolder(folderId, folderName) {
     renderBreadcrumbs();
     searchInput.value = '';
     searchContainer.style.display = 'block';
+    searchInput.disabled = false;
     
     appContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center;">Carregando...</div>';
 
@@ -184,13 +190,8 @@ function renderBreadcrumbs() {
                 // Se clicar na categoria (ex: Filmes), recarrega a categoria
                 // Para simplificar, vamos reconstruir a stack até este ponto
                 while(navigationStack.length > index + 1) { navigationStack.pop(); }
-                renderBreadcrumbs();
                 // Recarrega a lista baseada no ID da categoria (movie/series)
                 loadCategory(navigationStack[index].name, navigationStack[index].id);
-                // Nota: loadCategory empilha, então precisamos ajustar a lógica se quisermos voltar perfeitamente,
-                // mas para simplificar, clicar no breadcrumb recarrega o estado.
-                // Uma correção rápida para evitar loop:
-                navigationStack.pop(); // Remove o que acabamos de adicionar no loadCategory
             }
             // Para navegação mais complexa de voltar, precisaríamos refazer a stack
         };

@@ -19,6 +19,9 @@ body {
     background-color: var(--bg-color);
     color: var(--text-primary);
     overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Navbar */
@@ -113,6 +116,7 @@ body {
     gap: 20px;
     padding: 20px 4%;
     margin-top: 10px;
+    flex: 1; /* Faz o conteúdo empurrar o footer para baixo */
 }
 
 /* Cards */
@@ -296,4 +300,30 @@ body {
     border-radius: 4px;
     margin-bottom: 20px;
     font-size: 0.9rem;
+}
+
+/* Footer */
+.app-footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    width: 100%;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+}
+
+.app-footer a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--text-secondary);
+}
+
+.app-footer a:hover {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.login-footer {
+    position: absolute;
+    bottom: 0;
 }

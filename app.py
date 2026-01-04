@@ -117,6 +117,24 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# --- Utilitários de Template ---
+def get_app_version():
+    """Lê a versão atual do arquivo CHANGELOG.md"""
+    try:
+        with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
+            content = f.read()
+            # Procura pelo padrão ## [X.X.X]
+            match = re.search(r'## \[(\d+\.\d+\.\d+)\]', content)
+            if match:
+                return match.group(1)
+    except Exception:
+        pass
+    return '0.0.1' # Fallback
+
+@app.context_processor
+def inject_globals():
+    return dict(version=get_app_version(), github_url="https://github.com/AlvaroPereir4/DriveViewer")
+
 # --- Endpoints da API e Rotas ---
 
 DRIVE_SERVICE = get_drive_service()
