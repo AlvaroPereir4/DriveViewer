@@ -9,8 +9,3 @@ Um visualizador web para filmes, séries e arquivos hospedados no Google Drive. 
 - Navegação por pastas do Google Drive.
 - Busca em tempo real na lista exibida.
 - Player de vídeo integrado.
-
-## Como rodar
-
-Execute o arquivo principal:
-python app.py
