@@ -3,6 +3,7 @@ const breadcrumbsContainer = document.getElementById('breadcrumbs');
 const modal = document.getElementById('video-modal');
 const videoFrame = document.getElementById('video-frame');
 const modalTitle = document.getElementById('modal-title');
+const modalSynopsis = document.getElementById('modal-synopsis');
 const searchInput = document.getElementById('search-input');
 const itemsCountLabel = document.getElementById('items-count');
 const searchContainer = document.querySelector('.search-container');
@@ -150,15 +151,16 @@ function handleItemClick(item) {
     if (item.type === 'folder' || item.type === 'drive_folders') {
         loadFolder(item.id, item.title);
     } else {
-        openVideo(item.id, item.title);
+        openVideo(item.id, item.title, item.synopsis);
     }
 }
 
-function openVideo(fileId, title) {
+function openVideo(fileId, title, synopsis) {
     // Usa a URL de preview do Google Drive para embed
     const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
     videoFrame.src = embedUrl;
     modalTitle.innerText = title;
+    modalSynopsis.innerText = synopsis || '';
     modal.classList.remove('hidden');
 }
 

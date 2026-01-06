@@ -241,6 +241,13 @@ body {
     cursor: pointer;
 }
 
+.modal-synopsis {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
 /* Login Page Styles */
 .login-body {
     display: flex;
