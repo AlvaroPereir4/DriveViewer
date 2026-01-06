@@ -1,10 +1,12 @@
 :root {
-    --bg-color: #141414;
-    --card-bg: #1f1f1f;
-    --text-primary: #ffffff;
-    --text-secondary: #b3b3b3;
-    --accent-color: #e50914; /* Vermelho estilo Netflix, ou mude para azul se preferir */
-    --hover-scale: 1.05;
+    /* Paleta Earthy Chic / Cinema Indie */
+    --bg-color: #0c0b0b; /* Preto quente/café muito escuro */
+    --card-bg: #1a1817; /* Marrom acinzentado escuro */
+    --text-primary: #e6e1de; /* Creme/Off-white (menos cansativo que branco puro) */
+    --text-secondary: #8f8681; /* Cinza quente */
+    --accent-color: #c24d2c; /* Terracota / Laranja Queimado */
+    --accent-hover: #d65a36;
+    --hover-scale: 1.03; /* Movimento mais sutil e elegante */
     --transition-speed: 0.3s;
 }
 
@@ -15,7 +17,7 @@
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Outfit', sans-serif; /* Fonte mais moderna e geométrica */
     background-color: var(--bg-color);
     color: var(--text-primary);
     overflow-x: hidden;
@@ -29,7 +31,8 @@ body {
     display: flex;
     align-items: center;
     padding: 20px 4%;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.7) 10%, transparent);
+    background: linear-gradient(to bottom, rgba(12, 11, 11, 0.95) 0%, rgba(12, 11, 11, 0.8) 50%, transparent 100%);
+    backdrop-filter: blur(5px); /* Efeito de vidro fosco sutil */
     position: sticky;
     top: 0;
     z-index: 100;
@@ -37,12 +40,11 @@ body {
 }
 
 .logo {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--accent-color);
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-primary); /* Logo mais discreto */
     cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: -0.5px; /* Kerning mais moderno */
 }
 
 .breadcrumbs {
@@ -85,18 +87,19 @@ body {
 
 /* Search Bar */
 .search-container input {
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(255,255,255,0.05);
     border: 1px solid #333;
     padding: 8px 15px;
-    border-radius: 20px;
-    color: #fff;
+    border-radius: 4px; /* Bordas menos arredondadas (mais minimalista) */
+    color: var(--text-primary);
     outline: none;
     transition: border-color 0.3s, width 0.3s;
     width: 200px;
+    font-family: 'Outfit', sans-serif;
 }
 
 .search-container input:focus {
-    border-color: var(--text-primary);
+    border-color: var(--accent-color);
     width: 250px;
 }
 
@@ -122,7 +125,7 @@ body {
 /* Cards */
 .card {
     background-color: var(--card-bg);
-    border-radius: 4px;
+    border-radius: 6px;
     overflow: hidden;
     cursor: pointer;
     transition: transform var(--transition-speed), box-shadow var(--transition-speed);
@@ -135,13 +138,13 @@ body {
 
 .card:hover {
     transform: scale(var(--hover-scale));
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
     z-index: 10;
 }
 
 .card-content {
     padding: 15px;
-    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    background: linear-gradient(to top, rgba(12, 11, 11, 0.95), transparent);
     width: 100%;
 }
 
@@ -163,14 +166,15 @@ body {
 
 /* Category Cards (Special Style) */
 .card.category-card {
-    border: 2px solid var(--card-bg);
-    background: linear-gradient(45deg, #1f1f1f, #2a2a2a);
+    border: 1px solid rgba(255,255,255,0.1);
+    background: linear-gradient(135deg, #1a1817, #24211f);
     justify-content: center;
     align-items: center;
 }
 
 .card.category-card:hover {
     border-color: var(--accent-color);
+    background: linear-gradient(135deg, #24211f, #2e2a28);
 }
 
 .card.category-card .card-title {
@@ -254,18 +258,21 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: #000;
-    background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://assets.nflxext.com/ffe/siteui/vlv3/f841d4c7-10e1-40af-bcae-07a3f8dc141a/f6d7434e-d6de-4185-a6d4-c77a2d08737b/US-en-20220502-popsignuptwoweeks-perspective_alpha_website_medium.jpg'); /* Imagem de fundo genérica estilo streaming */
-    background-size: cover;
-    background-position: center;
+    background-color: var(--bg-color);
+    /* Efeito "Spotlight" Minimalista: Um gradiente radial no topo simulando um projetor */
+    background-image: 
+        radial-gradient(circle at 50% -20%, rgba(194, 77, 44, 0.15) 0%, transparent 50%),
+        linear-gradient(to bottom, #0c0b0b 0%, #141211 100%);
 }
 
 .login-container {
-    background-color: rgba(0,0,0,0.75);
-    padding: 60px;
-    border-radius: 4px;
+    background-color: transparent; /* Remove o fundo pesado */
+    padding: 40px;
     width: 100%;
-    max-width: 450px;
+    max-width: 400px;
+    border: 1px solid rgba(255,255,255,0.05); /* Borda sutil */
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
 }
 
 .form-group {
@@ -275,15 +282,18 @@ body {
 .form-group input {
     width: 100%;
     padding: 16px 20px;
-    background: #333;
-    border: none;
-    border-radius: 4px;
-    color: #fff;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-primary);
     font-size: 1rem;
+    font-family: 'Outfit', sans-serif;
+    transition: border-color 0.3s, background-color 0.3s;
 }
 
 .form-group input:focus {
-    background: #454545;
+    background: rgba(255,255,255,0.1);
+    border-color: var(--accent-color);
     outline: none;
 }
 
@@ -293,11 +303,16 @@ body {
     background-color: var(--accent-color);
     color: #fff;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     margin-top: 20px;
+    transition: background-color 0.3s;
+}
+
+.login-btn:hover {
+    background-color: var(--accent-hover);
 }
 
 .alert {

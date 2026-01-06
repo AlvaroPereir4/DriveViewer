@@ -1,6 +1,7 @@
 # Changelog
 
-## [0.0.2] - 2025-01-02
+## [0.0.2] - 2025-01-06
+- Feature: Refact to front-end style.
 - Feature: Implemented rate limiting on the registration. Limit of one account creation per IP every 24 hours to prevent spam.
 - Fix: Improved JSON parsing to support lists and auto-detect folder types from links.
 - Fix: Added to page hyperlink to github repository.
