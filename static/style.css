@@ -170,16 +170,61 @@ body {
     background: linear-gradient(135deg, #1a1817, #24211f);
     justify-content: center;
     align-items: center;
+    position: relative; /* Necessário para o efeito de TV */
+    overflow: hidden;
 }
 
 .card.category-card:hover {
     border-color: var(--accent-color);
     background: linear-gradient(135deg, #24211f, #2e2a28);
+    box-shadow: 0 0 25px rgba(194, 77, 44, 0.15); /* Glow sutil na borda */
 }
 
 .card.category-card .card-title {
     font-size: 1.5rem;
     white-space: normal;
+    transition: text-shadow 0.3s;
+    z-index: 2; /* Texto fica acima do efeito */
+}
+
+/* Efeito de TV / Scanlines Minimalista */
+.card.category-card::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    /* Cria linhas finas horizontais simulando TV antiga */
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0) 50%,
+        rgba(0, 0, 0, 0.2) 50%,
+        rgba(0, 0, 0, 0.2)
+    );
+    background-size: 100% 4px; /* Tamanho da linha */
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+/* Ao passar o mouse, liga o efeito */
+.card.category-card:hover::after {
+    opacity: 1;
+    animation: scanline 0.8s linear infinite;
+}
+
+/* Texto brilha levemente como fósforo de TV */
+.card.category-card:hover .card-title {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes scanline {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 100%; }
 }
 
 /* Folder Icon Placeholder if no image */
@@ -261,8 +306,33 @@ body {
     background-color: var(--bg-color);
     /* Efeito "Spotlight" Minimalista: Um gradiente radial no topo simulando um projetor */
     background-image: 
+        radial-gradient(circle 600px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(194, 77, 44, 0.06), transparent 100%), /* Mouse Follower Interativo */
         radial-gradient(circle at 50% -20%, rgba(194, 77, 44, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at center, transparent 60%, #000 100%), /* Vignette (Cantos escuros) */
         linear-gradient(to bottom, #0c0b0b 0%, #141211 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Scanlines em Tela Cheia (Efeito TV) */
+.login-body::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0) 50%,
+        rgba(0, 0, 0, 0.05) 50%, /* Bem sutil para não cansar a vista */
+        rgba(0, 0, 0, 0.05)
+    );
+    background-size: 100% 4px;
+    animation: scanline 8s linear infinite; /* Mais lento que o hover dos cards */
+    pointer-events: none;
+    z-index: 1;
 }
 
 .login-container {
@@ -273,6 +343,8 @@ body {
     border: 1px solid rgba(255,255,255,0.05); /* Borda sutil */
     border-radius: 12px;
     backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 10; /* Garante que o formulário fique ACIMA das scanlines */
 }
 
 .form-group {

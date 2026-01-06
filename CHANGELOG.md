@@ -1,7 +1,11 @@
 # Changelog
 
 ## [0.0.2] - 2025-01-06
+- Feature: Added cinematic "TV Scanline" background effect to Login and Register pages.
+- Feature: Added "Vignette" effect to login screen for better focus and aesthetics.
+- Feature: Added interactive "Mouse Spotlight" effect to login and register pages.
 - Feature: Refact to front-end style.
+- Feature: Added minimalist "TV Scanline" hover effect to home page category cards.
 - Feature: Implemented rate limiting on the registration. Limit of one account creation per IP every 24 hours to prevent spam.
 - Fix: Improved JSON parsing to support lists and auto-detect folder types from links.
 - Fix: Added to page hyperlink to github repository.
