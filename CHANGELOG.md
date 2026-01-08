@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.3] - 2025-01-08
+- Feature: Enriched movie data in production with additional details.
+- Feature: Movie links were migrated to the database in production.
+- Feature: Added a new directory and data enrichment pipeline.
+
 ## [0.0.2] - 2025-01-06
 - Feature: Added cinematic "TV Scanline" background effect to Login and Register pages.
 - Feature: Added "Vignette" effect to login screen for better focus and aesthetics.

@@ -123,10 +123,14 @@ function renderGrid(items) {
         const card = document.createElement('div');
         card.className = 'card';
         
-        const icon = item.type === 'folder' ? '📁' : '▶️';
+        // Se tiver poster, usa como background. Se não, usa estilo padrão.
+        if (item.poster) {
+            card.style.backgroundImage = `url('${item.poster}')`;
+        }
+        
+        const icon = item.poster ? '' : (item.type === 'folder' ? '📁' : '▶️');
         
         card.innerHTML = `
-            <div class="folder-icon">${icon}</div>
             <div class="card-content">
                 <div class="card-title">${item.title}</div>
                 <div class="card-type">${item.type === 'folder' ? 'Pasta' : 'Vídeo'}</div>

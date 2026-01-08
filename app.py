@@ -43,6 +43,20 @@ class RegistrationLog(db.Model):
     ip_address = db.Column(db.String(50), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+# Modelo de Mídia (Filmes e Séries Enriquecidos)
+class Media(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    drive_id = db.Column(db.String(100), unique=True, nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    original_title = db.Column(db.String(200))
+    overview = db.Column(db.Text) # Sinopse
+    poster_path = db.Column(db.String(200)) # URL da capa
+    backdrop_path = db.Column(db.String(200)) # URL do fundo
+    release_date = db.Column(db.String(20)) # Ano/Data
+    vote_average = db.Column(db.Float) # Nota
+    media_type = db.Column(db.String(20)) # 'movie' ou 'tv'
+    genres = db.Column(db.String(200)) # Gêneros separados por vírgula
+
 def get_drive_service():
     try:
         # Tenta ler do arquivo local primeiro, se não existir, tenta da variável de ambiente
@@ -76,47 +90,23 @@ def extract_id_from_link(link):
         return match.group(1)
     return None
 
+# Função antiga de ler JSON (Mantida como fallback ou para migração, mas a API vai usar o DB)
 def get_home_items():
-    home_items = []
-    try:
-        # Tenta ler arquivo local, senão lê da variável de ambiente
-        if os.path.exists(DATA_FILE):
-            with open(DATA_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        else:
-            # Lê do Vercel Environment Variable
-            data = json.loads(os.environ.get('links', '{}'))
-
-        # Suporte para JSON como lista direta ou dicionário
-        if isinstance(data, list):
-            iterator = [('all', data)]
-        else:
-            iterator = data.items()
-
-        for category, item_list in iterator:
-            for item in item_list:
-                link = item.get('link')
-                drive_id = extract_id_from_link(link)
-                title = item.get('title') or item.get('tittle') or 'Título Desconhecido'
-                
-                if drive_id:
-                    # Detecta se é pasta ou vídeo baseado no link
-                    is_folder = 'folders/' in link if link else False
-                    home_items.append({
-                        "id": drive_id,
-                        "title": title,
-                        "synopsis": item.get('sinopse', 'Sem sinopse disponível.'),
-                        "type": "folder" if is_folder else "video",
-                        "tag": item.get('tag', 'outros')
-                    })
-                else:
-                    print(f"AVISO: Não foi possível extrair um ID de Drive válido do link para '{title}'. Link: {link}")
-
-    except FileNotFoundError:
-        print(f"ERRO: Arquivo de dados '{DATA_FILE}' não encontrado.")
-    except json.JSONDecodeError:
-        print(f"ERRO: O arquivo '{DATA_FILE}' não é um JSON válido.")
-    
+    # Busca itens do Banco de Dados
+    medias = Media.query.all()
+    home_items = [
+        {
+            "id": m.drive_id,
+            "title": m.title,
+            "synopsis": m.overview,
+            "type": "folder" if m.media_type == 'tv' else "video", # Assumindo que séries são pastas
+            "tag": 'series' if m.media_type == 'tv' else 'movie',
+            "poster": f"https://image.tmdb.org/t/p/w500{m.poster_path}" if m.poster_path else None,
+            "backdrop": f"https://image.tmdb.org/t/p/original{m.backdrop_path}" if m.backdrop_path else None,
+            "rating": m.vote_average,
+            "year": m.release_date[:4] if m.release_date else ""
+        } for m in medias
+    ]
     return home_items
 
 def get_drive_items(service, folder_id):

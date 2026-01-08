@@ -127,6 +127,8 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    background-size: cover;
+    background-position: center;
 }
 
 .card:hover {
