@@ -8,15 +8,13 @@ const searchInput = document.getElementById('search-input');
 const itemsCountLabel = document.getElementById('items-count');
 const searchContainer = document.querySelector('.search-container');
 
-// Estado da navegação
 let navigationStack = [];
-let allHomeData = []; // Armazena todos os dados da home para filtrar sem recarregar
-let currentList = []; // Lista sendo exibida atualmente (para busca funcionar)
+let allHomeData = [];
+let currentList = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     loadHome();
     
-    // Evento de busca
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
         const filtered = currentList.filter(item => item.title.toLowerCase().includes(term));
@@ -28,7 +26,7 @@ async function loadHome() {
     navigationStack = [{ name: 'Início', id: 'home', type: 'root' }];
     renderBreadcrumbs();
     searchInput.value = '';
-    searchContainer.style.display = 'none'; // Oculta a busca na home
+    searchContainer.style.display = 'none';
     
     try {
         const response = await fetch('/api/home');
@@ -42,9 +40,8 @@ async function loadHome() {
 
 function renderCategories(items) {
     appContainer.innerHTML = '';
-    itemsCountLabel.innerText = ''; // Limpa contador na home
+    itemsCountLabel.innerText = '';
 
-    // Filtra e conta
     const movies = items.filter(i => i.tag === 'movie');
     const series = items.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
 
@@ -68,27 +65,24 @@ function renderCategories(items) {
 }
 
 function loadCategory(name, filterTag) {
-    // Evita duplicar a categoria no stack se já estivermos nela
     const lastItem = navigationStack[navigationStack.length - 1];
     if (!lastItem || lastItem.id !== filterTag) {
         navigationStack.push({ name: name, id: filterTag, type: 'category' });
     }
     renderBreadcrumbs();
     
-    // Filtra os dados já carregados
     if (filterTag === 'movie') {
         currentList = allHomeData.filter(i => i.tag === 'movie');
     } else {
         currentList = allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
     }
     
-    searchContainer.style.display = 'block'; // Exibe a busca
+    searchContainer.style.display = 'block';
     searchInput.disabled = false;
     renderGrid(currentList);
 }
 
 async function loadFolder(folderId, folderName) {
-    // Atualiza histórico
     navigationStack.push({ name: folderName, id: folderId, type: 'folder' });
     renderBreadcrumbs();
     searchInput.value = '';
@@ -101,7 +95,6 @@ async function loadFolder(folderId, folderName) {
         const response = await fetch(`/api/browse/${folderId}`);
         const items = await response.json();
         
-        // Normaliza os dados vindos do Drive API para o formato da nossa UI
         currentList = items.map(item => ({
             id: item.id,
             title: item.name,
@@ -119,7 +112,6 @@ async function loadFolder(folderId, folderName) {
 function renderGrid(items) {
     appContainer.innerHTML = '';
     
-    // Atualiza contador
     itemsCountLabel.innerText = `Exibindo ${items.length} iten(s)`;
 
     if (items.length === 0) {
@@ -131,7 +123,6 @@ function renderGrid(items) {
         const card = document.createElement('div');
         card.className = 'card';
         
-        // Ícone visual baseado no tipo
         const icon = item.type === 'folder' ? '📁' : '▶️';
         
         card.innerHTML = `
@@ -156,7 +147,6 @@ function handleItemClick(item) {
 }
 
 function openVideo(fileId, title, synopsis) {
-    // Usa a URL de preview do Google Drive para embed
     const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
     videoFrame.src = embedUrl;
     modalTitle.innerText = title;
@@ -166,10 +156,9 @@ function openVideo(fileId, title, synopsis) {
 
 function closeModal() {
     modal.classList.add('hidden');
-    videoFrame.src = ''; // Para o vídeo
+    videoFrame.src = '';
 }
 
-// Fecha modal ao clicar fora
 window.onclick = function(event) {
     if (event.target == modal) {
         closeModal();
@@ -185,17 +174,12 @@ function renderBreadcrumbs() {
         span.innerText = crumb.name;
         
         span.onclick = () => {
-            // Lógica simples para voltar: recarrega home se for o primeiro, ou implementa voltar
             if (index === 0) {
                 loadHome();
             } else if (navigationStack[index].type === 'category') {
-                // Se clicar na categoria (ex: Filmes), recarrega a categoria
-                // Para simplificar, vamos reconstruir a stack até este ponto
                 while(navigationStack.length > index + 1) { navigationStack.pop(); }
-                // Recarrega a lista baseada no ID da categoria (movie/series)
                 loadCategory(navigationStack[index].name, navigationStack[index].id);
             }
-            // Para navegação mais complexa de voltar, precisaríamos refazer a stack
         };
 
         breadcrumbsContainer.appendChild(span);

@@ -145,19 +145,16 @@ def get_app_version():
     try:
         with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
             content = f.read()
-            # Procura pelo padrão ## [X.X.X]
             match = re.search(r'## \[(\d+\.\d+\.\d+)\]', content)
             if match:
                 return match.group(1)
     except Exception:
         pass
-    return '0.0.1' # Fallback
+    return '0.0.1'
 
 @app.context_processor
 def inject_globals():
     return dict(version=get_app_version(), github_url="https://github.com/AlvaroPereir4/DriveViewer")
-
-# --- Endpoints da API e Rotas ---
 
 DRIVE_SERVICE = get_drive_service()
 
@@ -166,12 +163,10 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        
-        # Busca usuário no Banco de Dados
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password_hash, password):
-            session.permanent = True  # Ativa a expiração definida em permanent_session_lifetime
+            session.permanent = True
             session['user'] = user.username
             return redirect(url_for('index'))
         else:
@@ -182,13 +177,10 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        # --- Proteção contra Spam (Rate Limiting) ---
-        # No Vercel, o IP real vem no header X-Forwarded-For
         client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         if client_ip and ',' in client_ip:
             client_ip = client_ip.split(',')[0].strip()
 
-        # Verifica se esse IP criou conta nas últimas 24 horas
         last_reg = RegistrationLog.query.filter_by(ip_address=client_ip).order_by(RegistrationLog.timestamp.desc()).first()
         
         if last_reg and (datetime.utcnow() - last_reg.timestamp) < timedelta(hours=24):
@@ -203,23 +195,18 @@ def register():
             flash('As senhas não coincidem.', 'error')
             return render_template('register.html')
 
-        # Verifica se usuário já existe
         if User.query.filter_by(username=username).first():
             flash('Nome de usuário já existe.', 'error')
             return render_template('register.html')
 
-        # Cria novo usuário
         hashed_password = generate_password_hash(password)
         new_user = User(username=username, password_hash=hashed_password)
         
         try:
             db.session.add(new_user)
-            
-            # Registra o IP e a hora da criação
             db.session.add(RegistrationLog(ip_address=client_ip))
-            
             db.session.commit()
-            flash('Conta criada com sucesso! Faça login.', 'success') # Você pode criar um estilo .alert-success no CSS
+            flash('Conta criada com sucesso! Faça login.', 'success')
             return redirect(url_for('login'))
         except Exception as e:
             flash('Erro ao criar conta. Tente novamente.', 'error')
@@ -253,5 +240,5 @@ def browse_folder(folder_id):
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all() # Cria as tabelas no banco local (sqlite) se não existirem
+        db.create_all()
     app.run(debug=True, port=5001)

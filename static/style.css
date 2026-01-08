@@ -1,12 +1,11 @@
 :root {
-    /* Paleta Earthy Chic / Cinema Indie */
-    --bg-color: #0c0b0b; /* Preto quente/café muito escuro */
-    --card-bg: #1a1817; /* Marrom acinzentado escuro */
-    --text-primary: #e6e1de; /* Creme/Off-white (menos cansativo que branco puro) */
-    --text-secondary: #8f8681; /* Cinza quente */
-    --accent-color: #c24d2c; /* Terracota / Laranja Queimado */
+    --bg-color: #0c0b0b;
+    --card-bg: #1a1817;
+    --text-primary: #e6e1de;
+    --text-secondary: #8f8681;
+    --accent-color: #c24d2c;
     --accent-hover: #d65a36;
-    --hover-scale: 1.03; /* Movimento mais sutil e elegante */
+    --hover-scale: 1.03;
     --transition-speed: 0.3s;
 }
 
@@ -17,7 +16,7 @@
 }
 
 body {
-    font-family: 'Outfit', sans-serif; /* Fonte mais moderna e geométrica */
+    font-family: 'Outfit', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-primary);
     overflow-x: hidden;
@@ -26,13 +25,12 @@ body {
     flex-direction: column;
 }
 
-/* Navbar */
 .navbar {
     display: flex;
     align-items: center;
     padding: 20px 4%;
     background: linear-gradient(to bottom, rgba(12, 11, 11, 0.95) 0%, rgba(12, 11, 11, 0.8) 50%, transparent 100%);
-    backdrop-filter: blur(5px); /* Efeito de vidro fosco sutil */
+    backdrop-filter: blur(5px);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -42,9 +40,9 @@ body {
 .logo {
     font-size: 1.4rem;
     font-weight: 600;
-    color: var(--text-primary); /* Logo mais discreto */
+    color: var(--text-primary);
     cursor: pointer;
-    letter-spacing: -0.5px; /* Kerning mais moderno */
+    letter-spacing: -0.5px;
 }
 
 .breadcrumbs {
@@ -66,7 +64,6 @@ body {
     opacity: 0.5;
 }
 
-/* Nav Actions (Search + Logout) */
 .nav-actions {
     display: flex;
     align-items: center;
@@ -85,12 +82,11 @@ body {
     color: var(--accent-color);
 }
 
-/* Search Bar */
 .search-container input {
     background-color: rgba(255,255,255,0.05);
     border: 1px solid #333;
     padding: 8px 15px;
-    border-radius: 4px; /* Bordas menos arredondadas (mais minimalista) */
+    border-radius: 4px;
     color: var(--text-primary);
     outline: none;
     transition: border-color 0.3s, width 0.3s;
@@ -103,7 +99,6 @@ body {
     width: 250px;
 }
 
-/* Item Count */
 .items-count {
     padding: 0 4%;
     margin-top: 10px;
@@ -112,17 +107,15 @@ body {
     text-align: right;
 }
 
-/* Grid Layout */
 .content-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
     padding: 20px 4%;
     margin-top: 10px;
-    flex: 1; /* Faz o conteúdo empurrar o footer para baixo */
+    flex: 1;
 }
 
-/* Cards */
 .card {
     background-color: var(--card-bg);
     border-radius: 6px;
@@ -130,7 +123,7 @@ body {
     cursor: pointer;
     transition: transform var(--transition-speed), box-shadow var(--transition-speed);
     position: relative;
-    aspect-ratio: 16/9; /* Formato Widescreen */
+    aspect-ratio: 16/9;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -164,30 +157,28 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Category Cards (Special Style) */
 .card.category-card {
     border: 1px solid rgba(255,255,255,0.1);
     background: linear-gradient(135deg, #1a1817, #24211f);
     justify-content: center;
     align-items: center;
-    position: relative; /* Necessário para o efeito de TV */
+    position: relative;
     overflow: hidden;
 }
 
 .card.category-card:hover {
     border-color: var(--accent-color);
     background: linear-gradient(135deg, #24211f, #2e2a28);
-    box-shadow: 0 0 25px rgba(194, 77, 44, 0.15); /* Glow sutil na borda */
+    box-shadow: 0 0 25px rgba(194, 77, 44, 0.15);
 }
 
 .card.category-card .card-title {
     font-size: 1.5rem;
     white-space: normal;
     transition: text-shadow 0.3s;
-    z-index: 2; /* Texto fica acima do efeito */
+    z-index: 2;
 }
 
-/* Efeito de TV / Scanlines Minimalista */
 .card.category-card::after {
     content: " ";
     display: block;
@@ -196,7 +187,6 @@ body {
     left: 0;
     bottom: 0;
     right: 0;
-    /* Cria linhas finas horizontais simulando TV antiga */
     background: linear-gradient(
         to bottom,
         rgba(255, 255, 255, 0),
@@ -204,20 +194,18 @@ body {
         rgba(0, 0, 0, 0.2) 50%,
         rgba(0, 0, 0, 0.2)
     );
-    background-size: 100% 4px; /* Tamanho da linha */
+    background-size: 100% 4px;
     z-index: 1;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
 }
 
-/* Ao passar o mouse, liga o efeito */
 .card.category-card:hover::after {
     opacity: 1;
     animation: scanline 0.8s linear infinite;
 }
 
-/* Texto brilha levemente como fósforo de TV */
 .card.category-card:hover .card-title {
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
 }
@@ -227,7 +215,6 @@ body {
     100% { background-position: 0 100%; }
 }
 
-/* Folder Icon Placeholder if no image */
 .folder-icon {
     position: absolute;
     top: 50%;
@@ -237,7 +224,6 @@ body {
     opacity: 0.2;
 }
 
-/* Modal */
 .modal {
     position: fixed;
     top: 0;
@@ -269,7 +255,7 @@ body {
 
 .video-wrapper {
     position: relative;
-    padding-bottom: 56.25%; /* 16:9 */
+    padding-bottom: 56.25%;
     height: 0;
 }
 
@@ -297,24 +283,21 @@ body {
     line-height: 1.5;
 }
 
-/* Login Page Styles */
 .login-body {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     background-color: var(--bg-color);
-    /* Efeito "Spotlight" Minimalista: Um gradiente radial no topo simulando um projetor */
     background-image: 
-        radial-gradient(circle 600px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(194, 77, 44, 0.06), transparent 100%), /* Mouse Follower Interativo */
+        radial-gradient(circle 600px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(194, 77, 44, 0.06), transparent 100%),
         radial-gradient(circle at 50% -20%, rgba(194, 77, 44, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at center, transparent 60%, #000 100%), /* Vignette (Cantos escuros) */
+        radial-gradient(circle at center, transparent 60%, #000 100%),
         linear-gradient(to bottom, #0c0b0b 0%, #141211 100%);
     position: relative;
     overflow: hidden;
 }
 
-/* Scanlines em Tela Cheia (Efeito TV) */
 .login-body::after {
     content: "";
     position: absolute;
@@ -326,25 +309,25 @@ body {
         to bottom,
         rgba(255, 255, 255, 0),
         rgba(255, 255, 255, 0) 50%,
-        rgba(0, 0, 0, 0.05) 50%, /* Bem sutil para não cansar a vista */
+        rgba(0, 0, 0, 0.05) 50%,
         rgba(0, 0, 0, 0.05)
     );
     background-size: 100% 4px;
-    animation: scanline 8s linear infinite; /* Mais lento que o hover dos cards */
+    animation: scanline 8s linear infinite;
     pointer-events: none;
     z-index: 1;
 }
 
 .login-container {
-    background-color: transparent; /* Remove o fundo pesado */
+    background-color: transparent;
     padding: 40px;
     width: 100%;
     max-width: 400px;
-    border: 1px solid rgba(255,255,255,0.05); /* Borda sutil */
+    border: 1px solid rgba(255,255,255,0.05);
     border-radius: 12px;
     backdrop-filter: blur(10px);
     position: relative;
-    z-index: 10; /* Garante que o formulário fique ACIMA das scanlines */
+    z-index: 10;
 }
 
 .form-group {
@@ -396,7 +379,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* Footer */
 .app-footer {
     text-align: center;
     padding: 20px;
