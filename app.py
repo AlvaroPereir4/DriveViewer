@@ -113,9 +113,32 @@ def get_drive_items(service, folder_id):
     if not service: return []
     try:
         query = f"'{folder_id}' in parents and trashed=false"
-        fields = "files(id, name, mimeType)"
+        fields = "files(id, name, mimeType, shortcutDetails)"
         results = service.files().list(q=query, pageSize=200, fields=fields, supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
-        return results.get('files', [])
+        files = results.get('files', [])
+        for item in files:
+            mime_type = item.get('mimeType')
+
+            # Se for atalho, resolve o ID e o MIME do alvo
+            if mime_type == 'application/vnd.google-apps.shortcut':
+                details = item.get('shortcutDetails', {})
+                target_id = details.get('targetId')
+                target_mime = details.get('targetMimeType')
+                
+                if target_id:
+                    item['id'] = target_id
+                
+                if target_mime:
+                    mime_type = target_mime
+                    item['mimeType'] = target_mime  # Atualiza o mimeType real para o frontend não se confundir
+
+            # Classificação: Se for vídeo, marca como vídeo. Todo o resto vira pasta.
+            if mime_type and mime_type.startswith('video/'):
+                item['type'] = 'video'
+            else:
+                item['type'] = 'folder'
+            
+        return files
     except HttpError as error:
         print(f"Ocorreu um erro ao buscar itens do Drive: {error}")
         return []
