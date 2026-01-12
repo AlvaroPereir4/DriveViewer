@@ -6,7 +6,7 @@ from app import app, db, Media, extract_id_from_link
 from dotenv import load_dotenv
 
 load_dotenv()
-TMDB_API_KEY = os.environ.get('TMDB_API_KEY', '78ff393f56d5163de84e74f8a855daf6')
+TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
 DATA_FILE = os.path.join('../data', 'links.json')
 
 def search_tmdb(query, is_series=False):
