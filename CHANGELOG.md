@@ -1,6 +1,7 @@
 # Changelog
 
 ## [0.0.4] - 2026-01-11
+- Fix: Adjustments to front-end into series catalog.
 - Fix: Adjustments to cover some issues in recognize files or videos.
 
 ## [0.0.3] - 2026-01-08
