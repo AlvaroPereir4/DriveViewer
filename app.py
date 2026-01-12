@@ -15,18 +15,14 @@ load_dotenv()  # Carrega variáveis do arquivo .env localmente
 
 SERVICE_ACCOUNT_FILE = 'api_key.json'
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
-DATA_FILE = os.path.join('data', 'links.json')
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = os.environ.get('SECRET_KEY', 'chave_nova_para_forcar_logout_v2') # Alterado para invalidar sessões anteriores
 app.permanent_session_lifetime = timedelta(hours=2) # Define a duração da sessão para 2 horas
 
-# --- Configuração do Banco de Dados ---
-# Usa SQLite localmente se DATABASE_URL não estiver definido, ou PostgreSQL no Vercel
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///users.db')
 if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1) # Correção para SQLAlchemy
-
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -49,23 +45,21 @@ class Media(db.Model):
     drive_id = db.Column(db.String(100), unique=True, nullable=False)
     title = db.Column(db.String(200), nullable=False)
     original_title = db.Column(db.String(200))
-    overview = db.Column(db.Text) # Sinopse
-    poster_path = db.Column(db.String(200)) # URL da capa
-    backdrop_path = db.Column(db.String(200)) # URL do fundo
-    release_date = db.Column(db.String(20)) # Ano/Data
-    vote_average = db.Column(db.Float) # Nota
-    media_type = db.Column(db.String(20)) # 'movie' ou 'tv'
-    genres = db.Column(db.String(200)) # Gêneros separados por vírgula
+    overview = db.Column(db.Text)
+    poster_path = db.Column(db.String(200))
+    backdrop_path = db.Column(db.String(200))
+    release_date = db.Column(db.String(20))
+    vote_average = db.Column(db.Float)
+    media_type = db.Column(db.String(20))
+    genres = db.Column(db.String(200))
 
 def get_drive_service():
     try:
-        # Tenta ler do arquivo local primeiro, se não existir, tenta da variável de ambiente
         if os.path.exists(SERVICE_ACCOUNT_FILE):
             print(f"DEBUG: Usando arquivo local em: {os.path.abspath(SERVICE_ACCOUNT_FILE)}")
             creds = service_account.Credentials.from_service_account_file(
                 SERVICE_ACCOUNT_FILE, scopes=SCOPES)
         else:
-            # Lê do Vercel Environment Variable
             env_creds = os.environ.get('api_key')
             if env_creds:
                 creds_json = json.loads(env_creds)
@@ -83,23 +77,14 @@ def get_drive_service():
         print(f"ERRO ao conectar com o Google Drive: {e}")
     return None
 
-def extract_id_from_link(link):
-    if not link: return None
-    match = re.search(r'(?:folders/|file/d/|id=)([a-zA-Z0-9_-]{28,})', link)
-    if match:
-        return match.group(1)
-    return None
-
-# Função antiga de ler JSON (Mantida como fallback ou para migração, mas a API vai usar o DB)
 def get_home_items():
-    # Busca itens do Banco de Dados
     medias = Media.query.all()
     home_items = [
         {
             "id": m.drive_id,
             "title": m.title,
             "synopsis": m.overview,
-            "type": "folder" if m.media_type == 'tv' else "video", # Assumindo que séries são pastas
+            "type": "folder" if m.media_type == 'tv' else "video",
             "tag": 'series' if m.media_type == 'tv' else 'movie',
             "poster": f"https://image.tmdb.org/t/p/w500{m.poster_path}" if m.poster_path else None,
             "backdrop": f"https://image.tmdb.org/t/p/original{m.backdrop_path}" if m.backdrop_path else None,
@@ -112,15 +97,46 @@ def get_home_items():
 def get_drive_items(service, folder_id):
     if not service: return []
     try:
+        try:
+            current_folder = service.files().get(fileId=folder_id, fields="parents").execute()
+            current_parents = current_folder.get('parents', [])
+        except HttpError:
+            current_parents = []
+
         query = f"'{folder_id}' in parents and trashed=false"
-        fields = "files(id, name, mimeType)"
+        fields = "files(id, name, mimeType, shortcutDetails, parents)"
         results = service.files().list(q=query, pageSize=200, fields=fields, supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
-        return results.get('files', [])
+        files = results.get('files', [])
+        for item in files:
+            mime_type = item.get('mimeType')
+
+            if mime_type == 'application/vnd.google-apps.shortcut':
+                details = item.get('shortcutDetails', {})
+                target_id = details.get('targetId')
+                target_mime = details.get('targetMimeType')
+                
+                if target_id:
+                    item['id'] = target_id
+                
+                if target_mime:
+                    mime_type = target_mime
+                    item['mimeType'] = target_mime
+
+            if current_parents:
+                item['parents'] = current_parents
+
+            if mime_type and mime_type.startswith('video/'):
+                item['type'] = 'video'
+            else:
+                item['type'] = 'folder'
+
+        files.sort(key=lambda x: [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', x.get('name', ''))])
+
+        return files
     except HttpError as error:
         print(f"Ocorreu um erro ao buscar itens do Drive: {error}")
         return []
 
-# --- Decorator de Login ---
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -129,9 +145,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- Utilitários de Template ---
 def get_app_version():
-    """Lê a versão atual do arquivo CHANGELOG.md"""
     try:
         with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
             content = f.read()
