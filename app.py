@@ -173,8 +173,6 @@ def login():
     if request.method == 'POST':
         login_input = request.form.get('username')
         password = request.form.get('password')
-        
-        # Verifica se o input bate com o username OU com o email
         user = User.query.filter((User.username == login_input) | (User.email == login_input)).first()
         
         if user and check_password_hash(user.password_hash, password):
@@ -216,7 +214,6 @@ def register():
             flash('Este e-mail já está cadastrado.', 'error')
             return render_template('register.html')
 
-        # Captura informações de indicação
         referral_type = request.form.get('referral_type')
         referral_info = "Não informado"
 
@@ -263,13 +260,10 @@ def forgot_password():
         user = User.query.filter_by(email=email).first()
         
         if user:
-            # Gera um token seguro de 8 caracteres
             token = secrets.token_urlsafe(8)
-            # Define o token como a nova senha temporária
             user.password_hash = generate_password_hash(token)
             db.session.commit()
             
-            # Envio REAL de Email via Gmail
             email_sender = os.environ.get('EMAIL_USER')
             email_password = os.environ.get('EMAIL_PASS')
 
@@ -291,13 +285,11 @@ def forgot_password():
                     print(f"Erro ao enviar email: {e}")
                     flash('Erro ao enviar o e-mail. Contate o administrador.', 'error')
             else:
-                # Fallback para ambiente de desenvolvimento sem email configurado
                 print(f"DEBUG TOKEN: {token}")
                 flash('Sistema de e-mail não configurado. Contate o admin.', 'error')
 
             return redirect(url_for('login'))
         else:
-            # Por segurança, não informamos se o email existe ou não, mas aqui vamos avisar genericamente
             flash('Se o e-mail estiver cadastrado, você receberá as instruções.', 'info')
             
     return render_template('forgot_password.html')
@@ -308,7 +300,6 @@ def reset_password():
     user = User.query.filter_by(username=session['user']).first()
     
     if request.method == 'POST':
-        # Verifica Rate Limit de 24h
         if user.last_password_reset and (datetime.utcnow() - user.last_password_reset) < timedelta(hours=24):
             flash('Você só pode redefinir sua senha uma vez a cada 24 horas por segurança.', 'error')
             return render_template('reset_password.html')
