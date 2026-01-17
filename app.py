@@ -171,9 +171,11 @@ DRIVE_SERVICE = get_drive_service()
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        login_input = request.form.get('username')
         password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
+        
+        # Verifica se o input bate com o username OU com o email
+        user = User.query.filter((User.username == login_input) | (User.email == login_input)).first()
         
         if user and check_password_hash(user.password_hash, password):
             session.permanent = True
@@ -325,6 +327,11 @@ def reset_password():
         return redirect(url_for('index'))
 
     return render_template('reset_password.html')
+
+@app.route('/settings')
+@login_required
+def settings():
+    return render_template('settings.html')
 
 @app.route('/logout')
 def logout():
