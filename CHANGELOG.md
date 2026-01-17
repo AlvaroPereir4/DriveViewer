@@ -1,4 +1,5 @@
 # Changelog
+## [0.0.5] - 2026-01-17
 
 ## [0.0.3] - 2025-01-08
 - Feature: Enriched movie data in production with additional details.
