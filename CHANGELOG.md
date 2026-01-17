@@ -5,6 +5,7 @@
 - Feature: Implemented support for login via E-mail or Username.
 - Feature: Added secure Password Recovery system via email token.
 - Feature: Enhanced registration form with referral source fields and community disclaimer.
+- Feature: UI Update - Changed media cards to portrait mode (poster style) with CRT/Scanline and TV Flash hover effects.
 
 ## [0.0.4] - 2026-01-11
 - Fix: Adjustments to front-end into series catalog.

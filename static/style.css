@@ -109,7 +109,7 @@ body {
 
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 20px;
     padding: 20px 4%;
     margin-top: 10px;
@@ -123,7 +123,7 @@ body {
     cursor: pointer;
     transition: transform var(--transition-speed), box-shadow var(--transition-speed);
     position: relative;
-    aspect-ratio: 16/9;
+    aspect-ratio: 2/3;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -135,6 +135,7 @@ body {
     transform: scale(var(--hover-scale));
     box-shadow: 0 15px 30px rgba(0,0,0,0.4);
     z-index: 10;
+    animation: tv-flash 0.4s ease-out;
 }
 
 .card-content {
@@ -181,7 +182,7 @@ body {
     z-index: 2;
 }
 
-.card.category-card::after {
+.card::after {
     content: " ";
     display: block;
     position: absolute;
@@ -203,7 +204,7 @@ body {
     transition: opacity 0.3s;
 }
 
-.card.category-card:hover::after {
+.card:hover::after {
     opacity: 1;
     animation: scanline 0.8s linear infinite;
 }
@@ -215,6 +216,12 @@ body {
 @keyframes scanline {
     0% { background-position: 0 0; }
     100% { background-position: 0 100%; }
+}
+
+@keyframes tv-flash {
+    0% { filter: brightness(1); }
+    25% { filter: brightness(2.5) contrast(1.2); }
+    100% { filter: brightness(1); }
 }
 
 .folder-icon {
