@@ -6,12 +6,7 @@ from app import app, db, Media, extract_id_from_link
 from dotenv import load_dotenv
 
 load_dotenv()
-
-# --- CONFIGURAÇÃO ---
-# 1. Crie uma conta no https://www.themoviedb.org/
-# 2. Vá em Configurações > API e gere uma chave.
-# 3. Coloque a chave abaixo ou no seu .env como TMDB_API_KEY
-TMDB_API_KEY = os.environ.get('TMDB_API_KEY', '78ff393f56d5163de84e74f8a855daf6')
+TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
 DATA_FILE = os.path.join('../data', 'links.json')
 
 def search_tmdb(query, is_series=False):
@@ -27,7 +22,7 @@ def search_tmdb(query, is_series=False):
     if res.status_code == 200:
         results = res.json().get('results', [])
         if results:
-            return results[0] # Retorna o primeiro resultado (mais provável)
+            return results[0]
     return None
 
 def process_catalog():
@@ -38,7 +33,6 @@ def process_catalog():
     with open(DATA_FILE, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    # Normaliza entrada (lista ou dict)
     items_to_process = []
     if isinstance(data, list):
         items_to_process = data
@@ -49,7 +43,6 @@ def process_catalog():
     print(f"Iniciando enriquecimento de {len(items_to_process)} itens...")
 
     with app.app_context():
-        # Cria a tabela se não existir
         db.create_all()
 
         for item in items_to_process:
@@ -63,12 +56,10 @@ def process_catalog():
             if not drive_id:
                 continue
 
-            # Verifica se já existe no banco para não gastar API
             if Media.query.filter_by(drive_id=drive_id).first():
                 print(f"[SKIP] {raw_title} já está no banco.")
                 continue
 
-            # Detecta se é série (pelo link de pasta) ou filme
             is_series = 'folders/' in link
             media_type = 'tv' if is_series else 'movie'
 
@@ -95,7 +86,6 @@ def process_catalog():
                 db.session.commit()
             else:
                 print(f"      -> NÃO ENCONTRADO NO TMDB. Salvando básico.")
-                # Salva apenas com os dados que temos
                 fallback_media = Media(
                     drive_id=drive_id,
                     title=raw_title,

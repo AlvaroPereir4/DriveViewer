@@ -1,12 +1,16 @@
 # Changelog
 ## [0.0.5] - 2026-01-17
 
-## [0.0.3] - 2025-01-08
+## [0.0.4] - 2026-01-11
+- Fix: Adjustments to front-end into series catalog.
+- Fix: Adjustments to cover some issues in recognize files or videos.
+
+## [0.0.3] - 2026-01-08
 - Feature: Enriched movie data in production with additional details.
 - Feature: Movie links were migrated to the database in production.
 - Feature: Added a new directory and data enrichment pipeline.
 
-## [0.0.2] - 2025-01-06
+## [0.0.2] - 2026-01-06
 - Feature: Added cinematic "TV Scanline" background effect to Login and Register pages.
 - Feature: Added "Vignette" effect to login screen for better focus and aesthetics.
 - Feature: Added interactive "Mouse Spotlight" effect to login and register pages.
@@ -17,7 +21,7 @@
 - Fix: Added to page hyperlink to github repository.
 - Fix: Adjustments to search in movies and series sections.
 
-## [0.0.1] - 2025-01-01
+## [0.0.1] - 2026-01-01
 - Feature: Authentication System - Secure Login and Logout with route protection and automatic session expiration.
 - Feature: Vercel Support - Hybrid configuration to run locally (JSON files) or in the cloud (Environment Variables).
 - Feature: Streaming Style Interface - New Dark Mode design, responsive cards, and integrated video modal.
