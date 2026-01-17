@@ -1,5 +1,6 @@
 # Changelog
 ## [0.0.5] - 2026-01-17
+- Feature: Recover password 
 - Feature: Add some new camps to register process. (community message, referral info)
 
 ## [0.0.4] - 2026-01-11

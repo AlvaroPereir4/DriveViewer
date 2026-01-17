@@ -1,6 +1,10 @@
 import os
 import re
 import json
+import secrets
+import smtplib
+import ssl
+from email.message import EmailMessage
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash
@@ -11,7 +15,7 @@ from googleapiclient.errors import HttpError
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 SERVICE_ACCOUNT_FILE = 'api_key.json'
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
@@ -27,20 +31,21 @@ app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Modelo de Usuário
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     referral_info = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    registration_ip = db.Column(db.String(50))
+    last_password_reset = db.Column(db.DateTime)
 
-# Modelo de Log de Registro (Rate Limiting)
 class RegistrationLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ip_address = db.Column(db.String(50), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Modelo de Mídia (Filmes e Séries Enriquecidos)
 class Media(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     drive_id = db.Column(db.String(100), unique=True, nullable=False)
@@ -193,6 +198,7 @@ def register():
             return render_template('register.html')
 
         username = request.form.get('username')
+        email = request.form.get('email')
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
 
@@ -202,6 +208,10 @@ def register():
 
         if User.query.filter_by(username=username).first():
             flash('Nome de usuário já existe.', 'error')
+            return render_template('register.html')
+
+        if User.query.filter_by(email=email).first():
+            flash('Este e-mail já está cadastrado.', 'error')
             return render_template('register.html')
 
         # Captura informações de indicação
@@ -224,7 +234,13 @@ def register():
             referral_info = f"Outro: {other_reason}"
 
         hashed_password = generate_password_hash(password)
-        new_user = User(username=username, password_hash=hashed_password, referral_info=referral_info)
+        new_user = User(
+            username=username, 
+            email=email,
+            password_hash=hashed_password, 
+            referral_info=referral_info,
+            registration_ip=client_ip
+        )
         
         try:
             db.session.add(new_user)
@@ -237,6 +253,78 @@ def register():
             print(e)
 
     return render_template('register.html')
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            # Gera um token seguro de 8 caracteres
+            token = secrets.token_urlsafe(8)
+            # Define o token como a nova senha temporária
+            user.password_hash = generate_password_hash(token)
+            db.session.commit()
+            
+            # Envio REAL de Email via Gmail
+            email_sender = os.environ.get('EMAIL_USER')
+            email_password = os.environ.get('EMAIL_PASS')
+
+            if email_sender and email_password:
+                try:
+                    msg = EmailMessage()
+                    msg.set_content(f"Olá,\n\nRecebemos um pedido de recuperação de conta.\n\nSua nova senha temporária é: {token}\n\nUse esta senha para fazer login e, em seguida, vá em 'Redefinir Senha' para escolher uma nova.\n\nSe não foi você, ignore este e-mail.")
+                    msg['Subject'] = 'Recuperação de Senha - DriveViewer'
+                    msg['From'] = email_sender
+                    msg['To'] = email
+
+                    context = ssl.create_default_context()
+                    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
+                        smtp.login(email_sender, email_password)
+                        smtp.send_message(msg)
+                    
+                    flash('Uma nova senha temporária foi enviada para o seu e-mail.', 'success')
+                except Exception as e:
+                    print(f"Erro ao enviar email: {e}")
+                    flash('Erro ao enviar o e-mail. Contate o administrador.', 'error')
+            else:
+                # Fallback para ambiente de desenvolvimento sem email configurado
+                print(f"DEBUG TOKEN: {token}")
+                flash('Sistema de e-mail não configurado. Contate o admin.', 'error')
+
+            return redirect(url_for('login'))
+        else:
+            # Por segurança, não informamos se o email existe ou não, mas aqui vamos avisar genericamente
+            flash('Se o e-mail estiver cadastrado, você receberá as instruções.', 'info')
+            
+    return render_template('forgot_password.html')
+
+@app.route('/reset-password', methods=['GET', 'POST'])
+@login_required
+def reset_password():
+    user = User.query.filter_by(username=session['user']).first()
+    
+    if request.method == 'POST':
+        # Verifica Rate Limit de 24h
+        if user.last_password_reset and (datetime.utcnow() - user.last_password_reset) < timedelta(hours=24):
+            flash('Você só pode redefinir sua senha uma vez a cada 24 horas por segurança.', 'error')
+            return render_template('reset_password.html')
+
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        if new_password != confirm_password:
+            flash('As senhas não coincidem.', 'error')
+            return render_template('reset_password.html')
+
+        user.password_hash = generate_password_hash(new_password)
+        user.last_password_reset = datetime.utcnow()
+        db.session.commit()
+        flash('Sua senha foi atualizada com sucesso!', 'success')
+        return redirect(url_for('index'))
+
+    return render_template('reset_password.html')
 
 @app.route('/logout')
 def logout():
@@ -261,6 +349,7 @@ def browse_folder(folder_id):
         return jsonify({"error": "Serviço do Drive não está disponível."}), 500
     items = get_drive_items(DRIVE_SERVICE, folder_id)
     return jsonify(items)
+
 
 if __name__ == '__main__':
     with app.app_context():
