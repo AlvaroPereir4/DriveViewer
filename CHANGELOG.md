@@ -1,9 +1,10 @@
 # Changelog
+
 ## [0.0.5] - 2026-01-17
-- Feature: 
-- Feature: Add way to login using e-mail.
-- Feature: Recover password process.
-- Feature: Add some new camps to register process. (community message, referral info)
+- Feature: Added Account Settings hub for user management (e.g., password reset).
+- Feature: Implemented support for login via E-mail or Username.
+- Feature: Added secure Password Recovery system via email token.
+- Feature: Enhanced registration form with referral source fields and community disclaimer.
 
 ## [0.0.4] - 2026-01-11
 - Fix: Adjustments to front-end into series catalog.
