@@ -11,18 +11,16 @@ from googleapiclient.errors import HttpError
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import load_dotenv
 
-load_dotenv()  # Carrega variáveis do arquivo .env localmente
+load_dotenv()
 
 SERVICE_ACCOUNT_FILE = 'api_key.json'
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 DATA_FILE = os.path.join('data', 'links.json')
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.secret_key = os.environ.get('SECRET_KEY', 'chave_nova_para_forcar_logout_v2') # Alterado para invalidar sessões anteriores
-app.permanent_session_lifetime = timedelta(hours=2) # Define a duração da sessão para 2 horas
+app.secret_key = os.environ.get('SECRET_KEY', 'chave_nova_para_forcar_logout_v2')
+app.permanent_session_lifetime = timedelta(hours=2)
 
-# --- Configuração do Banco de Dados ---
-# Usa SQLite localmente se DATABASE_URL não estiver definido, ou PostgreSQL no Vercel
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///users.db')
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1) # Correção para SQLAlchemy
@@ -36,6 +34,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
+    referral_info = db.Column(db.String(255))
 
 # Modelo de Log de Registro (Rate Limiting)
 class RegistrationLog(db.Model):
@@ -189,8 +188,27 @@ def register():
             flash('Nome de usuário já existe.', 'error')
             return render_template('register.html')
 
+        # Captura informações de indicação
+        referral_type = request.form.get('referral_type')
+        referral_info = "Não informado"
+
+        if referral_type == 'recommended':
+            rec_by = request.form.get('recommended_by', '').strip()
+            if not rec_by:
+                flash('Por favor, informe quem recomendou o site.', 'error')
+                return render_template('register.html')
+            referral_info = f"Recomendado por: {rec_by}"
+        elif referral_type == 'github':
+            referral_info = "Pelo GitHub"
+        elif referral_type == 'other':
+            other_reason = request.form.get('other_reason', '').strip()
+            if not other_reason:
+                flash('Por favor, especifique como conheceu o site em "Outro".', 'error')
+                return render_template('register.html')
+            referral_info = f"Outro: {other_reason}"
+
         hashed_password = generate_password_hash(password)
-        new_user = User(username=username, password_hash=hashed_password)
+        new_user = User(username=username, password_hash=hashed_password, referral_info=referral_info)
         
         try:
             db.session.add(new_user)
