@@ -7,8 +7,6 @@ const modalSynopsis = document.getElementById('modal-synopsis');
 const searchInput = document.getElementById('search-input');
 const itemsCountLabel = document.getElementById('items-count');
 const searchContainer = document.querySelector('.search-container');
-
-// Elementos novos do Modal
 const detailsView = document.getElementById('details-view');
 const playerView = document.getElementById('player-view');
 const modalPoster = document.getElementById('modal-poster');
@@ -51,23 +49,16 @@ async function loadHome() {
 function renderCategories(items) {
     appContainer.innerHTML = '';
     itemsCountLabel.innerText = '';
-
     const movies = items.filter(i => i.tag === 'movie');
     const series = items.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
-
-    // Helper para pegar poster aleatório
     const getRandomPoster = (list) => {
         const withPoster = list.filter(i => i.poster);
         return withPoster.length > 0 ? withPoster[Math.floor(Math.random() * withPoster.length)].poster : null;
     };
-
-    // 1. Categorias Principais
     const categories = [
         { title: 'Filmes', count: movies.length, type: 'main', filter: 'movie', poster: getRandomPoster(movies) },
         { title: 'Séries', count: series.length, type: 'main', filter: 'series', poster: getRandomPoster(series) }
     ];
-
-    // 2. Processar Gêneros Dinamicamente
     const genreMap = {};
     items.forEach(item => {
         if (item.genres && item.genres.length > 0) {
@@ -80,19 +71,13 @@ function renderCategories(items) {
             });
         }
     });
-
-    // Ordena gêneros e escolhe capa aleatória
     const sortedGenres = Object.keys(genreMap).sort().map(key => {
         const g = genreMap[key];
         return { title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getRandomPoster(g.items) };
     });
-
-    // Função para criar o card
     const createCategoryCard = (cat) => {
         const card = document.createElement('div');
         card.className = 'card category-card';
-        
-        // Se tiver poster, coloca como fundo com overlay escuro
         if (cat.poster) {
             card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${cat.poster}')`;
             card.style.backgroundSize = 'cover';
@@ -108,19 +93,13 @@ function renderCategories(items) {
         card.onclick = () => loadCategory(cat.title, cat.filter, cat.type);
         return card;
     };
-
-    // 1. Renderiza Principais (Filmes e Séries)
     categories.forEach(cat => appContainer.appendChild(createCategoryCard(cat)));
-
-    // 2. Renderiza Separador (Se houver gêneros)
     if (sortedGenres.length > 0) {
         const separator = document.createElement('div');
-        separator.style.gridColumn = '1 / -1'; // Ocupa a linha inteira
+        separator.style.gridColumn = '1 / -1';
         separator.innerHTML = '<h3 style="color: #8f8681; font-size: 1.1rem; margin-top: 30px; margin-bottom: 10px; font-weight: 400; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Navegar por Gêneros</h3>';
         appContainer.appendChild(separator);
     }
-
-    // 3. Renderiza Gêneros
     sortedGenres.forEach(cat => appContainer.appendChild(createCategoryCard(cat)));
 }
 
@@ -132,17 +111,14 @@ function loadCategory(name, filterTag, type = 'main') {
     renderBreadcrumbs();
     
     if (type === 'genre') {
-        // Filtra por Gênero
         currentList = allHomeData.filter(i => i.genres && i.genres.includes(filterTag));
     } else {
-        // Filtra por Tipo (Filme/Série)
         if (filterTag === 'movie') {
             currentList = allHomeData.filter(i => i.tag === 'movie');
         } else {
             currentList = allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
         }
     }
-    
     searchContainer.style.display = 'block';
     searchInput.disabled = false;
     renderGrid(currentList);
@@ -177,12 +153,8 @@ async function loadFolder(folderId, folderName) {
 
 function renderGrid(items) {
     appContainer.innerHTML = '';
-    
-    // Garante que os itens estejam sempre em ordem alfabética
     items.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
-
     itemsCountLabel.innerText = `Exibindo ${items.length} iten(s)`;
-
     if (items.length === 0) {
         appContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">Pasta vazia.</p>';
         return;
@@ -191,8 +163,7 @@ function renderGrid(items) {
     items.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
-        
-        // Se tiver poster, usa como background. Se não, usa estilo padrão.
+
         if (item.poster) {
             card.style.backgroundImage = `url('${item.poster}')`;
         }
@@ -227,12 +198,10 @@ function handleItemClick(item) {
 }
 
 function openDetailsModal(item) {
-    // 1. Preenche os dados da View de Detalhes
     modalTitle.innerText = item.title;
     modalOriginalTitle.innerText = item.original_title ? item.original_title : '';
     modalSynopsis.innerText = item.synopsis || 'Sinopse indisponível.';
-    
-    // Poster
+
     if (item.poster) {
         modalPoster.src = item.poster;
         modalPoster.style.display = 'block';
@@ -240,7 +209,6 @@ function openDetailsModal(item) {
         modalPoster.style.display = 'none';
     }
 
-    // Gêneros
     modalGenres.innerHTML = '';
     if (item.genres && item.genres.length > 0) {
         item.genres.forEach(genre => {
@@ -250,48 +218,30 @@ function openDetailsModal(item) {
             modalGenres.appendChild(span);
         });
     }
-
-    // Metadados (Data Completa, Nota TMDB)
     let metaHtml = '';
-    
-    // Data formatada
     if (item.release_date) {
         const dateObj = new Date(item.release_date);
         const dateStr = dateObj.toLocaleDateString('pt-BR');
-        // Ícone SVG de Calendário
         metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${dateStr}</div>`;
     }
 
-    // Nota TMDB
     if (item.rating) {
-        // Ícone SVG de Estrela
         metaHtml += `<div class="meta-item" title="Nota baseada no TMDB"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)} (TMDB)</div>`;
     }
     
     modalMeta.innerHTML = metaHtml;
-
-    // 2. Configura o botão de Play
     playBtn.onclick = () => startVideo(item);
-
-    // 3. Reseta as views (Mostra detalhes, esconde player)
     detailsView.style.display = 'flex';
     playerView.classList.add('hidden');
-    videoFrame.src = ''; // Garante que não tem nada tocando
-
-    // 4. Abre o modal
+    videoFrame.src = '';
     modal.classList.remove('hidden');
 }
 
 function startVideo(item) {
-    // 1. Esconde detalhes, mostra player
     detailsView.style.display = 'none';
     playerView.classList.remove('hidden');
-
-    // 2. Carrega o vídeo
     const embedUrl = `https://drive.google.com/file/d/${item.id}/preview`;
     videoFrame.src = embedUrl;
-
-    // 3. Replica as infos abaixo do player (conforme pedido)
     playerInfoArea.innerHTML = `
         <h2 style="margin-top: 15px; font-size: 1.2rem;">${item.title}</h2>
         <p class="modal-synopsis">${item.synopsis || ''}</p>
