@@ -3,8 +3,8 @@
     --card-bg: #1a1817;
     --text-primary: #e6e1de;
     --text-secondary: #8f8681;
-    --accent-color: #c24d2c;
-    --accent-hover: #d65a36;
+    --accent-color: #e87c03;
+    --accent-hover: #ff9838;
     --hover-scale: 1.03;
     --transition-speed: 0.3s;
 }
@@ -260,6 +260,101 @@ body {
     padding: 20px;
     border-radius: 8px;
     position: relative;
+    overflow: hidden;
+}
+
+/* --- ESTILOS DO MODAL DE DETALHES --- */
+.details-view {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.details-poster-wrapper {
+    flex-shrink: 0;
+    width: 320px; /* Capa maior conforme pedido */
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.details-poster-wrapper img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.details-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#modal-title {
+    font-size: 2.2rem;
+    line-height: 1.1;
+    margin-bottom: 5px;
+}
+
+#modal-original-title {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.modal-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.genre-tag {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #ccc;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-meta-tags {
+    display: flex;
+    gap: 20px;
+    margin: 10px 0 20px 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    align-items: center;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.meta-icon {
+    width: 16px;
+    height: 16px;
+    stroke: var(--accent-color);
+}
+
+.play-action-btn {
+    width: auto;
+    padding: 12px 30px;
+    margin-top: 30px;
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+}
+
+/* --- ESTILOS DO PLAYER VIEW --- */
+.player-view.hidden {
+    display: none;
 }
 
 .video-wrapper {
@@ -292,6 +387,21 @@ body {
     line-height: 1.5;
 }
 
+/* Responsividade para o Modal */
+@media (max-width: 768px) {
+    .details-view {
+        flex-direction: column;
+    }
+    .details-poster-wrapper {
+        width: 200px;
+        margin: 0 auto;
+    }
+    .play-action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 .login-body {
     display: flex;
     justify-content: center;
@@ -299,8 +409,8 @@ body {
     height: 100vh;
     background-color: var(--bg-color);
     background-image: 
-        radial-gradient(circle 600px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(194, 77, 44, 0.06), transparent 100%),
-        radial-gradient(circle at 50% -20%, rgba(194, 77, 44, 0.15) 0%, transparent 50%),
+        radial-gradient(circle 600px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(232, 124, 3, 0.06), transparent 100%),
+        radial-gradient(circle at 50% -20%, rgba(232, 124, 3, 0.15) 0%, transparent 50%),
         radial-gradient(circle at center, transparent 60%, #000 100%),
         linear-gradient(to bottom, #0c0b0b 0%, #141211 100%);
     position: relative;
@@ -364,24 +474,27 @@ body {
 .login-btn {
     width: 100%;
     padding: 16px;
-    background-color: var(--accent-color);
-    color: #fff;
-    border: none;
+    background-color: #000;
+    color: var(--text-primary);
+    border: 1px solid var(--accent-color);
     border-radius: 6px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     margin-top: 20px;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
 }
 
 .login-btn:hover {
-    background-color: var(--accent-hover);
+    background-color: var(--accent-color);
+    color: #000;
+    box-shadow: 0 0 20px rgba(232, 124, 3, 0.3);
 }
 
 .alert {
-    background-color: #e87c03;
-    color: white;
+    background-color: rgba(232, 124, 3, 0.1);
+    border: 1px solid var(--accent-color);
+    color: var(--text-primary);
     padding: 10px;
     border-radius: 4px;
     margin-bottom: 20px;

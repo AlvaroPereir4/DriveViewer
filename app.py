@@ -59,6 +59,16 @@ class Media(db.Model):
     media_type = db.Column(db.String(20))
     genres = db.Column(db.String(200))
 
+# Mapeamento de Gêneros (TMDB IDs -> Nomes)
+GENRE_MAP = {
+    28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
+    99: "Documentário", 18: "Drama", 10751: "Família", 14: "Fantasia",
+    36: "História", 27: "Terror", 10402: "Música", 9648: "Mistério",
+    10749: "Romance", 878: "Ficção Científica", 10770: "Cinema TV",
+    53: "Thriller", 10752: "Guerra", 37: "Faroeste",
+    10759: "Ação e Aventura", 10765: "Sci-Fi & Fantasy"
+}
+
 def get_drive_service():
     try:
         if os.path.exists(SERVICE_ACCOUNT_FILE):
@@ -85,6 +95,16 @@ def get_drive_service():
 
 def get_home_items():
     medias = Media.query.all()
+    
+    def format_genres(genre_str):
+        if not genre_str: return []
+        try:
+            # Remove colchetes e espaços, divide por vírgula
+            ids = [int(x.strip()) for x in genre_str.replace('[', '').replace(']', '').split(',') if x.strip().isdigit()]
+            return [GENRE_MAP.get(i, 'Outros') for i in ids]
+        except:
+            return []
+
     home_items = [
         {
             "id": m.drive_id,
@@ -95,7 +115,10 @@ def get_home_items():
             "poster": f"https://image.tmdb.org/t/p/w500{m.poster_path}" if m.poster_path else None,
             "backdrop": f"https://image.tmdb.org/t/p/original{m.backdrop_path}" if m.backdrop_path else None,
             "rating": m.vote_average,
-            "year": m.release_date[:4] if m.release_date else ""
+            "year": m.release_date[:4] if m.release_date else "",
+            "release_date": m.release_date,
+            "original_title": m.original_title,
+            "genres": format_genres(m.genres)
         } for m in medias
     ]
     return home_items

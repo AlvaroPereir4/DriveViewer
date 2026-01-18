@@ -8,6 +8,7 @@
 - Feature: UI Update - Changed media cards to portrait mode (poster style) with CRT/Scanline and TV Flash hover effects.
 - Fix: Removed redundant "Video" label from media cards for cleaner UI.
 - Feature: Display release year on media cards for movies and series.
+- Feature: UI Update - Redesigned buttons to outlined style (Black/Orange) for a high-contrast A24 aesthetic.
 
 ## [0.0.4] - 2026-01-11
 - Fix: Adjustments to front-end into series catalog.

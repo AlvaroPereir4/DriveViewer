@@ -30,11 +30,29 @@
     <div id="video-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <div class="video-wrapper">
-                <iframe id="video-frame" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            
+            <!-- VISÃO 1: Detalhes do Filme (Capa + Info) -->
+            <div id="details-view" class="details-view">
+                <div class="details-poster-wrapper">
+                    <img id="modal-poster" src="" alt="Capa" onerror="this.style.display='none'">
+                </div>
+                <div class="details-info">
+                    <h2 id="modal-title"></h2>
+                    <h3 id="modal-original-title"></h3>
+                    <div id="modal-genres" class="modal-genres"></div>
+                    <div id="modal-meta" class="modal-meta-tags"></div>
+                    <p id="modal-synopsis" class="modal-synopsis"></p>
+                    <button id="play-btn" class="login-btn play-action-btn">▶ Assistir Agora</button>
+                </div>
             </div>
-            <h2 id="modal-title"></h2>
-            <p id="modal-synopsis" class="modal-synopsis"></p>
+
+            <!-- VISÃO 2: Player de Vídeo -->
+            <div id="player-view" class="player-view hidden">
+                <div class="video-wrapper">
+                    <iframe id="video-frame" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                </div>
+                <div id="player-info-area"></div> <!-- Info replicada aqui via JS -->
+            </div>
         </div>
     </div>
 

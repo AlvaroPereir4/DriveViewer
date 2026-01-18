@@ -8,6 +8,16 @@ const searchInput = document.getElementById('search-input');
 const itemsCountLabel = document.getElementById('items-count');
 const searchContainer = document.querySelector('.search-container');
 
+// Elementos novos do Modal
+const detailsView = document.getElementById('details-view');
+const playerView = document.getElementById('player-view');
+const modalPoster = document.getElementById('modal-poster');
+const modalOriginalTitle = document.getElementById('modal-original-title');
+const modalGenres = document.getElementById('modal-genres');
+const modalMeta = document.getElementById('modal-meta');
+const playBtn = document.getElementById('play-btn');
+const playerInfoArea = document.getElementById('player-info-area');
+
 let navigationStack = [];
 let allHomeData = [];
 let currentList = [];
@@ -156,16 +166,80 @@ function handleItemClick(item) {
     if (item.type === 'folder' || item.type === 'drive_folders') {
         loadFolder(item.id, item.title);
     } else {
-        openVideo(item.id, item.title, item.synopsis);
+        openDetailsModal(item);
     }
 }
 
-function openVideo(fileId, title, synopsis) {
-    const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-    videoFrame.src = embedUrl;
-    modalTitle.innerText = title;
-    modalSynopsis.innerText = synopsis || '';
+function openDetailsModal(item) {
+    // 1. Preenche os dados da View de Detalhes
+    modalTitle.innerText = item.title;
+    modalOriginalTitle.innerText = item.original_title ? item.original_title : '';
+    modalSynopsis.innerText = item.synopsis || 'Sinopse indisponível.';
+    
+    // Poster
+    if (item.poster) {
+        modalPoster.src = item.poster;
+        modalPoster.style.display = 'block';
+    } else {
+        modalPoster.style.display = 'none';
+    }
+
+    // Gêneros
+    modalGenres.innerHTML = '';
+    if (item.genres && item.genres.length > 0) {
+        item.genres.forEach(genre => {
+            const span = document.createElement('span');
+            span.className = 'genre-tag';
+            span.innerText = genre;
+            modalGenres.appendChild(span);
+        });
+    }
+
+    // Metadados (Data Completa, Nota TMDB)
+    let metaHtml = '';
+    
+    // Data formatada
+    if (item.release_date) {
+        const dateObj = new Date(item.release_date);
+        const dateStr = dateObj.toLocaleDateString('pt-BR');
+        // Ícone SVG de Calendário
+        metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${dateStr}</div>`;
+    }
+
+    // Nota TMDB
+    if (item.rating) {
+        // Ícone SVG de Estrela
+        metaHtml += `<div class="meta-item" title="Nota baseada no TMDB"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)} (TMDB)</div>`;
+    }
+    
+    modalMeta.innerHTML = metaHtml;
+
+    // 2. Configura o botão de Play
+    playBtn.onclick = () => startVideo(item);
+
+    // 3. Reseta as views (Mostra detalhes, esconde player)
+    detailsView.style.display = 'flex';
+    playerView.classList.add('hidden');
+    videoFrame.src = ''; // Garante que não tem nada tocando
+
+    // 4. Abre o modal
     modal.classList.remove('hidden');
+}
+
+function startVideo(item) {
+    // 1. Esconde detalhes, mostra player
+    detailsView.style.display = 'none';
+    playerView.classList.remove('hidden');
+
+    // 2. Carrega o vídeo
+    const embedUrl = `https://drive.google.com/file/d/${item.id}/preview`;
+    videoFrame.src = embedUrl;
+
+    // 3. Replica as infos abaixo do player (conforme pedido)
+    playerInfoArea.innerHTML = `
+        <h2 style="margin-top: 15px; font-size: 1.2rem;">${item.title}</h2>
+        <p class="modal-synopsis">${item.synopsis || ''}</p>
+    `;
 }
 
 function closeModal() {
