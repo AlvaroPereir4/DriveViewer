@@ -6,6 +6,8 @@
 - Feature: Added secure Password Recovery system via email token.
 - Feature: Enhanced registration form with referral source fields and community disclaimer.
 - Feature: UI Update - Changed media cards to portrait mode (poster style) with CRT/Scanline and TV Flash hover effects.
+- Fix: Removed redundant "Video" label from media cards for cleaner UI.
+- Feature: Display release year on media cards for movies and series.
 
 ## [0.0.4] - 2026-01-11
 - Fix: Adjustments to front-end into series catalog.

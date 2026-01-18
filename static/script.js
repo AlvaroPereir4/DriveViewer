@@ -130,10 +130,17 @@ function renderGrid(items) {
         
         const icon = item.poster ? '' : (item.type === 'folder' ? '📁' : '▶️');
         
+        let metaInfo = '';
+        if (item.year) {
+            metaInfo = `<div class="card-type">${item.year}</div>`;
+        } else if (item.type === 'folder') {
+            metaInfo = '<div class="card-type">Pasta</div>';
+        }
+
         card.innerHTML = `
             <div class="card-content">
                 <div class="card-title">${item.title}</div>
-                <div class="card-type">${item.type === 'folder' ? 'Pasta' : 'Vídeo'}</div>
+                ${metaInfo}
             </div>
         `;
 
