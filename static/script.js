@@ -112,6 +112,9 @@ async function loadFolder(folderId, folderName) {
 function renderGrid(items) {
     appContainer.innerHTML = '';
     
+    // Garante que os itens estejam sempre em ordem alfabética
+    items.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
+
     itemsCountLabel.innerText = `Exibindo ${items.length} iten(s)`;
 
     if (items.length === 0) {
