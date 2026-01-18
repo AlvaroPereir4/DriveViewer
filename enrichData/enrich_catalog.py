@@ -73,7 +73,8 @@ def manual_lookup():
             release_date = data.get('release_date') or data.get('first_air_date')
             vote_average = data.get('vote_average')
             
-            genres = str(data.get('genre_ids'))
+            genre_ids = data.get('genre_ids', [])
+            genres = ", ".join([GENRE_MAP.get(gid, str(gid)) for gid in genre_ids])
 
             print(f"title:          {title}")
             print(f"original_title: {original_title}")

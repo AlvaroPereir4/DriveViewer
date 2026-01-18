@@ -55,36 +55,92 @@ function renderCategories(items) {
     const movies = items.filter(i => i.tag === 'movie');
     const series = items.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
 
+    // Helper para pegar poster aleatório
+    const getRandomPoster = (list) => {
+        const withPoster = list.filter(i => i.poster);
+        return withPoster.length > 0 ? withPoster[Math.floor(Math.random() * withPoster.length)].poster : null;
+    };
+
+    // 1. Categorias Principais
     const categories = [
-        { title: 'Filmes', count: movies.length, type: 'category', filter: 'movie' },
-        { title: 'Séries', count: series.length, type: 'category', filter: 'series' }
+        { title: 'Filmes', count: movies.length, type: 'main', filter: 'movie', poster: getRandomPoster(movies) },
+        { title: 'Séries', count: series.length, type: 'main', filter: 'series', poster: getRandomPoster(series) }
     ];
 
-    categories.forEach(cat => {
+    // 2. Processar Gêneros Dinamicamente
+    const genreMap = {};
+    items.forEach(item => {
+        if (item.genres && item.genres.length > 0) {
+            item.genres.forEach(genre => {
+                if (!genreMap[genre]) {
+                    genreMap[genre] = { title: genre, count: 0, items: [] };
+                }
+                genreMap[genre].count++;
+                genreMap[genre].items.push(item);
+            });
+        }
+    });
+
+    // Ordena gêneros e escolhe capa aleatória
+    const sortedGenres = Object.keys(genreMap).sort().map(key => {
+        const g = genreMap[key];
+        return { title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getRandomPoster(g.items) };
+    });
+
+    // Função para criar o card
+    const createCategoryCard = (cat) => {
         const card = document.createElement('div');
         card.className = 'card category-card';
+        
+        // Se tiver poster, coloca como fundo com overlay escuro
+        if (cat.poster) {
+            card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${cat.poster}')`;
+            card.style.backgroundSize = 'cover';
+            card.style.backgroundPosition = 'center';
+        }
+
         card.innerHTML = `
-            <div class="card-content" style="text-align: center; background: none;">
+            <div class="card-content" style="text-align: center; background: none; z-index: 2;">
                 <div class="card-title">${cat.title}</div>
                 <div class="card-type">${cat.count} Títulos</div>
             </div>
         `;
-        card.onclick = () => loadCategory(cat.title, cat.filter);
-        appContainer.appendChild(card);
-    });
+        card.onclick = () => loadCategory(cat.title, cat.filter, cat.type);
+        return card;
+    };
+
+    // 1. Renderiza Principais (Filmes e Séries)
+    categories.forEach(cat => appContainer.appendChild(createCategoryCard(cat)));
+
+    // 2. Renderiza Separador (Se houver gêneros)
+    if (sortedGenres.length > 0) {
+        const separator = document.createElement('div');
+        separator.style.gridColumn = '1 / -1'; // Ocupa a linha inteira
+        separator.innerHTML = '<h3 style="color: #8f8681; font-size: 1.1rem; margin-top: 30px; margin-bottom: 10px; font-weight: 400; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Navegar por Gêneros</h3>';
+        appContainer.appendChild(separator);
+    }
+
+    // 3. Renderiza Gêneros
+    sortedGenres.forEach(cat => appContainer.appendChild(createCategoryCard(cat)));
 }
 
-function loadCategory(name, filterTag) {
+function loadCategory(name, filterTag, type = 'main') {
     const lastItem = navigationStack[navigationStack.length - 1];
     if (!lastItem || lastItem.id !== filterTag) {
-        navigationStack.push({ name: name, id: filterTag, type: 'category' });
+        navigationStack.push({ name: name, id: filterTag, type: 'category', categoryType: type });
     }
     renderBreadcrumbs();
     
-    if (filterTag === 'movie') {
-        currentList = allHomeData.filter(i => i.tag === 'movie');
+    if (type === 'genre') {
+        // Filtra por Gênero
+        currentList = allHomeData.filter(i => i.genres && i.genres.includes(filterTag));
     } else {
-        currentList = allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
+        // Filtra por Tipo (Filme/Série)
+        if (filterTag === 'movie') {
+            currentList = allHomeData.filter(i => i.tag === 'movie');
+        } else {
+            currentList = allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
+        }
     }
     
     searchContainer.style.display = 'block';
@@ -266,7 +322,7 @@ function renderBreadcrumbs() {
                 loadHome();
             } else if (navigationStack[index].type === 'category') {
                 while(navigationStack.length > index + 1) { navigationStack.pop(); }
-                loadCategory(navigationStack[index].name, navigationStack[index].id);
+                loadCategory(navigationStack[index].name, navigationStack[index].id, navigationStack[index].categoryType);
             }
         };
 

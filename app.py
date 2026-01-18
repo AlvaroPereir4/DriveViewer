@@ -96,14 +96,6 @@ def get_drive_service():
 def get_home_items():
     medias = Media.query.all()
     
-    def format_genres(genre_str):
-        if not genre_str: return []
-        try:
-            # Remove colchetes e espaços, divide por vírgula
-            ids = [int(x.strip()) for x in genre_str.replace('[', '').replace(']', '').split(',') if x.strip().isdigit()]
-            return [GENRE_MAP.get(i, 'Outros') for i in ids]
-        except:
-            return []
 
     home_items = [
         {
@@ -118,7 +110,7 @@ def get_home_items():
             "year": m.release_date[:4] if m.release_date else "",
             "release_date": m.release_date,
             "original_title": m.original_title,
-            "genres": format_genres(m.genres)
+            "genres": [g.strip() for g in m.genres.split(',')] if m.genres else []
         } for m in medias
     ]
     return home_items

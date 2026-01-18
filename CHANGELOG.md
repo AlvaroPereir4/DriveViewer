@@ -9,6 +9,8 @@
 - Fix: Removed redundant "Video" label from media cards for cleaner UI.
 - Feature: Display release year on media cards for movies and series.
 - Feature: UI Update - Redesigned buttons to outlined style (Black/Orange) for a high-contrast A24 aesthetic.
+- Feature: Added dynamic Genre Categories to the home page with random movie covers as background.
+- Feature: UI Update - Main categories (Movies/Series) now have dynamic covers and are visually separated from genres.
 
 ## [0.0.4] - 2026-01-11
 - Fix: Adjustments to front-end into series catalog.
