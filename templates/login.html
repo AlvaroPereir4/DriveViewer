@@ -22,10 +22,13 @@
 
         <form method="POST" action="/login">
             <div class="form-group">
-                <input type="text" name="username" placeholder="Usuário" required autocomplete="off">
+                <input type="text" name="username" placeholder="Usuário ou E-mail" required autocomplete="off">
             </div>
             <div class="form-group">
                 <input type="password" name="password" placeholder="Senha" required>
+            </div>
+            <div style="text-align: right; margin-bottom: 20px;">
+                <a href="{{ url_for('forgot_password') }}" style="color: #b3b3b3; font-size: 0.85rem; text-decoration: none;">Esqueci minha senha</a>
             </div>
             <button type="submit" class="login-btn">Entrar</button>
         </form>

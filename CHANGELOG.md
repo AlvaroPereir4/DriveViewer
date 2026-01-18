@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.5] - 2026-01-17
+- Feature: Added Account Settings hub for user management (e.g., password reset).
+- Feature: Implemented support for login via E-mail or Username.
+- Feature: Added secure Password Recovery system via email token.
+- Feature: Enhanced registration form with referral source fields and community disclaimer.
+- Feature: UI Update - Changed media cards to portrait mode (poster style) with CRT/Scanline and TV Flash hover effects.
+- Fix: Removed redundant "Video" label from media cards for cleaner UI.
+- Feature: Display release year on media cards for movies and series.
+- Feature: UI Update - Redesigned buttons to outlined style (Black/Orange) for a high-contrast A24 aesthetic.
+- Feature: Added dynamic Genre Categories to the home page with random movie covers as background.
+- Feature: UI Update - Main categories (Movies/Series) now have dynamic covers and are visually separated from genres.
+
 ## [0.0.4] - 2026-01-11
 - Fix: Adjustments to front-end into series catalog.
 - Fix: Adjustments to cover some issues in recognize files or videos.

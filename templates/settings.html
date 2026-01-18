@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações - DriveViewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;600&display=swap" rel="stylesheet">
+    <style>
+        .settings-item {
+            display: flex;
+            flex-direction: column;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            text-decoration: none;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        .settings-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateX(5px);
+        }
+    </style>
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <h1 class="logo" style="text-align: center; margin-bottom: 30px;">Configurações</h1>
+        
+        <div class="settings-menu">
+            <a href="{{ url_for('reset_password') }}" class="settings-item">
+                <span style="font-weight: 600; font-size: 1.1rem;">🔐 Redefinir Senha</span>
+                <span style="font-size: 0.85rem; color: #aaa; margin-top: 5px;">Altere sua senha de acesso atual.</span>
+            </a>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="{{ url_for('index') }}" style="color: #b3b3b3; text-decoration: none; font-size: 0.9rem;">Voltar</a>
+        </div>
+    </div>
+</body>
+</html>

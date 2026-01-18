@@ -16,6 +16,9 @@
             <div class="search-container">
                 <input type="text" id="search-input" placeholder="Buscar...">
             </div>
+            <a href="{{ url_for('settings') }}" style="text-decoration: none; color: #ccc; margin-right: 15px; display: flex; align-items: center; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#ccc'" title="Configurações">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.82 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </a>
             <a href="{{ url_for('logout') }}" class="logout-btn">Sair</a>
         </div>
     </nav>
@@ -27,11 +30,29 @@
     <div id="video-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <div class="video-wrapper">
-                <iframe id="video-frame" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            
+            <!-- VISÃO 1: Detalhes do Filme (Capa + Info) -->
+            <div id="details-view" class="details-view">
+                <div class="details-poster-wrapper">
+                    <img id="modal-poster" src="" alt="Capa" onerror="this.style.display='none'">
+                </div>
+                <div class="details-info">
+                    <h2 id="modal-title"></h2>
+                    <h3 id="modal-original-title"></h3>
+                    <div id="modal-genres" class="modal-genres"></div>
+                    <div id="modal-meta" class="modal-meta-tags"></div>
+                    <p id="modal-synopsis" class="modal-synopsis"></p>
+                    <button id="play-btn" class="login-btn play-action-btn">▶ Assistir Agora</button>
+                </div>
             </div>
-            <h2 id="modal-title"></h2>
-            <p id="modal-synopsis" class="modal-synopsis"></p>
+
+            <!-- VISÃO 2: Player de Vídeo -->
+            <div id="player-view" class="player-view hidden">
+                <div class="video-wrapper">
+                    <iframe id="video-frame" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                </div>
+                <div id="player-info-area"></div> <!-- Info replicada aqui via JS -->
+            </div>
         </div>
     </div>
 

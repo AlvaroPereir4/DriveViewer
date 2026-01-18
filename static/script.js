@@ -7,6 +7,14 @@ const modalSynopsis = document.getElementById('modal-synopsis');
 const searchInput = document.getElementById('search-input');
 const itemsCountLabel = document.getElementById('items-count');
 const searchContainer = document.querySelector('.search-container');
+const detailsView = document.getElementById('details-view');
+const playerView = document.getElementById('player-view');
+const modalPoster = document.getElementById('modal-poster');
+const modalOriginalTitle = document.getElementById('modal-original-title');
+const modalGenres = document.getElementById('modal-genres');
+const modalMeta = document.getElementById('modal-meta');
+const playBtn = document.getElementById('play-btn');
+const playerInfoArea = document.getElementById('player-info-area');
 
 let navigationStack = [];
 let allHomeData = [];
@@ -41,42 +49,76 @@ async function loadHome() {
 function renderCategories(items) {
     appContainer.innerHTML = '';
     itemsCountLabel.innerText = '';
-
     const movies = items.filter(i => i.tag === 'movie');
     const series = items.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
-
+    const getRandomPoster = (list) => {
+        const withPoster = list.filter(i => i.poster);
+        return withPoster.length > 0 ? withPoster[Math.floor(Math.random() * withPoster.length)].poster : null;
+    };
     const categories = [
-        { title: 'Filmes', count: movies.length, type: 'category', filter: 'movie' },
-        { title: 'Séries', count: series.length, type: 'category', filter: 'series' }
+        { title: 'Filmes', count: movies.length, type: 'main', filter: 'movie', poster: getRandomPoster(movies) },
+        { title: 'Séries', count: series.length, type: 'main', filter: 'series', poster: getRandomPoster(series) }
     ];
-
-    categories.forEach(cat => {
+    const genreMap = {};
+    items.forEach(item => {
+        if (item.genres && item.genres.length > 0) {
+            item.genres.forEach(genre => {
+                if (!genreMap[genre]) {
+                    genreMap[genre] = { title: genre, count: 0, items: [] };
+                }
+                genreMap[genre].count++;
+                genreMap[genre].items.push(item);
+            });
+        }
+    });
+    const sortedGenres = Object.keys(genreMap).sort().map(key => {
+        const g = genreMap[key];
+        return { title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getRandomPoster(g.items) };
+    });
+    const createCategoryCard = (cat) => {
         const card = document.createElement('div');
         card.className = 'card category-card';
+        if (cat.poster) {
+            card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${cat.poster}')`;
+            card.style.backgroundSize = 'cover';
+            card.style.backgroundPosition = 'center';
+        }
+
         card.innerHTML = `
-            <div class="card-content" style="text-align: center; background: none;">
+            <div class="card-content" style="text-align: center; background: none; z-index: 2;">
                 <div class="card-title">${cat.title}</div>
                 <div class="card-type">${cat.count} Títulos</div>
             </div>
         `;
-        card.onclick = () => loadCategory(cat.title, cat.filter);
-        appContainer.appendChild(card);
-    });
+        card.onclick = () => loadCategory(cat.title, cat.filter, cat.type);
+        return card;
+    };
+    categories.forEach(cat => appContainer.appendChild(createCategoryCard(cat)));
+    if (sortedGenres.length > 0) {
+        const separator = document.createElement('div');
+        separator.style.gridColumn = '1 / -1';
+        separator.innerHTML = '<h3 style="color: #8f8681; font-size: 1.1rem; margin-top: 30px; margin-bottom: 10px; font-weight: 400; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Navegar por Gêneros</h3>';
+        appContainer.appendChild(separator);
+    }
+    sortedGenres.forEach(cat => appContainer.appendChild(createCategoryCard(cat)));
 }
 
-function loadCategory(name, filterTag) {
+function loadCategory(name, filterTag, type = 'main') {
     const lastItem = navigationStack[navigationStack.length - 1];
     if (!lastItem || lastItem.id !== filterTag) {
-        navigationStack.push({ name: name, id: filterTag, type: 'category' });
+        navigationStack.push({ name: name, id: filterTag, type: 'category', categoryType: type });
     }
     renderBreadcrumbs();
     
-    if (filterTag === 'movie') {
-        currentList = allHomeData.filter(i => i.tag === 'movie');
+    if (type === 'genre') {
+        currentList = allHomeData.filter(i => i.genres && i.genres.includes(filterTag));
     } else {
-        currentList = allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
+        if (filterTag === 'movie') {
+            currentList = allHomeData.filter(i => i.tag === 'movie');
+        } else {
+            currentList = allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
+        }
     }
-    
     searchContainer.style.display = 'block';
     searchInput.disabled = false;
     renderGrid(currentList);
@@ -111,9 +153,8 @@ async function loadFolder(folderId, folderName) {
 
 function renderGrid(items) {
     appContainer.innerHTML = '';
-    
+    items.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
     itemsCountLabel.innerText = `Exibindo ${items.length} iten(s)`;
-
     if (items.length === 0) {
         appContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">Pasta vazia.</p>';
         return;
@@ -122,18 +163,24 @@ function renderGrid(items) {
     items.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
-        
-        // Se tiver poster, usa como background. Se não, usa estilo padrão.
+
         if (item.poster) {
             card.style.backgroundImage = `url('${item.poster}')`;
         }
         
         const icon = item.poster ? '' : (item.type === 'folder' ? '📁' : '▶️');
         
+        let metaInfo = '';
+        if (item.year) {
+            metaInfo = `<div class="card-type">${item.year}</div>`;
+        } else if (item.type === 'folder') {
+            metaInfo = '<div class="card-type">Pasta</div>';
+        }
+
         card.innerHTML = `
             <div class="card-content">
                 <div class="card-title">${item.title}</div>
-                <div class="card-type">${item.type === 'folder' ? 'Pasta' : 'Vídeo'}</div>
+                ${metaInfo}
             </div>
         `;
 
@@ -146,16 +193,59 @@ function handleItemClick(item) {
     if (item.type === 'folder' || item.type === 'drive_folders') {
         loadFolder(item.id, item.title);
     } else {
-        openVideo(item.id, item.title, item.synopsis);
+        openDetailsModal(item);
     }
 }
 
-function openVideo(fileId, title, synopsis) {
-    const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-    videoFrame.src = embedUrl;
-    modalTitle.innerText = title;
-    modalSynopsis.innerText = synopsis || '';
+function openDetailsModal(item) {
+    modalTitle.innerText = item.title;
+    modalOriginalTitle.innerText = item.original_title ? item.original_title : '';
+    modalSynopsis.innerText = item.synopsis || 'Sinopse indisponível.';
+
+    if (item.poster) {
+        modalPoster.src = item.poster;
+        modalPoster.style.display = 'block';
+    } else {
+        modalPoster.style.display = 'none';
+    }
+
+    modalGenres.innerHTML = '';
+    if (item.genres && item.genres.length > 0) {
+        item.genres.forEach(genre => {
+            const span = document.createElement('span');
+            span.className = 'genre-tag';
+            span.innerText = genre;
+            modalGenres.appendChild(span);
+        });
+    }
+    let metaHtml = '';
+    if (item.release_date) {
+        const dateObj = new Date(item.release_date);
+        const dateStr = dateObj.toLocaleDateString('pt-BR');
+        metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${dateStr}</div>`;
+    }
+
+    if (item.rating) {
+        metaHtml += `<div class="meta-item" title="Nota baseada no TMDB"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)} (TMDB)</div>`;
+    }
+    
+    modalMeta.innerHTML = metaHtml;
+    playBtn.onclick = () => startVideo(item);
+    detailsView.style.display = 'flex';
+    playerView.classList.add('hidden');
+    videoFrame.src = '';
     modal.classList.remove('hidden');
+}
+
+function startVideo(item) {
+    detailsView.style.display = 'none';
+    playerView.classList.remove('hidden');
+    const embedUrl = `https://drive.google.com/file/d/${item.id}/preview`;
+    videoFrame.src = embedUrl;
+    playerInfoArea.innerHTML = `
+        <h2 style="margin-top: 15px; font-size: 1.2rem;">${item.title}</h2>
+        <p class="modal-synopsis">${item.synopsis || ''}</p>
+    `;
 }
 
 function closeModal() {
@@ -182,7 +272,7 @@ function renderBreadcrumbs() {
                 loadHome();
             } else if (navigationStack[index].type === 'category') {
                 while(navigationStack.length > index + 1) { navigationStack.pop(); }
-                loadCategory(navigationStack[index].name, navigationStack[index].id);
+                loadCategory(navigationStack[index].name, navigationStack[index].id, navigationStack[index].categoryType);
             }
         };
 
