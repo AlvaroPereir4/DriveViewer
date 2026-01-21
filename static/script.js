@@ -72,10 +72,11 @@ function renderCategories(items) {
             });
         }
     });
-    const sortedGenres = Object.keys(genreMap).sort().map(key => {
+    const sortedGenres = Object.keys(genreMap).map(key => {
         const g = genreMap[key];
         return { title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getRandomPoster(g.items) };
-    });
+    }).sort((a, b) => b.count - a.count); // Ordena por quantidade (maior para menor)
+
     const createCategoryCard = (cat) => {
         const card = document.createElement('div');
         card.className = 'card category-card';

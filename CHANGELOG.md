@@ -3,6 +3,11 @@
 ## [0.0.6] - 2026-01-21
 - Feature: Backdrop image added to movie cards.
 - Fix: Minnor bug adjusment to enrich catalog.
+- Feature: UI Update - Expanded details modal size to better showcase backdrop images.
+- Feature: UI Update - Increased font size for movie synopsis in details modal.
+- Feature: UI Update - Replaced "Watch Now" button with a stylish circular Play icon.
+- Feature: UI Update - Moved Play button to bottom-right and increased size for better ergonomics.
+- Feature: Genre categories are now sorted by popularity (item count) instead of alphabetically.
 
 ## [0.0.5] - 2026-01-17
 - Feature: Added Account Settings hub for user management (e.g., password reset).

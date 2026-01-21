@@ -254,10 +254,10 @@ body {
 }
 
 .modal-content {
-    width: 90%;
-    max-width: 1000px;
+    width: 95%;
+    max-width: 1400px;
     background: #000;
-    padding: 20px;
+    padding: 50px;
     border-radius: 8px;
     position: relative;
     overflow: hidden;
@@ -269,6 +269,7 @@ body {
     display: flex;
     gap: 30px;
     align-items: flex-start;
+    min-height: 450px;
     position: relative;
     z-index: 2; /* Garante que o conteúdo fique acima do background */
 }
@@ -345,14 +346,32 @@ body {
 }
 
 .play-action-btn {
-    width: auto;
-    padding: 12px 30px;
-    margin-top: 30px;
-    align-self: flex-start;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 2px solid var(--accent-color);
+    color: var(--accent-color);
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
-    font-size: 1.1rem;
+    cursor: pointer;
+    margin-top: auto; /* Empurra para baixo */
+    align-self: flex-end; /* Empurra para a direita */
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.play-action-btn:hover {
+    background-color: var(--accent-color);
+    color: #000;
+    transform: scale(1.15);
+    box-shadow: 0 0 30px rgba(232, 124, 3, 0.5);
+}
+
+.play-action-btn svg {
+    width: 40px;
+    height: 40px;
+    margin-left: 4px; /* Correção visual para centralizar o triângulo */
 }
 
 /* --- ESTILOS DO PLAYER VIEW --- */
@@ -385,13 +404,16 @@ body {
 
 .modal-synopsis {
     margin-top: 10px;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     color: var(--text-secondary);
     line-height: 1.5;
 }
 
 /* Responsividade para o Modal */
 @media (max-width: 768px) {
+    .modal-content {
+        padding: 20px;
+    }
     .details-view {
         flex-direction: column;
     }
@@ -400,8 +422,8 @@ body {
         margin: 0 auto;
     }
     .play-action-btn {
-        width: 100%;
-        justify-content: center;
+        align-self: center; /* Centraliza no mobile */
+        margin-top: 30px;
     }
 }
 
