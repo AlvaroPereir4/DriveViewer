@@ -14,6 +14,7 @@
 - Fix: Category covers are now static (first item) instead of random to improve caching and consistency.
 - Fix: Added error handling to loading spinners to prevent infinite loops on broken images.
 - Feature: Implemented Advanced Client-Side Routing. Each category, folder, and movie now has a unique URL, enabling browser navigation (Back/Forward) and direct linking.
+- Feature: Security Update - URLs now use movie names (slugs) instead of Drive IDs to hide file identifiers from the address bar.
 
 ## [0.0.5] - 2026-01-17
 - Feature: Added Account Settings hub for user management (e.g., password reset).

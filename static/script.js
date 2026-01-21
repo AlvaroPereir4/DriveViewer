@@ -21,6 +21,17 @@ let navigationStack = [];
 let allHomeData = [];
 let currentList = [];
 
+// Helper para criar URL amigável (Slug) a partir do título
+function createSlug(text) {
+    return text.toString().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/\s+/g, '-')           // Espaços para hífens
+        .replace(/[^\w\-]+/g, '')       // Remove caracteres especiais
+        .replace(/\-\-+/g, '-')         // Remove hífens duplicados
+        .replace(/^-+/, '')             // Remove hífen do início
+        .replace(/-+$/, '');            // Remove hífen do fim
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
     
@@ -86,11 +97,12 @@ function router() {
     }
     // Rota: Detalhes/Watch (/watch/ID)
     else if (path.startsWith('/watch/')) {
-        const itemId = path.split('/watch/')[1];
+        const param = path.split('/watch/')[1];
         // Renderiza a home no fundo
         renderCategories(allHomeData);
         // Abre o modal por cima
-        const item = allHomeData.find(i => i.id === itemId);
+        // Tenta encontrar pelo Slug (Nome) ou pelo ID (Fallback para links antigos)
+        const item = allHomeData.find(i => createSlug(i.title) === param || i.id === param);
         if (item) {
             openDetailsModal(item, false); // false = não mudar URL de novo
         }
@@ -297,13 +309,14 @@ function handleItemClick(item) {
         loadFolder(item.id, item.title);
     } else {
         // Atualiza URL para /watch/ID
-        history.pushState(null, null, `/watch/${item.id}`);
+        const slug = createSlug(item.title);
+        history.pushState(null, null, `/watch/${slug}`);
         openDetailsModal(item, false);
     }
 }
 
 function openDetailsModal(item, updateUrl = true) {
-    if (updateUrl) history.pushState(null, null, `/watch/${item.id}`);
+    if (updateUrl) history.pushState(null, null, `/watch/${createSlug(item.title)}`);
 
     modalTitle.innerText = item.title;
     modalOriginalTitle.innerText = item.original_title ? item.original_title : '';
