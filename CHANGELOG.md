@@ -10,6 +10,7 @@
 - Feature: Genre categories are now sorted by popularity (item count) instead of alphabetically.
 - Feature: Added minimalist "Loading Spinner" (A24 Orange) for media cards and posters while images fetch.
 - Feature: Implemented loading state for Modal Backdrop and Poster, ensuring a smooth visual experience.
+- Fix: Added an overlay to disable the "Pop-out" button on the Google Drive video player.
 
 ## [0.0.5] - 2026-01-17
 - Feature: Added Account Settings hub for user management (e.g., password reset).

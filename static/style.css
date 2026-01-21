@@ -396,6 +396,16 @@ body {
     height: 100%;
 }
 
+/* Bloqueador do botão "Pop-out" do Google Drive */
+.iframe-blocker {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px; /* Cobre a área do botão */
+    height: 60px; /* Altura aproximada da barra superior */
+    z-index: 10; /* Fica acima do iframe */
+}
+
 .close-btn {
     position: absolute;
     top: -30px;
