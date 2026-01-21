@@ -345,8 +345,12 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/')
+@app.route('/category/<path:filter_tag>')
+@app.route('/folder/<path:folder_id>')
+@app.route('/watch/<path:item_id>')
 @login_required
-def index():
+def index(filter_tag=None, folder_id=None, item_id=None):
+    # O Flask entrega o HTML base, e o JavaScript (script.js) lê a URL e decide o que mostrar
     return render_template('index.html')
 
 @app.route('/api/home')

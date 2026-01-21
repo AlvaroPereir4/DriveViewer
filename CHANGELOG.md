@@ -13,6 +13,7 @@
 - Fix: Added an overlay to disable the "Pop-out" button on the Google Drive video player.
 - Fix: Category covers are now static (first item) instead of random to improve caching and consistency.
 - Fix: Added error handling to loading spinners to prevent infinite loops on broken images.
+- Feature: Implemented Advanced Client-Side Routing. Each category, folder, and movie now has a unique URL, enabling browser navigation (Back/Forward) and direct linking.
 
 ## [0.0.5] - 2026-01-17
 - Feature: Added Account Settings hub for user management (e.g., password reset).
