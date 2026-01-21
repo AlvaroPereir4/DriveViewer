@@ -15,6 +15,7 @@ const modalGenres = document.getElementById('modal-genres');
 const modalMeta = document.getElementById('modal-meta');
 const playBtn = document.getElementById('play-btn');
 const playerInfoArea = document.getElementById('player-info-area');
+const modalContent = document.querySelector('.modal-content');
 
 let navigationStack = [];
 let allHomeData = [];
@@ -201,6 +202,17 @@ function openDetailsModal(item) {
     modalTitle.innerText = item.title;
     modalOriginalTitle.innerText = item.original_title ? item.original_title : '';
     modalSynopsis.innerText = item.synopsis || 'Sinopse indisponível.';
+
+    // Configura o Backdrop (Imagem de fundo horizontal)
+    if (item.backdrop) {
+        // Adiciona a imagem com um gradiente escuro por cima para o texto ficar legível
+        modalContent.style.backgroundImage = `linear-gradient(to right, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.6) 100%), url('${item.backdrop}')`;
+        modalContent.style.backgroundSize = 'cover';
+        modalContent.style.backgroundPosition = 'center top';
+    } else {
+        modalContent.style.background = '#000';
+        modalContent.style.backgroundImage = 'none';
+    }
 
     if (item.poster) {
         modalPoster.src = item.poster;

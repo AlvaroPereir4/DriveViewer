@@ -261,6 +261,7 @@ body {
     border-radius: 8px;
     position: relative;
     overflow: hidden;
+    transition: background-image 0.3s ease-in-out;
 }
 
 /* --- ESTILOS DO MODAL DE DETALHES --- */
@@ -268,6 +269,8 @@ body {
     display: flex;
     gap: 30px;
     align-items: flex-start;
+    position: relative;
+    z-index: 2; /* Garante que o conteúdo fique acima do background */
 }
 
 .details-poster-wrapper {

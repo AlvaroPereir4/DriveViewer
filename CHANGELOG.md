@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.0.6] - 2026-01-21
+- Feature: Backdrop image added to movie cards.
+- Fix: Minnor bug adjusment to enrich catalog.
+
 ## [0.0.5] - 2026-01-17
 - Feature: Added Account Settings hub for user management (e.g., password reset).
 - Feature: Implemented support for login via E-mail or Username.

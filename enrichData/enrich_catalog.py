@@ -5,6 +5,17 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
 
+GENRE_MAP = {
+    28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
+    99: "Documentário", 18: "Drama", 10751: "Família", 14: "Fantasia",
+    36: "História", 27: "Terror", 10402: "Música", 9648: "Mistério",
+    10749: "Romance", 878: "Ficção Científica", 10770: "Cinema TV",
+    53: "Thriller", 10752: "Guerra", 37: "Faroeste",
+    10759: "Ação e Aventura", 10765: "Sci-Fi & Fantasy",
+    10762: "Infantil", 10763: "Notícias", 10764: "Reality",
+    10766: "Novela", 10767: "Talk", 10768: "Guerra e Política"
+}
+
 def search_tmdb(query, is_series=False):
     type_search = 'tv' if is_series else 'movie'
     url = f"https://api.themoviedb.org/3/search/{type_search}"
