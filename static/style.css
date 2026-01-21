@@ -280,6 +280,9 @@ body {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    aspect-ratio: 2/3;
+    background-color: var(--card-bg);
+    position: relative;
 }
 
 .details-poster-wrapper img {
@@ -524,6 +527,31 @@ body {
     border-radius: 4px;
     margin-bottom: 20px;
     font-size: 0.9rem;
+}
+
+/* --- LOADING STATE (Spinner Minimalista) --- */
+.loading {
+    position: relative;
+    background-color: var(--card-bg); /* Garante fundo cinza escuro */
+}
+
+.loading::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    border: 2px solid rgba(232, 124, 3, 0.2);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spinner 0.8s linear infinite;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+@keyframes spinner {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 .app-footer {

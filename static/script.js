@@ -80,10 +80,17 @@ function renderCategories(items) {
     const createCategoryCard = (cat) => {
         const card = document.createElement('div');
         card.className = 'card category-card';
+        
         if (cat.poster) {
-            card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${cat.poster}')`;
-            card.style.backgroundSize = 'cover';
-            card.style.backgroundPosition = 'center';
+            card.classList.add('loading');
+            const img = new Image();
+            img.src = cat.poster;
+            img.onload = () => {
+                card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${cat.poster}')`;
+                card.style.backgroundSize = 'cover';
+                card.style.backgroundPosition = 'center';
+                card.classList.remove('loading');
+            };
         }
 
         card.innerHTML = `
@@ -167,7 +174,13 @@ function renderGrid(items) {
         card.className = 'card';
 
         if (item.poster) {
-            card.style.backgroundImage = `url('${item.poster}')`;
+            card.classList.add('loading');
+            const img = new Image();
+            img.src = item.poster;
+            img.onload = () => {
+                card.style.backgroundImage = `url('${item.poster}')`;
+                card.classList.remove('loading');
+            };
         }
         
         const icon = item.poster ? '' : (item.type === 'folder' ? '📁' : '▶️');
@@ -206,19 +219,40 @@ function openDetailsModal(item) {
 
     // Configura o Backdrop (Imagem de fundo horizontal)
     if (item.backdrop) {
-        // Adiciona a imagem com um gradiente escuro por cima para o texto ficar legível
-        modalContent.style.backgroundImage = `linear-gradient(to right, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.6) 100%), url('${item.backdrop}')`;
-        modalContent.style.backgroundSize = 'cover';
-        modalContent.style.backgroundPosition = 'center top';
+        modalContent.classList.add('loading');
+        modalContent.style.backgroundImage = 'none'; // Limpa anterior para ver o spinner
+        
+        const img = new Image();
+        img.src = item.backdrop;
+        img.onload = () => {
+            modalContent.style.backgroundImage = `linear-gradient(to right, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.6) 100%), url('${item.backdrop}')`;
+            modalContent.style.backgroundSize = 'cover';
+            modalContent.style.backgroundPosition = 'center top';
+            modalContent.classList.remove('loading');
+        };
+        img.onerror = () => {
+            modalContent.classList.remove('loading');
+        };
     } else {
+        modalContent.classList.remove('loading');
         modalContent.style.background = '#000';
         modalContent.style.backgroundImage = 'none';
     }
 
+    const posterWrapper = document.querySelector('.details-poster-wrapper');
     if (item.poster) {
+        posterWrapper.classList.add('loading');
+        modalPoster.style.display = 'none'; // Esconde enquanto carrega
         modalPoster.src = item.poster;
-        modalPoster.style.display = 'block';
+        modalPoster.onload = () => {
+            posterWrapper.classList.remove('loading');
+            modalPoster.style.display = 'block';
+        };
+        modalPoster.onerror = () => {
+            posterWrapper.classList.remove('loading');
+        };
     } else {
+        posterWrapper.classList.remove('loading');
         modalPoster.style.display = 'none';
     }
 
