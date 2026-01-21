@@ -52,13 +52,13 @@ function renderCategories(items) {
     itemsCountLabel.innerText = '';
     const movies = items.filter(i => i.tag === 'movie');
     const series = items.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
-    const getRandomPoster = (list) => {
+    const getCategoryPoster = (list) => {
         const withPoster = list.filter(i => i.poster);
-        return withPoster.length > 0 ? withPoster[Math.floor(Math.random() * withPoster.length)].poster : null;
+        return withPoster.length > 0 ? withPoster[0].poster : null;
     };
     const categories = [
-        { title: 'Filmes', count: movies.length, type: 'main', filter: 'movie', poster: getRandomPoster(movies) },
-        { title: 'Séries', count: series.length, type: 'main', filter: 'series', poster: getRandomPoster(series) }
+        { title: 'Filmes', count: movies.length, type: 'main', filter: 'movie', poster: getCategoryPoster(movies) },
+        { title: 'Séries', count: series.length, type: 'main', filter: 'series', poster: getCategoryPoster(series) }
     ];
     const genreMap = {};
     items.forEach(item => {
@@ -74,7 +74,7 @@ function renderCategories(items) {
     });
     const sortedGenres = Object.keys(genreMap).map(key => {
         const g = genreMap[key];
-        return { title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getRandomPoster(g.items) };
+        return { title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getCategoryPoster(g.items) };
     }).sort((a, b) => b.count - a.count); // Ordena por quantidade (maior para menor)
 
     const createCategoryCard = (cat) => {
@@ -89,6 +89,9 @@ function renderCategories(items) {
                 card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${cat.poster}')`;
                 card.style.backgroundSize = 'cover';
                 card.style.backgroundPosition = 'center';
+                card.classList.remove('loading');
+            };
+            img.onerror = () => {
                 card.classList.remove('loading');
             };
         }
@@ -179,6 +182,9 @@ function renderGrid(items) {
             img.src = item.poster;
             img.onload = () => {
                 card.style.backgroundImage = `url('${item.poster}')`;
+                card.classList.remove('loading');
+            };
+            img.onerror = () => {
                 card.classList.remove('loading');
             };
         }
