@@ -106,6 +106,6 @@ Fluxo seguro para redefinição de credenciais:
 
 O projeto está implantado e rodando na Vercel! Sinta-se à vontade para acessar, criar uma conta e explorar as funcionalidades:
 
-👉 **Acessar DriveViewer**
+👉 [**Acessar DriveViewer**](https://drive-viewer.vercel.app/)
 
 Fique à vontade para testar o fluxo de cadastro, login e navegação. 🍿
