@@ -99,3 +99,13 @@ Fluxo seguro para redefinição de credenciais:
 1.  Geração de Token criptograficamente seguro (`secrets.token_urlsafe`).
 2.  Envio do token via servidor SMTP (Gmail) autenticado.
 3.  Substituição temporária da senha pelo hash do token, permitindo acesso único para redefinição.
+
+---
+
+## 🌐 Demo ao Vivo
+
+O projeto está implantado e rodando na Vercel! Sinta-se à vontade para acessar, criar uma conta e explorar as funcionalidades:
+
+👉 **Acessar DriveViewer**
+
+Fique à vontade para testar o fluxo de cadastro, login e navegação. 🍿
