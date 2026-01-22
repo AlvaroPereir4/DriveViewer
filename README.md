@@ -2,7 +2,7 @@
 
 **DriveViewer** é uma aplicação web Full-Stack projetada para atuar como um Media Center centralizado. O sistema abstrai a complexidade do armazenamento em nuvem, oferecendo uma interface de streaming moderna e responsiva.
 
-A arquitetura utiliza o **Google Drive** como infraestrutura de armazenamento de objetos (vídeos e arquivos), enquanto o **Supabase** gerencia a persistência de dados relacionais e metadados enriquecidos. O orquestrador central é um backend desenvolvido em **Python (Flask)**, servindo uma interface Frontend construída sob o conceito de Single Page Application (SPA).
+A arquitetura utiliza o **Google Drive** como infraestrutura de armazenamento de objetos, enquanto o **Supabase** gerencia a persistência de dados relacionais e metadados enriquecidos. O orquestrador central é um backend desenvolvido em **Python (Flask)**, servindo uma interface Frontend construída sob o conceito de Single Page Application (SPA).
 
 ---
 
@@ -24,7 +24,7 @@ A arquitetura utiliza o **Google Drive** como infraestrutura de armazenamento de
 O backend atua como uma API RESTful e controlador de renderização, gerenciando a lógica de negócios e a segurança.
 
 ### Core Framework (Flask)
-Utilizamos o Flask por sua leveza e flexibilidade. Ele gerencia as rotas da aplicação, servindo tanto os templates HTML quanto os endpoints JSON consumidos pelo frontend.
+É utilizado o Flask por sua leveza e flexibilidade. Ele gerencia as rotas da aplicação, servindo tanto os templates HTML quanto os endpoints JSON consumidos pelo frontend.
 
 ### Banco de Dados (Supabase & SQLAlchemy)
 O **Supabase** é utilizado como a camada de persistência em produção. Ele fornece um banco de dados **PostgreSQL** escalável na nuvem.

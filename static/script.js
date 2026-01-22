@@ -40,6 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
         renderGrid(filtered);
     });
     window.addEventListener('popstate', router);
+
+    // Efeito de Spotlight Global (Segue o mouse)
+    document.addEventListener('mousemove', (e) => {
+        document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+        document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+    });
 });
 
 async function initApp() {
@@ -349,6 +355,15 @@ function openDetailsModal(item, updateUrl = true) {
     if (item.rating) {
         metaHtml += `<div class="meta-item" title="Nota baseada no TMDB"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)} (TMDB)</div>`;
     }
+
+    // Link Letterboxd
+    const lbSlug = createSlug(item.original_title || item.title);
+    const lbUrl = `https://letterboxd.com/film/${lbSlug}/`;
+    metaHtml += `
+        <a href="${lbUrl}" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">
+            <svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>
+            Letterboxd
+        </a>`;
     
     modalMeta.innerHTML = metaHtml;
     playBtn.onclick = () => startVideo(item);
@@ -363,9 +378,44 @@ function startVideo(item) {
     playerView.classList.remove('hidden');
     const embedUrl = `https://drive.google.com/file/d/${item.id}/preview`;
     videoFrame.src = embedUrl;
+
+    // Reconstrói TODAS as informações para o modo Player
+    const lbSlug = createSlug(item.original_title || item.title);
+    const lbUrl = `https://letterboxd.com/film/${lbSlug}/`;
+    
+    // Gera HTML dos gêneros
+    let genresHtml = '';
+    if (item.genres && item.genres.length > 0) {
+        genresHtml = `<div class="modal-genres" style="margin-top: 10px;">` + 
+            item.genres.map(g => `<span class="genre-tag">${g}</span>`).join('') + 
+            `</div>`;
+    }
+
+    // Gera HTML dos Metadados (Data, Nota, Letterboxd)
+    let metaHtml = '<div class="modal-meta-tags">';
+    if (item.release_date) {
+        const dateStr = new Date(item.release_date).toLocaleDateString('pt-BR');
+        metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${dateStr}</div>`;
+    }
+    if (item.rating) {
+        metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)}</div>`;
+    }
+    metaHtml += `
+        <a href="${lbUrl}" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">
+            <svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>
+            Letterboxd
+        </a>`;
+    metaHtml += '</div>';
+
+    // Injeta no container abaixo do vídeo
     playerInfoArea.innerHTML = `
-        <h2 style="margin-top: 15px; font-size: 1.2rem;">${item.title}</h2>
-        <p class="modal-synopsis">${item.synopsis || ''}</p>
+        <div class="details-info" style="width: 100%;">
+            <h2 id="modal-title" style="margin-top: 20px;">${item.title}</h2>
+            <h3 id="modal-original-title">${item.original_title || ''}</h3>
+            ${genresHtml}
+            ${metaHtml}
+            <p class="modal-synopsis">${item.synopsis || ''}</p>
+        </div>
     `;
 }
 

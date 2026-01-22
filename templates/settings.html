@@ -41,5 +41,12 @@
             <a href="{{ url_for('index') }}" style="color: #b3b3b3; text-decoration: none; font-size: 0.9rem;">Voltar</a>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('mousemove', (e) => {
+            document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+            document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+        });
+    </script>
 </body>
 </html>

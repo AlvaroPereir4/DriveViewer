@@ -17,6 +17,9 @@
 - Feature: Security Update - URLs now use movie names (slugs) instead of Drive IDs to hide file identifiers from the address bar.
 - Fix: Repositioned and styled the modal close button to be visible and consistent with the UI.
 - Fix: Resolved issue where closing the movie modal required multiple clicks by enforcing navigation to the previous context.
+- Feature: Added Letterboxd integration. A direct link is now generated based on the movie title and displayed in both Details and Player views.
+- Feature: UI Update - The Player View now displays full movie metadata (Genres, Original Title, Rating, etc.) below the video, mirroring the Details View.
+- Feature: UI Update - Applied the cinematic "Spotlight & Scanline" background effect globally across the entire application.
 
 ## [0.0.5] - 2026-01-17
 - Feature: Added Account Settings hub for user management (e.g., password reset).
