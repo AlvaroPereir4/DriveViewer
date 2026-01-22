@@ -15,35 +15,120 @@ const modalGenres = document.getElementById('modal-genres');
 const modalMeta = document.getElementById('modal-meta');
 const playBtn = document.getElementById('play-btn');
 const playerInfoArea = document.getElementById('player-info-area');
+const modalContent = document.querySelector('.modal-content');
 
 let navigationStack = [];
 let allHomeData = [];
 let currentList = [];
 
+function createSlug(text) {
+    return text.toString().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    loadHome();
+    initApp();
     
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
         const filtered = currentList.filter(item => item.title.toLowerCase().includes(term));
         renderGrid(filtered);
     });
+    window.addEventListener('popstate', router);
 });
 
-async function loadHome() {
-    navigationStack = [{ name: 'Início', id: 'home', type: 'root' }];
-    renderBreadcrumbs();
-    searchInput.value = '';
-    searchContainer.style.display = 'none';
-    
+async function initApp() {
     try {
         const response = await fetch('/api/home');
         allHomeData = await response.json();
-        renderCategories(allHomeData);
+        router();
     } catch (error) {
-        console.error('Erro ao carregar home:', error);
+        console.error('Erro ao carregar dados:', error);
         appContainer.innerHTML = '<p>Erro ao carregar conteúdo.</p>';
     }
+}
+
+function router() {
+    const path = window.location.pathname;
+    searchInput.value = '';
+    searchContainer.style.display = 'none';
+    modal.classList.add('hidden');
+    videoFrame.src = '';
+
+    if (path === '/' || path === '/index') {
+        navigationStack = [{ name: 'Início', id: 'home', type: 'root' }];
+        renderBreadcrumbs();
+        renderCategories(allHomeData);
+    }
+    else if (path.startsWith('/category/')) {
+        const filterTag = decodeURIComponent(path.split('/category/')[1]);
+        let type = 'main';
+        let name = filterTag;
+
+        if (filterTag === 'movie') name = 'Filmes';
+        else if (filterTag === 'series') name = 'Séries';
+        else type = 'genre';
+        _renderCategoryView(name, filterTag, type);
+    }
+    else if (path.startsWith('/folder/')) {
+        const folderId = path.split('/folder/')[1];
+        _renderFolderView(folderId, 'Pasta');
+    }
+    else if (path.startsWith('/watch/')) {
+        const param = path.split('/watch/')[1];
+        renderCategories(allHomeData);
+        const item = allHomeData.find(i => createSlug(i.title) === param || i.id === param);
+        if (item) {
+            openDetailsModal(item, false);
+        }
+    }
+}
+
+function navigateTo(url) {
+    history.pushState(null, null, url);
+    router();
+}
+
+function loadHome() {
+    navigateTo('/');
+}
+
+function loadCategory(name, filterTag, type = 'main') {
+    navigateTo(`/category/${filterTag}`);
+}
+
+function loadFolder(folderId, folderName) {
+    navigateTo(`/folder/${folderId}`);
+}
+
+function _renderCategoryView(name, filterTag, type) {
+    if (navigationStack.length === 0 || navigationStack[0].id !== 'home') {
+        navigationStack = [{ name: 'Início', id: 'home', type: 'root' }];
+    }
+
+    const lastItem = navigationStack[navigationStack.length - 1];
+    if (!lastItem || lastItem.id !== filterTag) {
+        navigationStack.push({ name: name, id: filterTag, type: 'category', categoryType: type });
+    }
+    renderBreadcrumbs();
+
+    if (type === 'genre') {
+        currentList = allHomeData.filter(i => i.genres && i.genres.includes(filterTag));
+    } else {
+        if (filterTag === 'movie') {
+            currentList = allHomeData.filter(i => i.tag === 'movie');
+        } else {
+            currentList = allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
+        }
+    }
+    searchContainer.style.display = 'block';
+    searchInput.disabled = false;
+    renderGrid(currentList);
 }
 
 function renderCategories(items) {
@@ -51,13 +136,13 @@ function renderCategories(items) {
     itemsCountLabel.innerText = '';
     const movies = items.filter(i => i.tag === 'movie');
     const series = items.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
-    const getRandomPoster = (list) => {
+    const getCategoryPoster = (list) => {
         const withPoster = list.filter(i => i.poster);
-        return withPoster.length > 0 ? withPoster[Math.floor(Math.random() * withPoster.length)].poster : null;
+        return withPoster.length > 0 ? withPoster[0].poster : null;
     };
     const categories = [
-        { title: 'Filmes', count: movies.length, type: 'main', filter: 'movie', poster: getRandomPoster(movies) },
-        { title: 'Séries', count: series.length, type: 'main', filter: 'series', poster: getRandomPoster(series) }
+        { title: 'Filmes', count: movies.length, type: 'main', filter: 'movie', poster: getCategoryPoster(movies) },
+        { title: 'Séries', count: series.length, type: 'main', filter: 'series', poster: getCategoryPoster(series) }
     ];
     const genreMap = {};
     items.forEach(item => {
@@ -71,17 +156,28 @@ function renderCategories(items) {
             });
         }
     });
-    const sortedGenres = Object.keys(genreMap).sort().map(key => {
+    const sortedGenres = Object.keys(genreMap).map(key => {
         const g = genreMap[key];
-        return { title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getRandomPoster(g.items) };
-    });
+        return { title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getCategoryPoster(g.items) };
+    }).sort((a, b) => b.count - a.count);
+
     const createCategoryCard = (cat) => {
         const card = document.createElement('div');
         card.className = 'card category-card';
+        
         if (cat.poster) {
-            card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${cat.poster}')`;
-            card.style.backgroundSize = 'cover';
-            card.style.backgroundPosition = 'center';
+            card.classList.add('loading');
+            const img = new Image();
+            img.src = cat.poster;
+            img.onload = () => {
+                card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${cat.poster}')`;
+                card.style.backgroundSize = 'cover';
+                card.style.backgroundPosition = 'center';
+                card.classList.remove('loading');
+            };
+            img.onerror = () => {
+                card.classList.remove('loading');
+            };
         }
 
         card.innerHTML = `
@@ -103,31 +199,13 @@ function renderCategories(items) {
     sortedGenres.forEach(cat => appContainer.appendChild(createCategoryCard(cat)));
 }
 
-function loadCategory(name, filterTag, type = 'main') {
+async function _renderFolderView(folderId, folderName) {
     const lastItem = navigationStack[navigationStack.length - 1];
-    if (!lastItem || lastItem.id !== filterTag) {
-        navigationStack.push({ name: name, id: filterTag, type: 'category', categoryType: type });
+    if (!lastItem || lastItem.id !== folderId) {
+        navigationStack.push({ name: folderName, id: folderId, type: 'folder' });
     }
     renderBreadcrumbs();
     
-    if (type === 'genre') {
-        currentList = allHomeData.filter(i => i.genres && i.genres.includes(filterTag));
-    } else {
-        if (filterTag === 'movie') {
-            currentList = allHomeData.filter(i => i.tag === 'movie');
-        } else {
-            currentList = allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
-        }
-    }
-    searchContainer.style.display = 'block';
-    searchInput.disabled = false;
-    renderGrid(currentList);
-}
-
-async function loadFolder(folderId, folderName) {
-    navigationStack.push({ name: folderName, id: folderId, type: 'folder' });
-    renderBreadcrumbs();
-    searchInput.value = '';
     searchContainer.style.display = 'block';
     searchInput.disabled = false;
     
@@ -165,7 +243,16 @@ function renderGrid(items) {
         card.className = 'card';
 
         if (item.poster) {
-            card.style.backgroundImage = `url('${item.poster}')`;
+            card.classList.add('loading');
+            const img = new Image();
+            img.src = item.poster;
+            img.onload = () => {
+                card.style.backgroundImage = `url('${item.poster}')`;
+                card.classList.remove('loading');
+            };
+            img.onerror = () => {
+                card.classList.remove('loading');
+            };
         }
         
         const icon = item.poster ? '' : (item.type === 'folder' ? '📁' : '▶️');
@@ -193,19 +280,53 @@ function handleItemClick(item) {
     if (item.type === 'folder' || item.type === 'drive_folders') {
         loadFolder(item.id, item.title);
     } else {
-        openDetailsModal(item);
+        const slug = createSlug(item.title);
+        history.pushState(null, null, `/watch/${slug}`);
+        openDetailsModal(item, false);
     }
 }
 
-function openDetailsModal(item) {
+function openDetailsModal(item, updateUrl = true) {
+    if (updateUrl) history.pushState(null, null, `/watch/${createSlug(item.title)}`);
+
     modalTitle.innerText = item.title;
     modalOriginalTitle.innerText = item.original_title ? item.original_title : '';
     modalSynopsis.innerText = item.synopsis || 'Sinopse indisponível.';
-
-    if (item.poster) {
-        modalPoster.src = item.poster;
-        modalPoster.style.display = 'block';
+    if (item.backdrop) {
+        modalContent.classList.add('loading');
+        modalContent.style.backgroundImage = 'none';
+        
+        const img = new Image();
+        img.src = item.backdrop;
+        img.onload = () => {
+            modalContent.style.backgroundImage = `linear-gradient(to right, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.6) 100%), url('${item.backdrop}')`;
+            modalContent.style.backgroundSize = 'cover';
+            modalContent.style.backgroundPosition = 'center top';
+            modalContent.classList.remove('loading');
+        };
+        img.onerror = () => {
+            modalContent.classList.remove('loading');
+        };
     } else {
+        modalContent.classList.remove('loading');
+        modalContent.style.background = '#000';
+        modalContent.style.backgroundImage = 'none';
+    }
+
+    const posterWrapper = document.querySelector('.details-poster-wrapper');
+    if (item.poster) {
+        posterWrapper.classList.add('loading');
+        modalPoster.style.display = 'none';
+        modalPoster.src = item.poster;
+        modalPoster.onload = () => {
+            posterWrapper.classList.remove('loading');
+            modalPoster.style.display = 'block';
+        };
+        modalPoster.onerror = () => {
+            posterWrapper.classList.remove('loading');
+        };
+    } else {
+        posterWrapper.classList.remove('loading');
         modalPoster.style.display = 'none';
     }
 
@@ -251,6 +372,20 @@ function startVideo(item) {
 function closeModal() {
     modal.classList.add('hidden');
     videoFrame.src = '';
+
+    if (window.location.pathname.startsWith('/watch/')) {
+        const lastPage = navigationStack[navigationStack.length - 1];
+        let targetUrl = '/';
+        
+        if (lastPage) {
+            if (lastPage.type === 'category') {
+                targetUrl = `/category/${lastPage.id}`;
+            } else if (lastPage.type === 'folder') {
+                targetUrl = `/folder/${lastPage.id}`;
+            }
+        }
+        navigateTo(targetUrl);
+    }
 }
 
 window.onclick = function(event) {
@@ -277,7 +412,6 @@ function renderBreadcrumbs() {
         };
 
         breadcrumbsContainer.appendChild(span);
-        
         if (index < navigationStack.length - 1) {
             const separator = document.createElement('span');
             separator.className = 'breadcrumb-separator';

@@ -42,7 +42,9 @@
                     <div id="modal-genres" class="modal-genres"></div>
                     <div id="modal-meta" class="modal-meta-tags"></div>
                     <p id="modal-synopsis" class="modal-synopsis"></p>
-                    <button id="play-btn" class="login-btn play-action-btn">▶ Assistir Agora</button>
+                    <button id="play-btn" class="play-action-btn" title="Assistir">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
                 </div>
             </div>
 
@@ -50,6 +52,7 @@
             <div id="player-view" class="player-view hidden">
                 <div class="video-wrapper">
                     <iframe id="video-frame" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                    <div class="iframe-blocker"></div>
                 </div>
                 <div id="player-info-area"></div> <!-- Info replicada aqui via JS -->
             </div>

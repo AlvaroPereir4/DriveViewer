@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.0.6] - 2026-01-21
+- Feature: Backdrop image added to movie cards.
+- Fix: Minnor bug adjusment to enrich catalog.
+- Feature: UI Update - Expanded details modal size to better showcase backdrop images.
+- Feature: UI Update - Increased font size for movie synopsis in details modal.
+- Feature: UI Update - Replaced "Watch Now" button with a stylish circular Play icon.
+- Feature: UI Update - Moved Play button to bottom-right and increased size for better ergonomics.
+- Feature: Genre categories are now sorted by popularity (item count) instead of alphabetically.
+- Feature: Added minimalist "Loading Spinner" (A24 Orange) for media cards and posters while images fetch.
+- Feature: Implemented loading state for Modal Backdrop and Poster, ensuring a smooth visual experience.
+- Fix: Added an overlay to disable the "Pop-out" button on the Google Drive video player.
+- Fix: Category covers are now static (first item) instead of random to improve caching and consistency.
+- Fix: Added error handling to loading spinners to prevent infinite loops on broken images.
+- Feature: Implemented Advanced Client-Side Routing. Each category, folder, and movie now has a unique URL, enabling browser navigation (Back/Forward) and direct linking.
+- Feature: Security Update - URLs now use movie names (slugs) instead of Drive IDs to hide file identifiers from the address bar.
+- Fix: Repositioned and styled the modal close button to be visible and consistent with the UI.
+- Fix: Resolved issue where closing the movie modal required multiple clicks by enforcing navigation to the previous context.
+
 ## [0.0.5] - 2026-01-17
 - Feature: Added Account Settings hub for user management (e.g., password reset).
 - Feature: Implemented support for login via E-mail or Username.

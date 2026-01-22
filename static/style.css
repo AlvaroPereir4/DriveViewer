@@ -254,28 +254,34 @@ body {
 }
 
 .modal-content {
-    width: 90%;
-    max-width: 1000px;
+    width: 95%;
+    max-width: 1400px;
     background: #000;
-    padding: 20px;
+    padding: 50px;
     border-radius: 8px;
     position: relative;
     overflow: hidden;
+    transition: background-image 0.3s ease-in-out;
 }
 
-/* --- ESTILOS DO MODAL DE DETALHES --- */
 .details-view {
     display: flex;
     gap: 30px;
     align-items: flex-start;
+    min-height: 450px;
+    position: relative;
+    z-index: 2;
 }
 
 .details-poster-wrapper {
     flex-shrink: 0;
-    width: 320px; /* Capa maior conforme pedido */
+    width: 320px;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    aspect-ratio: 2/3;
+    background-color: var(--card-bg);
+    position: relative;
 }
 
 .details-poster-wrapper img {
@@ -342,17 +348,34 @@ body {
 }
 
 .play-action-btn {
-    width: auto;
-    padding: 12px 30px;
-    margin-top: 30px;
-    align-self: flex-start;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 2px solid var(--accent-color);
+    color: var(--accent-color);
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
-    font-size: 1.1rem;
+    cursor: pointer;
+    margin-top: auto;
+    align-self: flex-end;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* --- ESTILOS DO PLAYER VIEW --- */
+.play-action-btn:hover {
+    background-color: var(--accent-color);
+    color: #000;
+    transform: scale(1.15);
+    box-shadow: 0 0 30px rgba(232, 124, 3, 0.5);
+}
+
+.play-action-btn svg {
+    width: 40px;
+    height: 40px;
+    margin-left: 4px;
+}
+
 .player-view.hidden {
     display: none;
 }
@@ -371,24 +394,52 @@ body {
     height: 100%;
 }
 
+.iframe-blocker {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 60px;
+    z-index: 10;
+}
+
 .close-btn {
     position: absolute;
-    top: -30px;
-    right: 0;
-    color: #fff;
-    font-size: 2rem;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
+    z-index: 50;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    background-color: var(--accent-color);
+    color: #000;
+    transform: rotate(90deg);
+    border-color: var(--accent-color);
 }
 
 .modal-synopsis {
     margin-top: 10px;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     color: var(--text-secondary);
     line-height: 1.5;
 }
 
-/* Responsividade para o Modal */
 @media (max-width: 768px) {
+    .modal-content {
+        padding: 20px;
+    }
     .details-view {
         flex-direction: column;
     }
@@ -397,8 +448,8 @@ body {
         margin: 0 auto;
     }
     .play-action-btn {
-        width: 100%;
-        justify-content: center;
+        align-self: center;
+        margin-top: 30px;
     }
 }
 
@@ -499,6 +550,30 @@ body {
     border-radius: 4px;
     margin-bottom: 20px;
     font-size: 0.9rem;
+}
+
+.loading {
+    position: relative;
+    background-color: var(--card-bg);
+}
+
+.loading::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    border: 2px solid rgba(232, 124, 3, 0.2);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spinner 0.8s linear infinite;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+@keyframes spinner {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 .app-footer {
