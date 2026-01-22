@@ -401,12 +401,24 @@ function startVideo(item) {
 }
 
 function closeModal() {
-    // Se estivermos numa URL de watch, voltar no histórico deve fechar o modal
+    // 1. Fecha visualmente na hora (para sensação instantânea)
+    modal.classList.add('hidden');
+    videoFrame.src = '';
+
+    // 2. Se estivermos numa URL de filme, forçamos a saída para o contexto anterior
     if (window.location.pathname.startsWith('/watch/')) {
-        history.back();
-    } else {
-        modal.classList.add('hidden');
-        videoFrame.src = '';
+        const lastPage = navigationStack[navigationStack.length - 1];
+        let targetUrl = '/';
+        
+        if (lastPage) {
+            if (lastPage.type === 'category') {
+                targetUrl = `/category/${lastPage.id}`;
+            } else if (lastPage.type === 'folder') {
+                targetUrl = `/folder/${lastPage.id}`;
+            }
+        }
+        // Usa navigateTo para garantir que saímos do estado do filme
+        navigateTo(targetUrl);
     }
 }
 
