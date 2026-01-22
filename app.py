@@ -59,7 +59,6 @@ class Media(db.Model):
     media_type = db.Column(db.String(20))
     genres = db.Column(db.String(200))
 
-# Mapeamento de Gêneros (TMDB IDs -> Nomes)
 GENRE_MAP = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
     99: "Documentário", 18: "Drama", 10751: "Família", 14: "Fantasia",
@@ -350,7 +349,6 @@ def logout():
 @app.route('/watch/<path:item_id>')
 @login_required
 def index(filter_tag=None, folder_id=None, item_id=None):
-    # O Flask entrega o HTML base, e o JavaScript (script.js) lê a URL e decide o que mostrar
     return render_template('index.html')
 
 @app.route('/api/home')

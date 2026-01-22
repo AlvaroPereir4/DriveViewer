@@ -21,15 +21,14 @@ let navigationStack = [];
 let allHomeData = [];
 let currentList = [];
 
-// Helper para criar URL amigável (Slug) a partir do título
 function createSlug(text) {
     return text.toString().toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
-        .replace(/\s+/g, '-')           // Espaços para hífens
-        .replace(/[^\w\-]+/g, '')       // Remove caracteres especiais
-        .replace(/\-\-+/g, '-')         // Remove hífens duplicados
-        .replace(/^-+/, '')             // Remove hífen do início
-        .replace(/-+$/, '');            // Remove hífen do fim
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -40,18 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const filtered = currentList.filter(item => item.title.toLowerCase().includes(term));
         renderGrid(filtered);
     });
-
-    // Escuta o botão "Voltar" do navegador
     window.addEventListener('popstate', router);
 });
 
 async function initApp() {
-    // Carrega os dados iniciais antes de decidir a rota
     try {
         const response = await fetch('/api/home');
         allHomeData = await response.json();
-        
-        // Inicia o roteador para decidir qual tela mostrar baseada na URL atual
         router();
     } catch (error) {
         console.error('Erro ao carregar dados:', error);
@@ -59,63 +53,46 @@ async function initApp() {
     }
 }
 
-// --- SISTEMA DE ROTEAMENTO ---
-
 function router() {
     const path = window.location.pathname;
-    
-    // Reseta estados visuais (fecha modal, limpa busca)
     searchInput.value = '';
     searchContainer.style.display = 'none';
     modal.classList.add('hidden');
     videoFrame.src = '';
 
-    // Rota: Home (/)
     if (path === '/' || path === '/index') {
         navigationStack = [{ name: 'Início', id: 'home', type: 'root' }];
         renderBreadcrumbs();
         renderCategories(allHomeData);
-    } 
-    // Rota: Categoria (/category/Nome)
+    }
     else if (path.startsWith('/category/')) {
         const filterTag = decodeURIComponent(path.split('/category/')[1]);
-        // Tenta inferir o tipo e nome amigável
         let type = 'main';
         let name = filterTag;
-        
-        // Se for uma das principais, ajusta o nome
+
         if (filterTag === 'movie') name = 'Filmes';
         else if (filterTag === 'series') name = 'Séries';
-        else type = 'genre'; // Assume que é gênero
-
+        else type = 'genre';
         _renderCategoryView(name, filterTag, type);
     }
-    // Rota: Pasta (/folder/ID)
     else if (path.startsWith('/folder/')) {
         const folderId = path.split('/folder/')[1];
-        _renderFolderView(folderId, 'Pasta'); // Nome genérico pois não temos o nome na URL, mas o breadcrumb ajusta depois
+        _renderFolderView(folderId, 'Pasta');
     }
-    // Rota: Detalhes/Watch (/watch/ID)
     else if (path.startsWith('/watch/')) {
         const param = path.split('/watch/')[1];
-        // Renderiza a home no fundo
         renderCategories(allHomeData);
-        // Abre o modal por cima
-        // Tenta encontrar pelo Slug (Nome) ou pelo ID (Fallback para links antigos)
         const item = allHomeData.find(i => createSlug(i.title) === param || i.id === param);
         if (item) {
-            openDetailsModal(item, false); // false = não mudar URL de novo
+            openDetailsModal(item, false);
         }
     }
 }
 
-// Função auxiliar para navegar e atualizar URL
 function navigateTo(url) {
     history.pushState(null, null, url);
     router();
 }
-
-// --- FUNÇÕES DE RENDERIZAÇÃO (Internas) ---
 
 function loadHome() {
     navigateTo('/');
@@ -129,14 +106,11 @@ function loadFolder(folderId, folderName) {
     navigateTo(`/folder/${folderId}`);
 }
 
-// Lógica real de renderizar categoria (chamada pelo router)
 function _renderCategoryView(name, filterTag, type) {
-    // Reconstrói breadcrumbs básico se necessário
     if (navigationStack.length === 0 || navigationStack[0].id !== 'home') {
         navigationStack = [{ name: 'Início', id: 'home', type: 'root' }];
     }
-    
-    // Adiciona ao stack se não for o último
+
     const lastItem = navigationStack[navigationStack.length - 1];
     if (!lastItem || lastItem.id !== filterTag) {
         navigationStack.push({ name: name, id: filterTag, type: 'category', categoryType: type });
@@ -185,7 +159,7 @@ function renderCategories(items) {
     const sortedGenres = Object.keys(genreMap).map(key => {
         const g = genreMap[key];
         return { title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getCategoryPoster(g.items) };
-    }).sort((a, b) => b.count - a.count); // Ordena por quantidade (maior para menor)
+    }).sort((a, b) => b.count - a.count);
 
     const createCategoryCard = (cat) => {
         const card = document.createElement('div');
@@ -225,9 +199,7 @@ function renderCategories(items) {
     sortedGenres.forEach(cat => appContainer.appendChild(createCategoryCard(cat)));
 }
 
-// Lógica real de renderizar pasta (chamada pelo router)
 async function _renderFolderView(folderId, folderName) {
-    // Ajusta stack
     const lastItem = navigationStack[navigationStack.length - 1];
     if (!lastItem || lastItem.id !== folderId) {
         navigationStack.push({ name: folderName, id: folderId, type: 'folder' });
@@ -308,7 +280,6 @@ function handleItemClick(item) {
     if (item.type === 'folder' || item.type === 'drive_folders') {
         loadFolder(item.id, item.title);
     } else {
-        // Atualiza URL para /watch/ID
         const slug = createSlug(item.title);
         history.pushState(null, null, `/watch/${slug}`);
         openDetailsModal(item, false);
@@ -321,11 +292,9 @@ function openDetailsModal(item, updateUrl = true) {
     modalTitle.innerText = item.title;
     modalOriginalTitle.innerText = item.original_title ? item.original_title : '';
     modalSynopsis.innerText = item.synopsis || 'Sinopse indisponível.';
-
-    // Configura o Backdrop (Imagem de fundo horizontal)
     if (item.backdrop) {
         modalContent.classList.add('loading');
-        modalContent.style.backgroundImage = 'none'; // Limpa anterior para ver o spinner
+        modalContent.style.backgroundImage = 'none';
         
         const img = new Image();
         img.src = item.backdrop;
@@ -347,7 +316,7 @@ function openDetailsModal(item, updateUrl = true) {
     const posterWrapper = document.querySelector('.details-poster-wrapper');
     if (item.poster) {
         posterWrapper.classList.add('loading');
-        modalPoster.style.display = 'none'; // Esconde enquanto carrega
+        modalPoster.style.display = 'none';
         modalPoster.src = item.poster;
         modalPoster.onload = () => {
             posterWrapper.classList.remove('loading');
@@ -401,11 +370,9 @@ function startVideo(item) {
 }
 
 function closeModal() {
-    // 1. Fecha visualmente na hora (para sensação instantânea)
     modal.classList.add('hidden');
     videoFrame.src = '';
 
-    // 2. Se estivermos numa URL de filme, forçamos a saída para o contexto anterior
     if (window.location.pathname.startsWith('/watch/')) {
         const lastPage = navigationStack[navigationStack.length - 1];
         let targetUrl = '/';
@@ -417,7 +384,6 @@ function closeModal() {
                 targetUrl = `/folder/${lastPage.id}`;
             }
         }
-        // Usa navigateTo para garantir que saímos do estado do filme
         navigateTo(targetUrl);
     }
 }
@@ -446,7 +412,6 @@ function renderBreadcrumbs() {
         };
 
         breadcrumbsContainer.appendChild(span);
-        
         if (index < navigationStack.length - 1) {
             const separator = document.createElement('span');
             separator.className = 'breadcrumb-separator';
