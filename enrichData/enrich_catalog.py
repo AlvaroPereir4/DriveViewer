@@ -75,7 +75,6 @@ def manual_lookup():
                 print("Opção inválida. Digite apenas números.")
                 continue
             
-            # Preparando dados
             title = data.get('title') or data.get('name')
             original_title = data.get('original_title') or data.get('original_name')
             overview = data.get('overview')
