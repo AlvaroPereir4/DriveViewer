@@ -337,9 +337,7 @@ function handleItemClick(item) {
 function openDetailsModal(item, updateUrl = true) {
     if (updateUrl) history.pushState(null, null, `/watch/${createSlug(item.title)}`);
 
-    // Trava o scroll do body
     document.body.style.overflow = 'hidden';
-
     modalTitle.innerText = item.title;
     modalOriginalTitle.innerText = item.original_title ? item.original_title : '';
     modalSynopsis.innerText = item.synopsis || 'Sinopse indisponível.';
@@ -468,7 +466,6 @@ function closeModal() {
     modal.classList.add('hidden');
     videoFrame.src = '';
     
-    // Destrava o scroll do body
     document.body.style.overflow = '';
 
     if (window.location.pathname.startsWith('/watch/')) {

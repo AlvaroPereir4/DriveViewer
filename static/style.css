@@ -319,10 +319,9 @@ body::after {
     border-radius: 8px;
     position: relative;
     transition: background-image 0.3s ease-in-out;
-    max-height: 90vh; /* Limita a altura do modal no desktop */
-    overflow-y: auto; /* Permite scroll interno */
+    max-height: 90vh;
+    overflow-y: auto;
     
-    /* Scrollbar customizada */
     scrollbar-width: thin;
     scrollbar-color: var(--accent-color) rgba(255, 255, 255, 0.1);
 }
@@ -492,7 +491,7 @@ body::after {
 }
 
 .close-btn {
-    position: absolute; /* Volta a ser absoluto no desktop */
+    position: absolute;
     top: 20px;
     right: 20px;
     width: 40px;
@@ -645,14 +644,13 @@ body::after {
     bottom: 0;
 }
 
-/* MELHORIAS DE RESPONSIVIDADE */
 @media (max-width: 768px) {
     .navbar {
         flex-direction: column;
         align-items: stretch;
         gap: 15px;
         padding: 15px;
-        background: rgba(12, 11, 11, 0.95); /* Fundo mais sólido no mobile */
+        background: rgba(12, 11, 11, 0.95);
     }
 
     .logo {
@@ -698,8 +696,7 @@ body::after {
         border-radius: 0;
         overflow-y: auto;
     }
-    
-    /* Overlay escuro para garantir leitura do texto sobre o backdrop no mobile */
+
     .modal-content::before {
         content: "";
         position: absolute;
@@ -713,7 +710,7 @@ body::after {
 
     .details-view {
         flex-direction: column;
-        padding-top: 40px; /* Espaço para o botão fechar */
+        padding-top: 40px;
         position: relative;
         z-index: 2;
     }
@@ -755,7 +752,7 @@ body::after {
     }
 
     .close-btn {
-        position: fixed; /* Mantém fixo no mobile */
+        position: fixed;
         top: 15px;
         right: 15px;
         background-color: rgba(0, 0, 0, 0.8);
@@ -764,10 +761,9 @@ body::after {
         font-size: 1.2rem;
         z-index: 2000;
     }
-    
-    /* Ajustes no Player para Mobile */
+
     .video-wrapper {
-        margin-top: 40px; /* Espaço para botão fechar se estiver sobreposto ou apenas margem */
+        margin-top: 40px;
     }
 }
 
@@ -795,7 +791,7 @@ body::after {
     
     .modal-synopsis {
         font-size: 0.95rem;
-        text-align: left; /* Sinopse melhor alinhada a esquerda para leitura */
+        text-align: left;
     }
     
     .login-container {
