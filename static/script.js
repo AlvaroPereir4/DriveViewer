@@ -46,7 +46,49 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
         document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
     });
+
+    initBackgroundEffects();
 });
+
+// --- EFEITOS VISUAIS DE FUNDO ---
+function initBackgroundEffects() {
+    const container = document.createElement('div');
+    container.className = 'background-effects';
+    document.body.appendChild(container);
+
+    // Cria uma nova linha a cada X milissegundos
+    setInterval(() => {
+        const line = document.createElement('div');
+        line.className = 'drift-line';
+        
+        // Randomização
+        const topPos = Math.random() * 100; // Posição vertical (0-100%)
+        const width = Math.random() * 150 + 50; // Largura entre 50px e 200px
+        const duration = Math.random() * 15 + 10; // Duração entre 10s e 25s (bem lento)
+        const opacity = Math.random() * 0.15 + 0.05; // Opacidade entre 0.05 e 0.2 (Sutil)
+        const delay = Math.random() * 5; // Atraso inicial
+
+        // Aplica estilos
+        line.style.top = `${topPos}%`;
+        line.style.width = `${width}px`;
+        line.style.opacity = opacity;
+        
+        // Animação manual via Web Animations API para controle total
+        const animation = line.animate([
+            { transform: 'translateX(-200px)', opacity: 0 },
+            { opacity: opacity, offset: 0.2 },
+            { opacity: opacity, offset: 0.8 },
+            { transform: 'translateX(100vw)', opacity: 0 }
+        ], {
+            duration: duration * 1000,
+            easing: 'linear'
+        });
+
+        // Remove o elemento do DOM quando a animação acabar
+        animation.onfinish = () => line.remove();
+        
+    }, 800); // Tenta criar uma linha a cada 0.8 segundos
+}
 
 async function initApp() {
     try {

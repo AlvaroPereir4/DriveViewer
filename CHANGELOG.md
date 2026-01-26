@@ -20,6 +20,7 @@
 - Feature: Added Letterboxd integration. A direct link is now generated based on the movie title and displayed in both Details and Player views.
 - Feature: UI Update - The Player View now displays full movie metadata (Genres, Original Title, Rating, etc.) below the video, mirroring the Details View.
 - Feature: UI Update - Applied the cinematic "Spotlight & Scanline" background effect globally across the entire application.
+- Feature: UI Update - Added subtle "Drifting Energy Lines" (Orange) to the background for enhanced atmosphere.
 
 ## [0.0.5] - 2026-01-17
 - Feature: Added Account Settings hub for user management (e.g., password reset).
