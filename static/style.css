@@ -127,6 +127,19 @@ body::after {
     color: var(--accent-color);
 }
 
+.settings-icon-link {
+    text-decoration: none; 
+    color: #ccc; 
+    margin-right: 15px; 
+    display: flex; 
+    align-items: center; 
+    transition: color 0.2s;
+}
+
+.settings-icon-link:hover {
+    color: #fff;
+}
+
 .search-container input {
     background-color: rgba(255,255,255,0.05);
     border: 1px solid #333;
@@ -299,14 +312,32 @@ body::after {
 }
 
 .modal-content {
-    width: 95%;
-    max-width: 1400px;
+    width: 90%;
+    max-width: 1200px;
     background: #000;
-    padding: 50px;
+    padding: 40px;
     border-radius: 8px;
     position: relative;
-    overflow: hidden;
     transition: background-image 0.3s ease-in-out;
+    max-height: 90vh; /* Limita a altura do modal no desktop */
+    overflow-y: auto; /* Permite scroll interno */
+    
+    /* Scrollbar customizada */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) rgba(255, 255, 255, 0.1);
+}
+
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background-color: var(--accent-color);
+    border-radius: 4px;
 }
 
 .details-view {
@@ -320,7 +351,7 @@ body::after {
 
 .details-poster-wrapper {
     flex-shrink: 0;
-    width: 320px;
+    width: 300px;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
@@ -461,7 +492,7 @@ body::after {
 }
 
 .close-btn {
-    position: absolute;
+    position: absolute; /* Volta a ser absoluto no desktop */
     top: 20px;
     right: 20px;
     width: 40px;
@@ -491,23 +522,6 @@ body::after {
     font-size: 1.1rem;
     color: var(--text-secondary);
     line-height: 1.5;
-}
-
-@media (max-width: 768px) {
-    .modal-content {
-        padding: 20px;
-    }
-    .details-view {
-        flex-direction: column;
-    }
-    .details-poster-wrapper {
-        width: 200px;
-        margin: 0 auto;
-    }
-    .play-action-btn {
-        align-self: center;
-        margin-top: 30px;
-    }
 }
 
 .login-body {
@@ -629,4 +643,162 @@ body::after {
 .login-footer {
     position: absolute;
     bottom: 0;
+}
+
+/* MELHORIAS DE RESPONSIVIDADE */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+        padding: 15px;
+        background: rgba(12, 11, 11, 0.95); /* Fundo mais sólido no mobile */
+    }
+
+    .logo {
+        text-align: center;
+        margin-bottom: 5px;
+    }
+
+    .breadcrumbs {
+        text-align: center;
+        margin-bottom: 5px;
+        font-size: 0.85rem;
+    }
+
+    .nav-actions {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .search-container {
+        flex: 1;
+        margin-right: 15px;
+    }
+
+    .search-container input {
+        width: 100%;
+    }
+    
+    .search-container input:focus {
+        width: 100%;
+    }
+
+    .content-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 12px;
+        padding: 10px;
+    }
+
+    .modal-content {
+        padding: 20px;
+        width: 100%;
+        height: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+        overflow-y: auto;
+    }
+    
+    /* Overlay escuro para garantir leitura do texto sobre o backdrop no mobile */
+    .modal-content::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.75);
+        z-index: 0;
+    }
+
+    .details-view {
+        flex-direction: column;
+        padding-top: 40px; /* Espaço para o botão fechar */
+        position: relative;
+        z-index: 2;
+    }
+
+    .details-poster-wrapper {
+        width: 180px;
+        margin: 0 auto 20px auto;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    .details-info {
+        align-items: center;
+        text-align: center;
+    }
+
+    #modal-title {
+        font-size: 1.8rem;
+    }
+
+    .modal-meta-tags {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .modal-genres {
+        justify-content: center;
+    }
+
+    .play-action-btn {
+        align-self: center;
+        margin-top: 30px;
+        width: 70px;
+        height: 70px;
+    }
+    
+    .play-action-btn svg {
+        width: 30px;
+        height: 30px;
+    }
+
+    .close-btn {
+        position: fixed; /* Mantém fixo no mobile */
+        top: 15px;
+        right: 15px;
+        background-color: rgba(0, 0, 0, 0.8);
+        width: 35px;
+        height: 35px;
+        font-size: 1.2rem;
+        z-index: 2000;
+    }
+    
+    /* Ajustes no Player para Mobile */
+    .video-wrapper {
+        margin-top: 40px; /* Espaço para botão fechar se estiver sobreposto ou apenas margem */
+    }
+}
+
+@media (max-width: 480px) {
+    .content-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .card-title {
+        font-size: 0.9rem;
+    }
+    
+    .card-type {
+        font-size: 0.65rem;
+    }
+    
+    .details-poster-wrapper {
+        width: 140px;
+    }
+    
+    #modal-title {
+        font-size: 1.5rem;
+    }
+    
+    .modal-synopsis {
+        font-size: 0.95rem;
+        text-align: left; /* Sinopse melhor alinhada a esquerda para leitura */
+    }
+    
+    .login-container {
+        padding: 25px 20px;
+    }
 }

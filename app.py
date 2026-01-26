@@ -22,7 +22,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = os.environ.get('SECRET_KEY', 'chave_nova_para_forcar_logout_v2')
-app.permanent_session_lifetime = timedelta(hours=2)
+app.permanent_session_lifetime = timedelta(hours=24)
 
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///users.db')
 if db_url.startswith("postgres://"):
