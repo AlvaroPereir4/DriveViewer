@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.0.7] - 2026-01-26
+- Feature: Mobile responsiveness improvements.
+- Feature: Extended login session lifetime.
+
 ## [0.0.6] - 2026-01-21
 - Feature: Backdrop image added to movie cards.
 - Fix: Minnor bug adjusment to enrich catalog.
