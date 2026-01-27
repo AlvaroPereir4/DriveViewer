@@ -471,7 +471,6 @@ def add_media():
                 flash('Dados incompletos para adicionar ao catálogo.', 'error')
                 return redirect(url_for('add_media'))
 
-            # Verificar se já existe no banco de dados
             if Media.query.filter_by(drive_id=drive_id).first():
                 flash('Este Drive ID já está no catálogo.', 'error')
                 return redirect(url_for('add_media'))
