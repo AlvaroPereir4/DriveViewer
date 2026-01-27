@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.0.8] - 2026-01-26
+- Feature: Admin Dashboard (`/admin`) implemented for media management.
+- Feature: Admin Dashboard includes a searchable table to list all media items.
+- Feature: Admin Dashboard allows editing of existing media details (`/admin/edit/<id>`).
+- Feature: Admin Dashboard allows deletion of media items (`/admin/delete/<id>`).
+- Feature: "Add Media" functionality (`/add-media`) is now integrated into the Admin Dashboard.
+- Feature: Admin access is restricted to a specific email defined in `ADMIN_EMAIL` environment variable.
+- Feature: Admin link is visible in the navbar only for authenticated administrators.
+- Fix: Corrected modal scroll behavior on desktop for media details.
+- Fix: Ensured close button is always visible on media details modal for desktop.
+
 ## [0.0.7] - 2026-01-26
 - Feature: Mobile responsiveness improvements.
 - Feature: Extended login session lifetime.

@@ -9,11 +9,13 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import load_dotenv
+import requests
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
@@ -58,6 +60,7 @@ class Media(db.Model):
     vote_average = db.Column(db.Float)
     media_type = db.Column(db.String(20))
     genres = db.Column(db.String(200))
+    letterboxd_slug = db.Column(db.String(200))
 
 GENRE_MAP = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
@@ -109,7 +112,8 @@ def get_home_items():
             "year": m.release_date[:4] if m.release_date else "",
             "release_date": m.release_date,
             "original_title": m.original_title,
-            "genres": [g.strip() for g in m.genres.split(',')] if m.genres else []
+            "genres": [g.strip() for g in m.genres.split(',')] if m.genres else [],
+            "letterboxd_slug": m.letterboxd_slug
         } for m in medias
     ]
     return home_items
@@ -165,6 +169,22 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login'))
+        
+        user = User.query.filter_by(username=session['user']).first()
+        admin_email = os.environ.get('ADMIN_EMAIL')
+        
+        if not user or not admin_email or user.email != admin_email:
+            flash('Acesso negado. Área restrita para administradores.', 'error')
+            return redirect(url_for('index'))
+            
+        return f(*args, **kwargs)
+    return decorated_function
+
 def get_app_version():
     try:
         with open('CHANGELOG.md', 'r', encoding='utf-8') as f:
@@ -178,7 +198,14 @@ def get_app_version():
 
 @app.context_processor
 def inject_globals():
-    return dict(version=get_app_version(), github_url="https://github.com/AlvaroPereir4/DriveViewer")
+    is_admin = False
+    if 'user' in session:
+        user = User.query.filter_by(username=session['user']).first()
+        admin_email = os.environ.get('ADMIN_EMAIL')
+        if user and admin_email and user.email == admin_email:
+            is_admin = True
+            
+    return dict(version=get_app_version(), github_url="https://github.com/AlvaroPereir4/DriveViewer", is_admin=is_admin)
 
 DRIVE_SERVICE = get_drive_service()
 
@@ -338,6 +365,171 @@ def reset_password():
 def settings():
     return render_template('settings.html')
 
+@app.route('/admin')
+@admin_required
+def admin_dashboard():
+    medias = Media.query.order_by(Media.id.desc()).all()
+    return render_template('admin_dashboard.html', medias=medias)
+
+@app.route('/admin/edit/<int:id>', methods=['GET', 'POST'])
+@admin_required
+def admin_edit(id):
+    media = Media.query.get_or_404(id)
+    if request.method == 'POST':
+        media.title = request.form.get('title')
+        media.original_title = request.form.get('original_title')
+        media.drive_id = request.form.get('drive_id')
+        media.overview = request.form.get('overview')
+        media.poster_path = request.form.get('poster_path')
+        media.backdrop_path = request.form.get('backdrop_path')
+        media.release_date = request.form.get('release_date')
+        media.media_type = request.form.get('media_type')
+        media.genres = request.form.get('genres')
+        media.letterboxd_slug = request.form.get('letterboxd_slug')
+        
+        try:
+            media.vote_average = float(request.form.get('vote_average'))
+        except (ValueError, TypeError):
+            pass
+
+        db.session.commit()
+        flash('Mídia atualizada com sucesso!', 'success')
+        return redirect(url_for('admin_dashboard'))
+        
+    return render_template('admin_edit.html', media=media)
+
+@app.route('/admin/delete/<int:id>')
+@admin_required
+def admin_delete(id):
+    media = Media.query.get_or_404(id)
+    db.session.delete(media)
+    db.session.commit()
+    flash('Mídia removida com sucesso!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/add-media', methods=['GET', 'POST'])
+@admin_required
+def add_media():
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'search':
+            query = request.form.get('query')
+            media_type = request.form.get('media_type')
+            if not query:
+                flash('Por favor, insira um termo de busca.', 'error')
+                return render_template('add_media.html', search_results=[])
+
+            TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
+            if not TMDB_API_KEY:
+                flash('Chave de API do TMDB não configurada.', 'error')
+                return render_template('add_media.html', search_results=[])
+
+            search_url = f"https://api.themoviedb.org/3/search/{media_type}"
+            params = {
+                'api_key': TMDB_API_KEY,
+                'query': query,
+                'language': 'pt-BR'
+            }
+            try:
+                response = requests.get(search_url, params=params)
+                response.raise_for_status()
+                data = response.json()
+                results = []
+                for item in data.get('results', []):
+                    if media_type == 'movie':
+                        title = item.get('title')
+                        original_title = item.get('original_title')
+                        release_date = item.get('release_date')
+                    else: # tv
+                        title = item.get('name')
+                        original_title = item.get('original_name')
+                        release_date = item.get('first_air_date')
+
+                    results.append({
+                        'id': item.get('id'),
+                        'title': title,
+                        'original_title': original_title,
+                        'overview': item.get('overview'),
+                        'poster_path': item.get('poster_path'),
+                        'backdrop_path': item.get('backdrop_path'),
+                        'release_date': release_date,
+                        'vote_average': item.get('vote_average'),
+                        'media_type': media_type,
+                        'genre_ids': item.get('genre_ids', [])
+                    })
+                return render_template('add_media.html', search_results=results, query=query, media_type=media_type)
+            except requests.exceptions.RequestException as e:
+                flash(f'Erro ao buscar no TMDB: {e}', 'error')
+                return render_template('add_media.html', search_results=[])
+        
+        elif action == 'add_to_db':
+            drive_id = request.form.get('drive_id')
+            tmdb_id = request.form.get('tmdb_id')
+            media_type = request.form.get('media_type')
+
+            if not drive_id or not tmdb_id or not media_type:
+                flash('Dados incompletos para adicionar ao catálogo.', 'error')
+                return redirect(url_for('add_media'))
+
+            # Verificar se já existe no banco de dados
+            if Media.query.filter_by(drive_id=drive_id).first():
+                flash('Este Drive ID já está no catálogo.', 'error')
+                return redirect(url_for('add_media'))
+
+            TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
+            if not TMDB_API_KEY:
+                flash('Chave de API do TMDB não configurada.', 'error')
+                return redirect(url_for('add_media'))
+
+            details_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}"
+            params = {
+                'api_key': TMDB_API_KEY,
+                'language': 'pt-BR'
+            }
+            try:
+                response = requests.get(details_url, params=params)
+                response.raise_for_status()
+                item = response.json()
+
+                genres_list = [GENRE_MAP.get(g['id'], g['name']) for g in item.get('genres', [])]
+                genres_str = ", ".join(genres_list)
+
+                if media_type == 'movie':
+                    title = item.get('title')
+                    original_title = item.get('original_title')
+                    release_date = item.get('release_date')
+                else: # tv
+                    title = item.get('name')
+                    original_title = item.get('original_name')
+                    release_date = item.get('first_air_date')
+
+                new_media = Media(
+                    drive_id=drive_id,
+                    title=title,
+                    original_title=original_title,
+                    overview=item.get('overview'),
+                    poster_path=item.get('poster_path'),
+                    backdrop_path=item.get('backdrop_path'),
+                    release_date=release_date,
+                    vote_average=item.get('vote_average'),
+                    media_type=media_type,
+                    genres=genres_str
+                )
+                db.session.add(new_media)
+                db.session.commit()
+                flash(f'"{title}" adicionado(a) ao catálogo com sucesso!', 'success')
+                return redirect(url_for('add_media'))
+
+            except requests.exceptions.RequestException as e:
+                flash(f'Erro ao obter detalhes do TMDB: {e}', 'error')
+                return redirect(url_for('add_media'))
+            except Exception as e:
+                flash(f'Erro ao salvar no banco de dados: {e}', 'error')
+                db.session.rollback()
+                return redirect(url_for('add_media'))
+
+    return render_template('add_media.html', search_results=[])
+
 @app.route('/logout')
 def logout():
     session.pop('user', None)
@@ -365,8 +557,22 @@ def browse_folder(folder_id):
     items = get_drive_items(DRIVE_SERVICE, folder_id)
     return jsonify(items)
 
+def run_migrations():
+    try:
+        inspector = db.inspect(db.engine)
+        if inspector.has_table("media"):
+            columns = [col['name'] for col in inspector.get_columns('media')]
+            if 'letterboxd_slug' not in columns:
+                print("Aplicando migração: Adicionando coluna letterboxd_slug...")
+                with db.engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE media ADD COLUMN letterboxd_slug VARCHAR(200)"))
+                    conn.commit()
+                print("Migração concluída com sucesso.")
+    except Exception as e:
+        print(f"Erro ao verificar/executar migrações: {e}")
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        run_migrations()
     app.run(debug=True, port=5001)

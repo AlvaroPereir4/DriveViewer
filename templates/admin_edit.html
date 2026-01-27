@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Mídia - DriveViewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Sobrescreve o estilo do body para permitir scroll */
+        body.login-body {
+            height: auto;
+            overflow-y: auto;
+            display: block;
+        }
+
+        .edit-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .edit-header {
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+        }
+        .edit-header h1 {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: var(--accent-color);
+            outline: none;
+        }
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .btn-cancel {
+            padding: 12px 20px;
+            background-color: transparent;
+            color: var(--text-secondary);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-cancel:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+        .btn-save {
+            padding: 12px 25px;
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        .btn-save:hover {
+            background-color: var(--accent-hover);
+        }
+    </style>
+</head>
+<body class="login-body">
+
+    <nav class="navbar">
+        <div class="logo" onclick="window.location.href='/'">DriveViewer</div>
+        <div class="nav-actions">
+            <a href="{{ url_for('admin_dashboard') }}" style="color: var(--text-secondary); text-decoration: none; margin-right: 15px;">Voltar ao Painel</a>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Sair</a>
+        </div>
+    </nav>
+
+    <div class="edit-container">
+        <div class="edit-header">
+            <h1>Editar: {{ media.title }}</h1>
+        </div>
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="title">Título</label>
+                <input type="text" id="title" name="title" value="{{ media.title }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="original_title">Título Original</label>
+                <input type="text" id="original_title" name="original_title" value="{{ media.original_title }}">
+            </div>
+
+            <div class="form-group">
+                <label for="drive_id">Google Drive ID</label>
+                <input type="text" id="drive_id" name="drive_id" value="{{ media.drive_id }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="media_type">Tipo de Mídia</label>
+                <select id="media_type" name="media_type">
+                    <option value="movie" {% if media.media_type == 'movie' %}selected{% endif %}>Filme</option>
+                    <option value="tv" {% if media.media_type == 'tv' %}selected{% endif %}>Série</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="overview">Sinopse</label>
+                <textarea id="overview" name="overview">{{ media.overview }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="genres">Gêneros (separados por vírgula)</label>
+                <input type="text" id="genres" name="genres" value="{{ media.genres }}">
+            </div>
+
+            <div class="form-group">
+                <label for="release_date">Data de Lançamento (AAAA-MM-DD)</label>
+                <input type="text" id="release_date" name="release_date" value="{{ media.release_date }}">
+            </div>
+
+            <div class="form-group">
+                <label for="vote_average">Nota (0-10)</label>
+                <input type="number" step="0.1" id="vote_average" name="vote_average" value="{{ media.vote_average }}">
+            </div>
+
+            <div class="form-group">
+                <label for="poster_path">Caminho do Pôster (TMDB)</label>
+                <input type="text" id="poster_path" name="poster_path" value="{{ media.poster_path }}">
+            </div>
+
+            <div class="form-group">
+                <label for="backdrop_path">Caminho do Backdrop (TMDB)</label>
+                <input type="text" id="backdrop_path" name="backdrop_path" value="{{ media.backdrop_path }}">
+            </div>
+
+            <div class="form-group">
+                <label for="letterboxd_slug">Letterboxd Slug (Opcional)</label>
+                <input type="text" id="letterboxd_slug" name="letterboxd_slug" value="{{ media.letterboxd_slug or '' }}" placeholder="Ex: o-poderoso-chefao">
+                <small style="color: #666; display: block; margin-top: 5px;">Se preenchido, será usado para gerar o link: https://letterboxd.com/film/<b>slug</b>/</small>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn-cancel">Cancelar</a>
+                <button type="submit" class="btn-save">Salvar Alterações</button>
+            </div>
+        </form>
+    </div>
+
+    <footer class="app-footer">
+        <p>v{{ version }} | Developing in: <a href="{{ github_url }}" target="_blank">GitHub</a></p>
+    </footer>
+
+    <script>
+        document.addEventListener('mousemove', (e) => {
+            document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+            document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+        });
+    </script>
+</body>
+</html>

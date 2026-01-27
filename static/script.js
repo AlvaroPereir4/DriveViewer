@@ -400,8 +400,14 @@ function openDetailsModal(item, updateUrl = true) {
     }
 
     // Link Letterboxd
-    const lbSlug = createSlug(item.original_title || item.title);
-    const lbUrl = `https://letterboxd.com/film/${lbSlug}/`;
+    let lbUrl;
+    if (item.letterboxd_slug) {
+        lbUrl = `https://letterboxd.com/film/${item.letterboxd_slug}/`;
+    } else {
+        const lbSlug = createSlug(item.original_title || item.title);
+        lbUrl = `https://letterboxd.com/film/${lbSlug}/`;
+    }
+    
     metaHtml += `
         <a href="${lbUrl}" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">
             <svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>
@@ -423,8 +429,13 @@ function startVideo(item) {
     videoFrame.src = embedUrl;
 
     // Reconstrói TODAS as informações para o modo Player
-    const lbSlug = createSlug(item.original_title || item.title);
-    const lbUrl = `https://letterboxd.com/film/${lbSlug}/`;
+    let lbUrl;
+    if (item.letterboxd_slug) {
+        lbUrl = `https://letterboxd.com/film/${item.letterboxd_slug}/`;
+    } else {
+        const lbSlug = createSlug(item.original_title || item.title);
+        lbUrl = `https://letterboxd.com/film/${lbSlug}/`;
+    }
     
     // Gera HTML dos gêneros
     let genresHtml = '';
