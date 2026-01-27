@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Mídia - DriveViewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;600&display=swap" rel="stylesheet">
+    <style>
+        .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .search-form input, .search-form select {
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+        }
+        .search-form input {
+            flex: 1;
+        }
+        .search-btn {
+            padding: 12px 20px;
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .search-btn:hover {
+            background-color: var(--accent-hover);
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .result-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.3s;
+        }
+        .result-card:hover {
+            transform: scale(1.02);
+            z-index: 10;
+        }
+        .result-poster {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+        }
+        .result-info {
+            padding: 15px;
+        }
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+        .result-year {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+        .add-form {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .add-form input {
+            padding: 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        .add-btn {
+            padding: 8px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .add-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo" onclick="window.location.href='/'">DriveViewer</div>
+        <div class="nav-actions">
+            <a href="{{ url_for('index') }}" style="color: var(--text-secondary); text-decoration: none; margin-right: 15px;">Voltar</a>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Sair</a>
+        </div>
+    </nav>
+
+    <div class="content-grid" style="display: block; max-width: 1200px; margin: 0 auto;">
+        <h1 style="margin-bottom: 20px;">Adicionar ao Catálogo</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="margin-bottom: 20px;">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/add-media" class="search-form">
+            <input type="hidden" name="action" value="search">
+            <select name="media_type">
+                <option value="movie" {% if media_type == 'movie' %}selected{% endif %}>Filme</option>
+                <option value="tv" {% if media_type == 'tv' %}selected{% endif %}>Série</option>
+            </select>
+            <input type="text" name="query" placeholder="Digite o nome do filme ou série..." value="{{ query if query else '' }}" required>
+            <button type="submit" class="search-btn">Pesquisar</button>
+        </form>
+
+        {% if search_results %}
+            <div class="results-grid">
+                {% for item in search_results %}
+                    <div class="result-card">
+                        {% if item.poster_path %}
+                            <img src="https://image.tmdb.org/t/p/w500{{ item.poster_path }}" alt="{{ item.title }}" class="result-poster">
+                        {% else %}
+                            <div class="result-poster" style="background: #333; display: flex; align-items: center; justify-content: center; color: #666;">Sem Imagem</div>
+                        {% endif %}
+                        <div class="result-info">
+                            <div class="result-title">{{ item.title }}</div>
+                            <div class="result-year">
+                                {% if item.release_date %}
+                                    {{ item.release_date[:4] }}
+                                {% endif %}
+                            </div>
+                            <form method="POST" action="/add-media" class="add-form">
+                                <input type="hidden" name="action" value="add_to_db">
+                                <input type="hidden" name="tmdb_id" value="{{ item.id }}">
+                                <input type="hidden" name="media_type" value="{{ item.media_type }}">
+                                <input type="text" name="drive_id" placeholder="Cole o ID do Google Drive" required>
+                                <button type="submit" class="add-btn">Adicionar</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% elif query %}
+            <p style="text-align: center; color: var(--text-secondary);">Nenhum resultado encontrado para "{{ query }}".</p>
+        {% endif %}
+    </div>
+
+    <footer class="app-footer">
+        <p>v{{ version }} | Developing in: <a href="{{ github_url }}" target="_blank">GitHub</a></p>
+    </footer>
+
+    <script>
+        document.addEventListener('mousemove', (e) => {
+            document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+            document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+        });
+    </script>
+</body>
+</html>
