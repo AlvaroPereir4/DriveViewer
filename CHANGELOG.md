@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.0] - 2026-03-11
+- Feature: Added LazyLoadObserver library to improve response time and optimize resource loading.
+- Feature: Added space/cosmic meteor background animation to replace TV scanline effect.
+- Feature: Improved card hover panel with larger play button, better layout, and increased typography sizes.
+- Feature: Reworked card hover expansion animation to avoid text distortion.
+- Feature: Enhanced modal layout with larger size and visible movie backdrop hero background.
+- Feature: Updated interaction flow — cards no longer open on click, play button now opens details modal.
+- Feature: Preserved grid state and scroll position when closing modal.
+- Bug: Fixed JS crash caused by duplicate EDGE_MARGIN declaration.
+- Bug: Fixed modal scroll being blocked due to incorrect overflow configuration.
+- Bug: Fixed poster animation truncation caused by conflicting transform animations.
+
 ## [0.0.8] - 2026-01-26
 - Feature: Admin Dashboard (`/admin`) implemented for media management.
 - Feature: Admin Dashboard includes a searchable table to list all media items.
