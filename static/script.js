@@ -333,10 +333,29 @@ function renderGrid(items) {
             metaInfo = '<div class="card-type">Pasta</div>';
         }
 
+        // Prepara dados para o hover (Netflix Style)
+        const synopsis = item.synopsis ? (item.synopsis.length > 90 ? item.synopsis.substring(0, 90) + '...' : item.synopsis) : '';
+        const rating = item.rating ? `★ ${item.rating.toFixed(1)}` : '';
+        const genres = item.genres ? item.genres.slice(0, 2).join(' • ') : '';
+
         card.innerHTML = `
             <div class="card-content">
                 <div class="card-title">${item.title}</div>
                 ${metaInfo}
+            </div>
+            <div class="card-hover-info">
+                <div class="hover-details">
+                    <div class="hover-actions">
+                        <div class="play-icon-circle">▶</div>
+                    </div>
+                    <div class="hover-title">${item.title}</div>
+                    <div class="hover-meta">
+                        <span class="hover-match">${rating}</span>
+                        <span class="hover-year">${item.year || ''}</span>
+                    </div>
+                    <div class="hover-genres">${genres}</div>
+                    <p class="hover-desc">${synopsis}</p>
+                </div>
             </div>
         `;
 
