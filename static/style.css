@@ -174,27 +174,54 @@ body::after {
     flex: 1;
 }
 
+/* Wrapper invisível que mantém o espaço na grade vertical */
+.card-wrapper {
+    position: relative;
+    aspect-ratio: 2/3;
+    z-index: 1;
+}
+
 .card {
+    /* O card ocupa o wrapper inicialmente */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
     background-color: var(--card-bg);
     border-radius: 6px;
     overflow: hidden;
     cursor: pointer;
+    
+    /* Transição rápida e suave para expansão */
     transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), z-index 0s 0.1s;
-    position: relative;
-    aspect-ratio: 2/3;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     background-size: cover;
     background-position: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
-.card:hover {
-    transform: scale(1.3);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+/* --- EXPANSÃO DO CARD NO HOVER --- */
+/* Ao passar o mouse no Wrapper, o Card filho se expande */
+.card-wrapper:hover .card {
+    /* Geometria Horizontal (Landscape) */
+    width: 340px; 
+    height: auto;
+    aspect-ratio: 16/9;
+    
+    /* Centraliza a expansão em relação ao wrapper original */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1.1);
+    
     z-index: 999;
-    transition-delay: 0.1s;
-    /* animation: tv-flash 0.4s ease-out; Removido para o hover ficar mais limpo estilo streaming */
+    box-shadow: 0 15px 40px rgba(0,0,0,0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card-content {
@@ -204,7 +231,7 @@ body::after {
 }
 
 /* Esconde o título simples ao expandir */
-.card:hover .card-content {
+.card-wrapper:hover .card-content {
     opacity: 0;
 }
 
@@ -233,7 +260,7 @@ body::after {
     overflow: hidden;
 }
 
-.card.category-card:hover {
+.card-wrapper:hover .card.category-card {
     border-color: var(--accent-color);
     background: linear-gradient(135deg, #24211f, #2e2a28);
     box-shadow: 0 0 25px rgba(194, 77, 44, 0.15);
@@ -268,7 +295,7 @@ body::after {
     transition: opacity 0.3s;
 }
 
-.card:hover::after {
+.card-wrapper:hover .card::after {
     opacity: 1;
     animation: scanline 0.8s linear infinite;
 }
@@ -288,31 +315,76 @@ body::after {
     100% { filter: brightness(1); }
 }
 
-/* --- ÁREA DE INFORMAÇÕES (HOVER) --- */
-.card-hover-info {
+/* --- IMAGEM DE FUNDO (BACKDROP) --- */
+.card-backdrop {
     position: absolute;
-    bottom: 0;
+    top: 0;
     left: 0;
-    right: 0;
-    padding: 15px;
-    background: linear-gradient(to top, rgba(0,0,0,1) 10%, rgba(0,0,0,0.8) 50%, transparent 100%);
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
     opacity: 0;
-    transition: opacity 0.2s ease;
-    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 0; 
 }
 
-.card:hover .card-hover-info {
+.card-wrapper:hover .card-backdrop.loaded {
     opacity: 1;
 }
 
-.hover-details {
+/* --- ÁREA DE INFORMAÇÕES (HOVER) --- */
+.card-hover-info {
+    position: absolute;
+    inset: 0; /* Ocupa todo o card */
+    padding: 15px;
+    /* Gradiente horizontal para escurecer atrás do texto */
+    background: linear-gradient(to right, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.6) 60%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 2;
+    
+    /* Layout Flex: Poster na esquerda, Info na direita */
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,1);
+    align-items: center;
+    gap: 15px;
 }
 
-.hover-actions {
+.card-wrapper:hover .card-hover-info {
+    opacity: 1;
+}
+
+/* Mini Poster (Capa visível no hover) */
+.mini-poster-wrapper {
+    width: 80px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    aspect-ratio: 2/3;
+}
+
+.mini-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.hover-details-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,1);
+    flex: 1; /* Ocupa o resto do espaço */
+}
+
+.hover-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 5px;
 }
 
@@ -328,10 +400,11 @@ body::after {
     font-size: 12px;
     font-weight: bold;
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    flex-shrink: 0;
 }
 
 .hover-title {
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 700;
     color: white;
     line-height: 1.2;

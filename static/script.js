@@ -315,6 +315,10 @@ function renderGrid(items) {
     }
 
     items.forEach(item => {
+        // Wrapper segura o espaço na grade (Layout Grid)
+        const wrapper = document.createElement('div');
+        wrapper.className = 'card-wrapper';
+
         const card = document.createElement('div');
         card.className = 'card';
 
@@ -338,17 +342,36 @@ function renderGrid(items) {
         const rating = item.rating ? `★ ${item.rating.toFixed(1)}` : '';
         const genres = item.genres ? item.genres.slice(0, 2).join(' • ') : '';
 
+        // Setup para carregar o backdrop no hover
+        if (item.backdrop) {
+            card.addEventListener('mouseenter', () => {
+                const backdropDiv = card.querySelector('.card-backdrop');
+                if (backdropDiv && !backdropDiv.style.backgroundImage) {
+                    const img = new Image();
+                    img.src = item.backdrop;
+                    img.onload = () => {
+                        backdropDiv.style.backgroundImage = `url('${item.backdrop}')`;
+                        backdropDiv.classList.add('loaded');
+                    };
+                }
+            });
+        }
+
         card.innerHTML = `
+            <div class="card-backdrop"></div>
             <div class="card-content">
                 <div class="card-title">${item.title}</div>
                 ${metaInfo}
             </div>
             <div class="card-hover-info">
-                <div class="hover-details">
-                    <div class="hover-actions">
+                <div class="mini-poster-wrapper">
+                     <img src="${item.poster}" class="mini-poster" loading="lazy">
+                </div>
+                <div class="hover-details-column">
+                    <div class="hover-header">
                         <div class="play-icon-circle">▶</div>
-                    </div>
-                    <div class="hover-title">${item.title}</div>
+                        <div class="hover-title">${item.title}</div>
+                    </div> 
                     <div class="hover-meta">
                         <span class="hover-match">${rating}</span>
                         <span class="hover-year">${item.year || ''}</span>
@@ -360,7 +383,8 @@ function renderGrid(items) {
         `;
 
         card.onclick = () => handleItemClick(item);
-        appContainer.appendChild(card);
+        wrapper.appendChild(card);
+        appContainer.appendChild(wrapper);
     });
 }
 
