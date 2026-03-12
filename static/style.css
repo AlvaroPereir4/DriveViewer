@@ -7,6 +7,7 @@
     --accent-hover: #ff9838;
     --hover-scale: 1.03;
     --transition-speed: 0.3s;
+    --card-glow: 232, 124, 3;
 }
 
 * {
@@ -23,21 +24,18 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    
-    /* --- EFEITO GLOBAL (Spotlight + Fundo) --- */
-    background-image: 
+    background-image:
         radial-gradient(circle 600px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(232, 124, 3, 0.06), transparent 100%),
         radial-gradient(circle at 50% -20%, rgba(232, 124, 3, 0.15) 0%, transparent 50%),
         radial-gradient(circle at center, transparent 60%, #000 100%),
         linear-gradient(to bottom, #0c0b0b 0%, #141211 100%);
-    background-attachment: fixed; /* Garante que a luz siga o mouse na tela, não no scroll */
+    background-attachment: fixed;
     position: relative;
 }
 
-/* --- EFEITO GLOBAL (Scanlines) --- */
 body::after {
     content: "";
-    position: fixed; /* Cobre a tela inteira mesmo com scroll */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
@@ -46,17 +44,16 @@ body::after {
     background-size: 100% 4px;
     animation: scanline 8s linear infinite;
     pointer-events: none;
-    z-index: -1; /* Fica atrás do conteúdo, mas na frente do fundo */
+    z-index: -1;
 }
 
-/* --- EFEITO DE LINHAS FLUTUANTES (Drifting Lines) --- */
 .background-effects {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -2; /* Atrás das scanlines */
+    z-index: -2;
     pointer-events: none;
     overflow: hidden;
 }
@@ -70,6 +67,9 @@ body::after {
     box-shadow: 0 0 4px var(--accent-color);
 }
 
+/* ============================================================
+   NAVBAR
+   ============================================================ */
 .navbar {
     display: flex;
     align-items: center;
@@ -128,11 +128,11 @@ body::after {
 }
 
 .settings-icon-link {
-    text-decoration: none; 
-    color: #ccc; 
-    margin-right: 15px; 
-    display: flex; 
-    align-items: center; 
+    text-decoration: none;
+    color: #ccc;
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
     transition: color 0.2s;
 }
 
@@ -165,6 +165,9 @@ body::after {
     text-align: right;
 }
 
+/* ============================================================
+   GRID
+   ============================================================ */
 .content-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(18%, 1fr));
@@ -174,71 +177,215 @@ body::after {
     flex: 1;
 }
 
-/* Wrapper invisível que mantém o espaço na grade vertical */
+/* Hovered wrapper fica acima de tudo */
+.card-wrapper:hover {
+    z-index: 500 !important;
+}
+
+/* Vizinhos se afastam como baralho */
+.card-wrapper.neighbor-left-1 {
+    transform: translateX(-38px) scale(0.93);
+    z-index: 2;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.card-wrapper.neighbor-left-2 {
+    transform: translateX(-18px) scale(0.96);
+    z-index: 2;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.card-wrapper.neighbor-right-1 {
+    transform: translateX(38px) scale(0.93);
+    z-index: 2;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.card-wrapper.neighbor-right-2 {
+    transform: translateX(18px) scale(0.96);
+    z-index: 2;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Expansão para a DIREITA (card perto da borda esquerda) */
+.card-wrapper.expand-right:hover .card {
+    left: 0;
+    transform: scale(1.06);
+}
+
+/* Expansão para a ESQUERDA (card perto da borda direita) */
+.card-wrapper.expand-left:hover .card {
+    left: auto;
+    right: 0;
+    transform: scale(1.06);
+}
+
+/* ============================================================
+   CARD WRAPPER — mantém espaço na grade
+   ============================================================ */
 .card-wrapper {
     position: relative;
     aspect-ratio: 2/3;
     z-index: 1;
+    /* Entrada animada com stagger via --item-index */
+    animation: cardEntrance 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(var(--item-index, 0) * 0.04s);
+    transition: transform 0.45s ease, opacity 0.45s ease, filter 0.45s ease;
 }
 
+@keyframes cardEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ============================================================
+   CARD BASE
+   ============================================================ */
 .card {
-    /* O card ocupa o wrapper inicialmente */
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    
+
     background-color: var(--card-bg);
     border-radius: 6px;
     overflow: hidden;
     cursor: pointer;
-    
-    /* Transição rápida e suave para expansão */
-    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), z-index 0s 0.1s;
-    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+
+    transition:
+        width 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        left 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        transform 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        box-shadow 0.42s ease,
+        border-color 0.42s ease;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     background-size: cover;
     background-position: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    border: 1px solid transparent;
 }
 
-/* --- EXPANSÃO DO CARD NO HOVER --- */
-/* Ao passar o mouse no Wrapper, o Card filho se expande */
+/* ============================================================
+   CARD — ESTADO EXPANDIDO (hover)
+   ============================================================ */
 .card-wrapper:hover .card {
-    /* Geometria Horizontal (Landscape) */
-    width: 340px; 
-    height: auto;
-    aspect-ratio: 16/9;
-    
-    /* Centraliza a expansão em relação ao wrapper original */
-    top: 50%;
+    height: 100%;
+    width: 185%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(1.1);
-    
+    transform: translateX(-50%) scale(1.06);
     z-index: 999;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.95),
+        0 0 0 1px rgba(255,255,255,0.07),
+        0 0 80px rgba(var(--card-glow), 0.12),
+        inset 0 0 60px rgba(0,0,0,0.3);
+    background-color: #0a0908;
 }
 
-.card-content {
-    padding: 15px;
-    background: linear-gradient(to top, rgba(12, 11, 11, 0.95), transparent);
+/* ============================================================
+   POSTER LAYER — encolhe para esquerda no hover
+   ============================================================ */
+.poster-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center top;
+    transition: width 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 2;
+    /* Borda sutil no lado direito para separar do painel */
+    border-right: 0px solid transparent;
 }
 
-/* Esconde o título simples ao expandir */
+.card-wrapper:hover .poster-layer {
+    /* Reseta o height 100% herdado e usa aspect-ratio 2/3 */
+    top: 50%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    transform: translateY(-50%);
+    width: 26%;
+    left: 10px;
+    border-radius: 5px;
+    border-right: none;
+    box-shadow: 6px 0 30px rgba(0,0,0,0.85), 0 4px 16px rgba(0,0,0,0.6);
+    background-size: cover;
+    background-position: center top;
+}
+
+/* ============================================================
+   BACKDROP — imagem de fundo cinematográfica
+   ============================================================ */
+.card-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    z-index: 1;
+}
+
+/* Overlay cinematográfico em cima do backdrop */
+.card-backdrop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        /* Escurece a esquerda onde fica o poster */
+        linear-gradient(90deg, rgba(10,9,8,0.8) 0%, rgba(10,9,8,0.4) 35%, rgba(10,9,8,0.15) 55%, transparent 75%),
+        /* Vinheta no topo e rodapé */
+        linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 20%, transparent 75%, rgba(0,0,0,0.65) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Backdrop visível no hover */
+.card-wrapper:hover .card-backdrop.loaded {
+    opacity: 1;
+    animation: backdropReveal 0.45s ease forwards;
+}
+
+/* Efeito projetor: flash sutil ao acender */
+@keyframes backdropReveal {
+    0%   { opacity: 0;    filter: brightness(2) saturate(0); }
+    15%  { opacity: 0.9;  filter: brightness(1.4) saturate(0.4); }
+    35%  { opacity: 0.5;  filter: brightness(0.7) saturate(0.7); }
+    100% { opacity: 1;    filter: brightness(1) saturate(1); }
+}
+
+/* ============================================================
+   INFO BÁSICA (título simples, some no hover)
+   ============================================================ */
+.card-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(to top, rgba(12, 11, 11, 0.98), rgba(12,11,11,0.4) 60%, transparent);
+    z-index: 3;
+    transition: opacity 0.25s ease;
+}
+
 .card-wrapper:hover .card-content {
     opacity: 0;
+    pointer-events: none;
 }
 
 .card-title {
     font-size: 1rem;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -251,6 +398,176 @@ body::after {
     letter-spacing: 0.5px;
 }
 
+/* ============================================================
+   PAINEL DE DETALHES (lado direito no hover)
+   ============================================================ */
+.card-details-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 72%;
+    height: 100%;
+    padding: 18px 16px;
+
+    /* Sem fundo próprio: o backdrop já tem overlay cinematic */
+    background: transparent;
+    opacity: 0;
+    pointer-events: none;
+    /* Delay pequeno para entrar após o card expandir */
+    transition: opacity 0.2s ease 0.15s;
+    z-index: 4;
+
+    display: flex;
+    align-items: center;
+}
+
+.card-wrapper:hover .card-details-panel {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Conteúdo do painel — desliza da direita */
+.details-content {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.9), 0 2px 15px rgba(0,0,0,0.7);
+    width: 100%;
+    opacity: 0;
+    transform: translateX(12px);
+    transition: opacity 0.3s ease 0.2s, transform 0.3s ease 0.2s;
+}
+
+.card-wrapper:hover .details-content {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* ---- Play + Título ---- */
+.hover-header {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 4px;
+}
+
+.play-icon-circle {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: rgba(255,255,255,0.95);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    padding-left: 2px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.6);
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+
+/* Pulso no play */
+.play-icon-circle::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.35);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.card-wrapper:hover .play-icon-circle::before {
+    opacity: 1;
+    transform: scale(1);
+    animation: playPulse 1.8s ease-in-out infinite 0.5s;
+}
+
+@keyframes playPulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50%       { opacity: 0;   transform: scale(1.5); }
+}
+
+.play-icon-circle:hover {
+    transform: scale(1.12);
+    background: var(--accent-color);
+    box-shadow: 0 0 20px rgba(232, 124, 3, 0.6);
+}
+
+.hover-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ---- Linha divisória ---- */
+.hover-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.2), transparent);
+    margin: 2px 0;
+}
+
+/* ---- Meta (ano + rating) ---- */
+.hover-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.hover-match {
+    color: #5de06a;
+    letter-spacing: 0.3px;
+}
+
+.hover-year {
+    color: #aaa;
+}
+
+/* ---- Gêneros como etiquetas de filme ---- */
+.hover-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.hover-genre-tag {
+    font-size: 0.58rem;
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 2px;
+    padding: 1px 6px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.04);
+}
+
+/* ---- Sinopse ---- */
+.hover-desc {
+    font-size: 0.58rem;
+    color: rgba(200,195,190,0.85);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ============================================================
+   CATEGORY CARD (cards de categoria/gênero)
+   ============================================================ */
 .card.category-card {
     border: 1px solid rgba(255,255,255,0.1);
     background: linear-gradient(135deg, #1a1817, #24211f);
@@ -263,7 +580,7 @@ body::after {
 .card-wrapper:hover .card.category-card {
     border-color: var(--accent-color);
     background: linear-gradient(135deg, #24211f, #2e2a28);
-    box-shadow: 0 0 25px rgba(194, 77, 44, 0.15);
+    box-shadow: 0 0 30px rgba(194, 77, 44, 0.2), 0 20px 50px rgba(0,0,0,0.8);
 }
 
 .card.category-card .card-title {
@@ -273,6 +590,13 @@ body::after {
     z-index: 2;
 }
 
+.card.category-card:hover .card-title {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
+/* ============================================================
+   SCANLINE NO HOVER
+   ============================================================ */
 .card::after {
     content: " ";
     display: block;
@@ -285,11 +609,11 @@ body::after {
         to bottom,
         rgba(255, 255, 255, 0),
         rgba(255, 255, 255, 0) 50%,
-        rgba(0, 0, 0, 0.2) 50%,
-        rgba(0, 0, 0, 0.2)
+        rgba(0, 0, 0, 0.15) 50%,
+        rgba(0, 0, 0, 0.15)
     );
     background-size: 100% 4px;
-    z-index: 1;
+    z-index: 5;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
@@ -300,154 +624,20 @@ body::after {
     animation: scanline 0.8s linear infinite;
 }
 
-.card.category-card:hover .card-title {
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
-}
-
 @keyframes scanline {
-    0% { background-position: 0 0; }
+    0%   { background-position: 0 0; }
     100% { background-position: 0 100%; }
 }
 
 @keyframes tv-flash {
-    0% { filter: brightness(1); }
-    25% { filter: brightness(2.5) contrast(1.2); }
+    0%   { filter: brightness(1); }
+    25%  { filter: brightness(2.5) contrast(1.2); }
     100% { filter: brightness(1); }
 }
 
-/* --- IMAGEM DE FUNDO (BACKDROP) --- */
-.card-backdrop {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    z-index: 0; 
-}
-
-.card-wrapper:hover .card-backdrop.loaded {
-    opacity: 1;
-}
-
-/* --- ÁREA DE INFORMAÇÕES (HOVER) --- */
-.card-hover-info {
-    position: absolute;
-    inset: 0; /* Ocupa todo o card */
-    padding: 15px;
-    /* Gradiente horizontal para escurecer atrás do texto */
-    background: linear-gradient(to right, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.6) 60%, transparent 100%);
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    pointer-events: none;
-    z-index: 2;
-    
-    /* Layout Flex: Poster na esquerda, Info na direita */
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.card-wrapper:hover .card-hover-info {
-    opacity: 1;
-}
-
-/* Mini Poster (Capa visível no hover) */
-.mini-poster-wrapper {
-    width: 80px;
-    flex-shrink: 0;
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    aspect-ratio: 2/3;
-}
-
-.mini-poster {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.hover-details-column {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 4px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,1);
-    flex: 1; /* Ocupa o resto do espaço */
-}
-
-.hover-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 5px;
-}
-
-.play-icon-circle {
-    width: 30px;
-    height: 30px;
-    background: white;
-    color: black;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    flex-shrink: 0;
-}
-
-.hover-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: white;
-    line-height: 1.2;
-}
-
-.hover-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.7rem;
-    color: #ccc;
-    font-weight: 600;
-}
-
-.hover-match {
-    color: #46d369; /* Verde estilo Match */
-}
-
-.hover-genres {
-    font-size: 0.65rem;
-    color: #ddd;
-}
-
-.hover-desc {
-    font-size: 0.6rem;
-    color: #bbb;
-    margin-top: 4px;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.folder-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 3rem;
-    opacity: 0.2;
-}
-
+/* ============================================================
+   MODAL
+   ============================================================ */
 .modal {
     position: fixed;
     top: 0;
@@ -478,23 +668,13 @@ body::after {
     transition: background-image 0.3s ease-in-out;
     max-height: 90vh;
     overflow-y: auto;
-    
     scrollbar-width: thin;
     scrollbar-color: var(--accent-color) rgba(255, 255, 255, 0.1);
 }
 
-.modal-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.modal-content::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-    background-color: var(--accent-color);
-    border-radius: 4px;
-}
+.modal-content::-webkit-scrollbar { width: 8px; }
+.modal-content::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+.modal-content::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
 
 .details-view {
     display: flex;
@@ -587,7 +767,7 @@ body::after {
 }
 
 .letterboxd-link:hover {
-    color: #40bcf4; /* Cor azulada característica do Letterboxd ou branco */
+    color: #40bcf4;
     text-shadow: 0 0 8px rgba(64, 188, 244, 0.4);
 }
 
@@ -614,15 +794,9 @@ body::after {
     box-shadow: 0 0 30px rgba(232, 124, 3, 0.5);
 }
 
-.play-action-btn svg {
-    width: 40px;
-    height: 40px;
-    margin-left: 4px;
-}
+.play-action-btn svg { width: 40px; height: 40px; margin-left: 4px; }
 
-.player-view.hidden {
-    display: none;
-}
+.player-view.hidden { display: none; }
 
 .video-wrapper {
     position: relative;
@@ -632,27 +806,21 @@ body::after {
 
 .video-wrapper iframe {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
 }
 
 .iframe-blocker {
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 60px;
+    top: 0; right: 0;
+    width: 100px; height: 60px;
     z-index: 10;
 }
 
 .close-btn {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
+    top: 20px; right: 20px;
+    width: 40px; height: 40px;
     background-color: rgba(0, 0, 0, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
@@ -680,6 +848,34 @@ body::after {
     line-height: 1.5;
 }
 
+/* ============================================================
+   LOADING SPINNER
+   ============================================================ */
+.loading {
+    position: relative;
+    background-color: var(--card-bg);
+}
+
+.loading::before {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 30px; height: 30px;
+    border: 2px solid rgba(232, 124, 3, 0.2);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spinner 0.8s linear infinite;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+@keyframes spinner {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
 .login-body {
     display: flex;
     justify-content: center;
@@ -700,9 +896,7 @@ body::after {
     z-index: 10;
 }
 
-.form-group {
-    margin-bottom: 20px;
-}
+.form-group { margin-bottom: 20px; }
 
 .form-group input {
     width: 100%;
@@ -752,30 +946,9 @@ body::after {
     font-size: 0.9rem;
 }
 
-.loading {
-    position: relative;
-    background-color: var(--card-bg);
-}
-
-.loading::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 30px;
-    height: 30px;
-    border: 2px solid rgba(232, 124, 3, 0.2);
-    border-top-color: var(--accent-color);
-    border-radius: 50%;
-    animation: spinner 0.8s linear infinite;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-}
-
-@keyframes spinner {
-    to { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
+/* ============================================================
+   FOOTER
+   ============================================================ */
 .app-footer {
     text-align: center;
     padding: 20px;
@@ -796,11 +969,11 @@ body::after {
     border-color: var(--accent-color);
 }
 
-.login-footer {
-    position: absolute;
-    bottom: 0;
-}
+.login-footer { position: absolute; bottom: 0; }
 
+/* ============================================================
+   RESPONSIVO
+   ============================================================ */
 @media (max-width: 768px) {
     .navbar {
         flex-direction: column;
@@ -810,39 +983,34 @@ body::after {
         background: rgba(12, 11, 11, 0.95);
     }
 
-    .logo {
-        text-align: center;
-        margin-bottom: 5px;
-    }
+    .logo { text-align: center; margin-bottom: 5px; }
 
-    .breadcrumbs {
-        text-align: center;
-        margin-bottom: 5px;
-        font-size: 0.85rem;
-    }
+    .breadcrumbs { text-align: center; margin-bottom: 5px; font-size: 0.85rem; }
 
-    .nav-actions {
-        justify-content: space-between;
-        width: 100%;
-    }
+    .nav-actions { justify-content: space-between; width: 100%; }
 
-    .search-container {
-        flex: 1;
-        margin-right: 15px;
-    }
-
-    .search-container input {
-        width: 100%;
-    }
-    
-    .search-container input:focus {
-        width: 100%;
-    }
+    .search-container { flex: 1; margin-right: 15px; }
+    .search-container input { width: 100%; }
+    .search-container input:focus { width: 100%; }
 
     .content-grid {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         gap: 12px;
         padding: 10px;
+    }
+
+    /* No mobile, desliga a expansão do hover (UX melhor) */
+    .card-wrapper:hover .card {
+        width: 100%;
+        left: 0;
+        transform: none;
+    }
+    .card-wrapper:hover .poster-layer { width: 100%; }
+    .card-details-panel { display: none; }
+    .content-grid:hover .card-wrapper:not(:hover) {
+        transform: none;
+        opacity: 1;
+        filter: none;
     }
 
     .modal-content {
@@ -857,10 +1025,8 @@ body::after {
     .modal-content::before {
         content: "";
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
         background: rgba(0,0,0,0.75);
         z-index: 0;
     }
@@ -878,80 +1044,36 @@ body::after {
         box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     }
 
-    .details-info {
-        align-items: center;
-        text-align: center;
-    }
-
-    #modal-title {
-        font-size: 1.8rem;
-    }
-
-    .modal-meta-tags {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .modal-genres {
-        justify-content: center;
-    }
+    .details-info { align-items: center; text-align: center; }
+    #modal-title { font-size: 1.8rem; }
+    .modal-meta-tags { justify-content: center; flex-wrap: wrap; }
+    .modal-genres { justify-content: center; }
 
     .play-action-btn {
         align-self: center;
         margin-top: 30px;
-        width: 70px;
-        height: 70px;
+        width: 70px; height: 70px;
     }
-    
-    .play-action-btn svg {
-        width: 30px;
-        height: 30px;
-    }
+    .play-action-btn svg { width: 30px; height: 30px; }
 
     .close-btn {
         position: fixed;
-        top: 15px;
-        right: 15px;
+        top: 15px; right: 15px;
         background-color: rgba(0, 0, 0, 0.8);
-        width: 35px;
-        height: 35px;
+        width: 35px; height: 35px;
         font-size: 1.2rem;
         z-index: 2000;
     }
 
-    .video-wrapper {
-        margin-top: 40px;
-    }
+    .video-wrapper { margin-top: 40px; }
 }
 
 @media (max-width: 480px) {
-    .content-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-
-    .card-title {
-        font-size: 0.9rem;
-    }
-    
-    .card-type {
-        font-size: 0.65rem;
-    }
-    
-    .details-poster-wrapper {
-        width: 140px;
-    }
-    
-    #modal-title {
-        font-size: 1.5rem;
-    }
-    
-    .modal-synopsis {
-        font-size: 0.95rem;
-        text-align: left;
-    }
-    
-    .login-container {
-        padding: 25px 20px;
-    }
+    .content-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .card-title { font-size: 0.9rem; }
+    .card-type { font-size: 0.65rem; }
+    .details-poster-wrapper { width: 140px; }
+    #modal-title { font-size: 1.5rem; }
+    .modal-synopsis { font-size: 0.95rem; text-align: left; }
+    .login-container { padding: 25px 20px; }
 }
