@@ -22,14 +22,33 @@ let allHomeData = [];
 let currentList = [];
 let lazyLoadObserver;
 
+// --- HELPERS ---
 function createSlug(text) {
     return text.toString().toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-]+/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '');
+        .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+}
+
+/**
+ * Gera HTML de estrelas a partir de nota TMDB (0–10)
+ * Converte para escala 0–5 com meia-estrela
+ */
+function buildStars(rating) {
+    if (!rating) return '';
+    const score = Math.min(10, Math.max(0, rating));
+    const stars5 = score / 2; // converte 0-10 → 0-5
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+        if (stars5 >= i) {
+            html += '<span class="star star-full">★</span>';
+        } else if (stars5 >= i - 0.5) {
+            html += '<span class="star star-half">★</span>';
+        } else {
+            html += '<span class="star star-empty">☆</span>';
+        }
+    }
+    return html;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -44,50 +63,79 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('popstate', router);
 
-    // Spotlight global (segue o mouse)
+    // Spotlight global
     document.addEventListener('mousemove', (e) => {
         document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
         document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
     });
 
-    // ESC fecha o modal
+    // ESC fecha modal
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-            closeModal();
-        }
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
     });
 
     initBackgroundEffects();
 });
 
-// --- EFEITOS VISUAIS DE FUNDO ---
+// --- EFEITOS DE FUNDO ---
 function initBackgroundEffects() {
     const container = document.createElement('div');
     container.className = 'background-effects';
     document.body.appendChild(container);
 
-    setInterval(() => {
-        const line = document.createElement('div');
-        line.className = 'drift-line';
+    function spawnMeteor() {
+        // Só cria meteoro se o modal estiver fechado
+        if (!document.getElementById('video-modal').classList.contains('hidden')) return;
 
-        const topPos   = Math.random() * 100;
-        const width    = Math.random() * 150 + 50;
-        const duration = Math.random() * 15 + 10;
-        const opacity  = Math.random() * 0.15 + 0.05;
+        const meteor = document.createElement('div');
+        meteor.className = 'meteor';
 
-        line.style.top   = `${topPos}%`;
-        line.style.width = `${width}px`;
-        line.style.opacity = opacity;
+        // Comprimento variado — bem maior que antes
+        const len = Math.random() * 180 + 80;
+        meteor.style.width = `${len}px`;
 
-        const animation = line.animate([
-            { transform: 'translateX(-200px)', opacity: 0 },
-            { opacity: opacity, offset: 0.2 },
-            { opacity: opacity, offset: 0.8 },
-            { transform: 'translateX(100vw)', opacity: 0 }
-        ], { duration: duration * 1000, easing: 'linear' });
+        // Diagonal ~30–50 graus caindo da esquerda para direita e para baixo
+        const angle = Math.random() * 20 + 30; // 30° a 50°
+        meteor.style.transform = `rotate(${angle}deg)`;
+        meteor.style.transformOrigin = 'left center';
 
-        animation.onfinish = () => line.remove();
-    }, 800);
+        // Posição inicial — começa fora da tela pelo topo ou esquerda
+        const startFromTop = Math.random() > 0.4;
+        if (startFromTop) {
+            meteor.style.top  = `${-20}px`;
+            meteor.style.left = `${Math.random() * 120}vw`;
+        } else {
+            meteor.style.top  = `${Math.random() * 60}vh`;
+            meteor.style.left = `-${len + 20}px`;
+        }
+
+        // Opacidade sutil
+        const opacity = Math.random() * 0.45 + 0.2;
+
+        // Distância percorrida proporcional ao ângulo
+        const dist = window.innerWidth * 1.3;
+        const dy   = dist * Math.tan(angle * Math.PI / 180);
+
+        // Duração bem lenta: 18–38 segundos
+        const duration = (Math.random() * 20 + 18) * 1000;
+
+        const anim = meteor.animate([
+            { opacity: 0,       transform: `rotate(${angle}deg) translateX(0)` },
+            { opacity,          transform: `rotate(${angle}deg) translateX(${dist * 0.15}px)`, offset: 0.08 },
+            { opacity,          transform: `rotate(${angle}deg) translateX(${dist * 0.85}px)`, offset: 0.92 },
+            { opacity: 0,       transform: `rotate(${angle}deg) translateX(${dist}px)` },
+        ], { duration, easing: 'linear', fill: 'forwards' });
+
+        anim.onfinish = () => { meteor.remove(); };
+        container.appendChild(meteor);
+    }
+
+    // Cria meteoros de forma espaçada
+    setInterval(spawnMeteor, 2200);
+    // Alguns iniciais para não começar vazio
+    setTimeout(spawnMeteor, 400);
+    setTimeout(spawnMeteor, 1200);
+    setTimeout(spawnMeteor, 2000);
 }
 
 // --- LAZY LOADING ---
@@ -95,10 +143,7 @@ function initLazyLoading() {
     if ('IntersectionObserver' in window) {
         lazyLoadObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    loadCardImage(entry.target);
-                    observer.unobserve(entry.target);
-                }
+                if (entry.isIntersecting) { loadCardImage(entry.target); observer.unobserve(entry.target); }
             });
         }, { rootMargin: '200px' });
     } else {
@@ -109,7 +154,6 @@ function initLazyLoading() {
 function loadCardImage(card) {
     const poster = card.dataset.poster;
     if (!poster) return;
-
     const img = new Image();
     img.src = poster;
     img.onload = () => {
@@ -152,15 +196,13 @@ function router() {
         renderCategories(allHomeData);
     } else if (path.startsWith('/category/')) {
         const filterTag = decodeURIComponent(path.split('/category/')[1]);
-        let type = 'main';
-        let name = filterTag;
+        let type = 'main', name = filterTag;
         if (filterTag === 'movie') name = 'Filmes';
         else if (filterTag === 'series') name = 'Séries';
         else type = 'genre';
         _renderCategoryView(name, filterTag, type);
     } else if (path.startsWith('/folder/')) {
-        const folderId = path.split('/folder/')[1];
-        _renderFolderView(folderId, 'Pasta');
+        _renderFolderView(path.split('/folder/')[1], 'Pasta');
     } else if (path.startsWith('/watch/')) {
         const param = path.split('/watch/')[1];
         renderCategories(allHomeData);
@@ -169,14 +211,10 @@ function router() {
     }
 }
 
-function navigateTo(url) {
-    history.pushState(null, null, url);
-    router();
-}
-
+function navigateTo(url) { history.pushState(null, null, url); router(); }
 function loadHome() { navigateTo('/'); }
 function loadCategory(name, filterTag, type = 'main') { navigateTo(`/category/${filterTag}`); }
-function loadFolder(folderId, folderName) { navigateTo(`/folder/${folderId}`); }
+function loadFolder(folderId) { navigateTo(`/folder/${folderId}`); }
 
 function _renderCategoryView(name, filterTag, type) {
     if (navigationStack.length === 0 || navigationStack[0].id !== 'home') {
@@ -187,15 +225,12 @@ function _renderCategoryView(name, filterTag, type) {
         navigationStack.push({ name, id: filterTag, type: 'category', categoryType: type });
     }
     renderBreadcrumbs();
-
     if (type === 'genre') {
         currentList = allHomeData.filter(i => i.genres && i.genres.includes(filterTag));
     } else {
-        if (filterTag === 'movie') {
-            currentList = allHomeData.filter(i => i.tag === 'movie');
-        } else {
-            currentList = allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
-        }
+        currentList = filterTag === 'movie'
+            ? allHomeData.filter(i => i.tag === 'movie')
+            : allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
     }
     searchContainer.style.display = 'block';
     searchInput.disabled = false;
@@ -208,52 +243,41 @@ function renderCategories(items) {
 
     const movies = items.filter(i => i.tag === 'movie');
     const series = items.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
-    const getCategoryPoster = (list) => {
-        const withPoster = list.filter(i => i.poster);
-        return withPoster.length > 0 ? withPoster[0].poster : null;
-    };
+    const getCategoryPoster = (list) => list.find(i => i.poster)?.poster || null;
 
     const categories = [
-        { title: 'Filmes',  count: movies.length, type: 'main', filter: 'movie',  poster: getCategoryPoster(movies) },
-        { title: 'Séries',  count: series.length, type: 'main', filter: 'series', poster: getCategoryPoster(series) }
+        { title: 'Filmes', count: movies.length, type: 'main', filter: 'movie',  poster: getCategoryPoster(movies) },
+        { title: 'Séries', count: series.length, type: 'main', filter: 'series', poster: getCategoryPoster(series) }
     ];
 
     const genreMap = {};
     items.forEach(item => {
-        if (item.genres && item.genres.length > 0) {
-            item.genres.forEach(genre => {
-                if (!genreMap[genre]) genreMap[genre] = { title: genre, count: 0, items: [] };
-                genreMap[genre].count++;
-                genreMap[genre].items.push(item);
-            });
-        }
+        (item.genres || []).forEach(genre => {
+            if (!genreMap[genre]) genreMap[genre] = { title: genre, count: 0, items: [] };
+            genreMap[genre].count++;
+            genreMap[genre].items.push(item);
+        });
     });
-
-    const sortedGenres = Object.keys(genreMap).map(key => {
-        const g = genreMap[key];
-        return { title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getCategoryPoster(g.items) };
-    }).sort((a, b) => b.count - a.count);
+    const sortedGenres = Object.values(genreMap)
+        .map(g => ({ title: g.title, count: g.count, type: 'genre', filter: g.title, poster: getCategoryPoster(g.items) }))
+        .sort((a, b) => b.count - a.count);
 
     const createCategoryCard = (cat) => {
-        // Wrapper mantém o aspecto na grade (igual aos cards de filme)
         const wrapper = document.createElement('div');
-        wrapper.className = 'card-wrapper';
+        wrapper.className = 'card-wrapper category-wrapper';
 
         const card = document.createElement('div');
         card.className = 'card category-card';
-
         if (cat.poster) {
             card.classList.add('loading');
             card.dataset.poster = cat.poster;
             if (lazyLoadObserver) lazyLoadObserver.observe(card);
         }
-
         card.innerHTML = `
-            <div class="card-content" style="text-align: center; background: linear-gradient(to top, rgba(12,11,11,0.95), transparent); z-index: 2;">
+            <div class="card-content" style="text-align:center; background: linear-gradient(to top, rgba(12,11,11,0.95), transparent); z-index:2;">
                 <div class="card-title">${cat.title}</div>
                 <div class="card-type">${cat.count} Títulos</div>
-            </div>
-        `;
+            </div>`;
         card.onclick = () => loadCategory(cat.title, cat.filter, cat.type);
         wrapper.appendChild(card);
         return wrapper;
@@ -262,12 +286,11 @@ function renderCategories(items) {
     categories.forEach(cat => appContainer.appendChild(createCategoryCard(cat)));
 
     if (sortedGenres.length > 0) {
-        const separator = document.createElement('div');
-        separator.style.gridColumn = '1 / -1';
-        separator.innerHTML = '<h3 style="color: #8f8681; font-size: 1.1rem; margin-top: 30px; margin-bottom: 10px; font-weight: 400; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Navegar por Gêneros</h3>';
-        appContainer.appendChild(separator);
+        const sep = document.createElement('div');
+        sep.style.gridColumn = '1 / -1';
+        sep.innerHTML = '<h3 style="color:#8f8681;font-size:1.1rem;margin-top:30px;margin-bottom:10px;font-weight:400;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:10px;">Navegar por Gêneros</h3>';
+        appContainer.appendChild(sep);
     }
-
     sortedGenres.forEach(cat => appContainer.appendChild(createCategoryCard(cat)));
 }
 
@@ -277,11 +300,9 @@ async function _renderFolderView(folderId, folderName) {
         navigationStack.push({ name: folderName, id: folderId, type: 'folder' });
     }
     renderBreadcrumbs();
-
     searchContainer.style.display = 'block';
     searchInput.disabled = false;
-    appContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center;">Carregando...</div>';
-
+    appContainer.innerHTML = '<div style="grid-column:1/-1;text-align:center;">Carregando...</div>';
     try {
         const response = await fetch(`/api/browse/${folderId}`);
         const items = await response.json();
@@ -298,20 +319,25 @@ async function _renderFolderView(folderId, folderName) {
     }
 }
 
+// ============================================================
+// RENDER GRID — cards de filmes com delay de 1.5s
+// ============================================================
 function renderGrid(items) {
     appContainer.innerHTML = '';
     items.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
     itemsCountLabel.innerText = `Exibindo ${items.length} iten(s)`;
 
     if (items.length === 0) {
-        appContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">Pasta vazia.</p>';
+        appContainer.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#666;">Pasta vazia.</p>';
         return;
     }
+
+    const EXPAND_DELAY = 0; // sem delay
+    const EDGE_MARGIN  = 100;  // px antes da borda da tela
 
     items.forEach((item, index) => {
         const wrapper = document.createElement('div');
         wrapper.className = 'card-wrapper';
-        // Stagger de entrada (limita a 25 para não atrasar demais)
         wrapper.style.setProperty('--item-index', Math.min(index, 25));
 
         const card = document.createElement('div');
@@ -323,124 +349,156 @@ function renderGrid(items) {
             if (lazyLoadObserver) lazyLoadObserver.observe(card);
         }
 
+        // Metadado simples (estado não-expandido)
         let metaInfo = '';
-        if (item.year) {
-            metaInfo = `<div class="card-type">${item.year}</div>`;
-        } else if (item.type === 'folder') {
-            metaInfo = '<div class="card-type">Pasta</div>';
-        }
+        if (item.year)             metaInfo = `<div class="card-type">${item.year}</div>`;
+        else if (item.type === 'folder') metaInfo = '<div class="card-type">Pasta</div>';
 
-        // Sinopse curta para o hover
+        // ---- Conteúdo do painel expandido ----
+        const starsHtml = buildStars(item.rating);
+
+        const ratingRow = item.rating ? `
+            <div class="hover-rating-row">
+                <div class="hover-stars">
+                    ${starsHtml}
+                    <span class="hover-score-num">${item.rating.toFixed(1)}</span>
+                    <span class="hover-score-src">TMDB</span>
+                </div>
+                ${item.year ? `<span class="hover-year-badge">${item.year}</span>` : ''}
+            </div>` : (item.year ? `<div class="hover-rating-row"><span class="hover-year-badge">${item.year}</span></div>` : '');
+
+        const genreTagsHtml = (item.genres || []).slice(0, 4)
+            .map(g => `<span class="hover-genre-tag">${g}</span>`).join('');
+
         const synopsis = item.synopsis
-            ? (item.synopsis.length > 110 ? item.synopsis.substring(0, 110) + '…' : item.synopsis)
+            ? (item.synopsis.length > 160 ? item.synopsis.substring(0, 160) + '…' : item.synopsis)
             : '';
 
-        // Rating formatado
-        const rating = item.rating ? `★ ${item.rating.toFixed(1)}` : '';
-
-        // Gêneros como tags individuais (máx 3)
-        const genreTagsHtml = item.genres
-            ? item.genres.slice(0, 3).map(g => `<span class="hover-genre-tag">${g}</span>`).join('')
+        const releaseStr = item.release_date
+            ? new Date(item.release_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
             : '';
 
-        // Carrega backdrop lazy no hover
+        const originalTitleHtml = (item.original_title && item.original_title !== item.title)
+            ? `<div class="hover-original-title">${item.original_title}</div>`
+            : '';
+
+        // Carrega backdrop no primeiro hover
         if (item.backdrop) {
             card.addEventListener('mouseenter', () => {
-                const backdropDiv = card.querySelector('.card-backdrop');
-                if (backdropDiv && !backdropDiv.dataset.loaded) {
+                const bd = card.querySelector('.card-backdrop');
+                if (bd && !bd.dataset.loaded) {
                     const img = new Image();
                     img.src = item.backdrop;
                     img.onload = () => {
-                        backdropDiv.style.backgroundImage = `url('${item.backdrop}')`;
-                        backdropDiv.dataset.loaded = 'true';
-                        // Pequeno delay para o card já estar expandido antes do flash
-                        requestAnimationFrame(() => {
-                            backdropDiv.classList.add('loaded');
-                        });
+                        bd.style.backgroundImage = `url('${item.backdrop}')`;
+                        bd.dataset.loaded = 'true';
+                        requestAnimationFrame(() => bd.classList.add('loaded'));
                     };
                 }
-            });
+            }, { passive: true });
         }
 
         card.innerHTML = `
             <div class="card-backdrop"></div>
             <div class="poster-layer"></div>
-
             <div class="card-content">
                 <div class="card-title">${item.title}</div>
                 ${metaInfo}
             </div>
-
             <div class="card-details-panel">
                 <div class="details-content">
-                    <div class="hover-header">
-                        <div class="play-icon-circle" title="Assistir">▶</div>
+                    <div class="hover-title-block">
                         <div class="hover-title">${item.title}</div>
+                        ${originalTitleHtml}
                     </div>
 
                     <div class="hover-divider"></div>
 
-                    <div class="hover-meta">
-                        ${rating ? `<span class="hover-match">${rating}</span>` : ''}
-                        ${item.year ? `<span class="hover-year">${item.year}</span>` : ''}
-                    </div>
+                    ${ratingRow}
 
                     ${genreTagsHtml ? `<div class="hover-genres">${genreTagsHtml}</div>` : ''}
 
-                    ${synopsis ? `<p class="hover-desc">${synopsis}</p>` : ''}
+                    ${synopsis ? `<div class="hover-synopsis-wrap"><p class="hover-desc">${synopsis}</p></div>` : ''}
+
+                    ${releaseStr ? `<div class="hover-release">${releaseStr}</div>` : ''}
                 </div>
             </div>
-        `;
+            <button class="corner-play-btn" title="Assistir">▶</button>`;
 
-        card.onclick = () => handleItemClick(item);
+        // Pastas navegam no clique; filmes: só o botão de play faz algo
+        if (item.type === 'folder' || item.type === 'drive_folders') {
+            card.onclick = () => loadFolder(item.id);
+        }
+        // Nenhum card.onclick para filmes — só o botão abaixo
 
-        // Botão play no painel — não propaga para o card
-        const playBtnEl = card.querySelector('.play-icon-circle');
-        if (playBtnEl) {
-            playBtnEl.onclick = (e) => {
+        // Botão play: abre o modal de detalhes direto
+        const cornerPlay = card.querySelector('.corner-play-btn');
+        if (cornerPlay) {
+            cornerPlay.addEventListener('click', (e) => {
                 e.stopPropagation();
-                startVideo(item);
-            };
+                openDetailsModal(item, true);
+            });
         }
 
         wrapper.appendChild(card);
         appContainer.appendChild(wrapper);
     });
 
-    // Efeito baralho + detecção de borda
-    const allWrappers = [...appContainer.querySelectorAll('.card-wrapper')];
-    const EDGE_MARGIN = 120; // px da borda da tela que ativa o redirecionamento
+    // ---- HOVER: Netflix-style (colapso instantâneo ao trocar) + baralho + borda ----
+    const allWrappers = [...appContainer.querySelectorAll('.card-wrapper:not(.category-wrapper)')];
+    let currentExpanded = null;
+
+    function collapseCard(w, instant = false) {
+        if (!w) return;
+        if (instant) {
+            w.classList.add('no-transition');
+            w.classList.remove('is-expanded');
+            // força reflow para aplicar no-transition antes de remover a classe
+            w.offsetWidth;
+            w.classList.remove('no-transition');
+        } else {
+            w.classList.remove('is-expanded');
+        }
+    }
 
     allWrappers.forEach((w, i) => {
         w.addEventListener('mouseenter', () => {
-            // Detecta borda e define direção de expansão
-            const rect = w.getBoundingClientRect();
-            const cardExpandedWidth = rect.width * 1.85;
-            const halfExpand = cardExpandedWidth / 2;
+            // Se há outro card expandido, colapsa instantaneamente
+            if (currentExpanded && currentExpanded !== w) {
+                collapseCard(currentExpanded, true);
+                // Limpa baralho do card anterior
+                allWrappers.forEach(wr => wr.classList.remove(
+                    'neighbor-left-1','neighbor-left-2',
+                    'neighbor-right-1','neighbor-right-2'
+                ));
+            }
+            currentExpanded = w;
 
+            // Detecta borda
+            const rect = w.getBoundingClientRect();
+            const expandedW = rect.width * 1.85;
             w.classList.remove('expand-left', 'expand-right');
-            if (rect.left + rect.width / 2 - halfExpand < EDGE_MARGIN) {
+            if (rect.left + rect.width / 2 - expandedW / 2 < EDGE_MARGIN) {
                 w.classList.add('expand-right');
-            } else if (rect.right - rect.width / 2 + halfExpand > window.innerWidth - EDGE_MARGIN) {
+            } else if (rect.right - rect.width / 2 + expandedW / 2 > window.innerWidth - EDGE_MARGIN) {
                 w.classList.add('expand-left');
             }
 
-            // Vizinhos
-            const neighbors = [
-                [i - 1, 'neighbor-left-1'],
-                [i - 2, 'neighbor-left-2'],
-                [i + 1, 'neighbor-right-1'],
-                [i + 2, 'neighbor-right-2'],
-            ];
-            neighbors.forEach(([idx, cls]) => {
-                if (allWrappers[idx]) allWrappers[idx].classList.add(cls);
-            });
+            // Baralho
+            [[i-1,'neighbor-left-1'],[i-2,'neighbor-left-2'],
+             [i+1,'neighbor-right-1'],[i+2,'neighbor-right-2']]
+                .forEach(([idx, cls]) => { if (allWrappers[idx]) allWrappers[idx].classList.add(cls); });
+
+            w.classList.add('is-expanded');
         });
+
         w.addEventListener('mouseleave', () => {
+            if (currentExpanded === w) currentExpanded = null;
+            collapseCard(w, false);
             w.classList.remove('expand-left', 'expand-right');
             allWrappers.forEach(wr => wr.classList.remove(
-                'neighbor-left-1', 'neighbor-left-2',
-                'neighbor-right-1', 'neighbor-right-2'
+                'neighbor-left-1','neighbor-left-2',
+                'neighbor-right-1','neighbor-right-2'
             ));
         });
     });
@@ -448,49 +506,46 @@ function renderGrid(items) {
 
 function handleItemClick(item) {
     if (item.type === 'folder' || item.type === 'drive_folders') {
-        loadFolder(item.id, item.title);
+        loadFolder(item.id);
     } else {
-        const slug = createSlug(item.title);
-        history.pushState(null, null, `/watch/${slug}`);
+        history.pushState(null, null, `/watch/${createSlug(item.title)}`);
         openDetailsModal(item, false);
+    }
+}
+
+function applyModalBackdrop(item) {
+    if (item.backdrop) {
+        const img = new Image();
+        img.src = item.backdrop;
+        img.onload = () => {
+            modalContent.style.backgroundImage =
+                `linear-gradient(to right, rgba(6,5,4,0.92) 25%, rgba(6,5,4,0.45) 55%, rgba(6,5,4,0.15) 100%),
+                 linear-gradient(to top, rgba(6,5,4,0.95) 0%, transparent 35%),
+                 url('${item.backdrop}')`;
+            modalContent.style.backgroundSize = 'cover';
+            modalContent.style.backgroundPosition = 'center 20%';
+        };
+    } else {
+        modalContent.style.backgroundImage = 'none';
+        modalContent.style.background = '#060504';
     }
 }
 
 function openDetailsModal(item, updateUrl = true) {
     if (updateUrl) history.pushState(null, null, `/watch/${createSlug(item.title)}`);
-
     document.body.style.overflow = 'hidden';
     modalTitle.innerText = item.title;
     modalOriginalTitle.innerText = item.original_title || '';
     modalSynopsis.innerText = item.synopsis || 'Sinopse indisponível.';
 
-    if (item.backdrop) {
-        modalContent.classList.add('loading');
-        modalContent.style.backgroundImage = 'none';
-        const img = new Image();
-        img.src = item.backdrop;
-        img.onload = () => {
-            modalContent.style.backgroundImage = `linear-gradient(to right, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.6) 100%), url('${item.backdrop}')`;
-            modalContent.style.backgroundSize = 'cover';
-            modalContent.style.backgroundPosition = 'center top';
-            modalContent.classList.remove('loading');
-        };
-        img.onerror = () => modalContent.classList.remove('loading');
-    } else {
-        modalContent.classList.remove('loading');
-        modalContent.style.background = '#000';
-        modalContent.style.backgroundImage = 'none';
-    }
+    applyModalBackdrop(item);
 
     const posterWrapper = document.querySelector('.details-poster-wrapper');
     if (item.poster) {
         posterWrapper.classList.add('loading');
         modalPoster.style.display = 'none';
         modalPoster.src = item.poster;
-        modalPoster.onload = () => {
-            posterWrapper.classList.remove('loading');
-            modalPoster.style.display = 'block';
-        };
+        modalPoster.onload = () => { posterWrapper.classList.remove('loading'); modalPoster.style.display = 'block'; };
         modalPoster.onerror = () => posterWrapper.classList.remove('loading');
     } else {
         posterWrapper.classList.remove('loading');
@@ -498,14 +553,12 @@ function openDetailsModal(item, updateUrl = true) {
     }
 
     modalGenres.innerHTML = '';
-    if (item.genres && item.genres.length > 0) {
-        item.genres.forEach(genre => {
-            const span = document.createElement('span');
-            span.className = 'genre-tag';
-            span.innerText = genre;
-            modalGenres.appendChild(span);
-        });
-    }
+    (item.genres || []).forEach(genre => {
+        const span = document.createElement('span');
+        span.className = 'genre-tag';
+        span.innerText = genre;
+        modalGenres.appendChild(span);
+    });
 
     let metaHtml = '';
     if (item.release_date) {
@@ -513,28 +566,23 @@ function openDetailsModal(item, updateUrl = true) {
         metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${dateStr}</div>`;
     }
     if (item.rating) {
-        metaHtml += `<div class="meta-item" title="Nota baseada no TMDB"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)} (TMDB)</div>`;
+        metaHtml += `<div class="meta-item" title="Nota TMDB"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)} (TMDB)</div>`;
     }
 
-    let lbUrl;
-    if (item.letterboxd_slug) {
-        lbUrl = `https://letterboxd.com/film/${item.letterboxd_slug}/`;
-    } else {
-        lbUrl = `https://letterboxd.com/film/${createSlug(item.original_title || item.title)}/`;
-    }
-
+    const lbSlug = item.letterboxd_slug || createSlug(item.original_title || item.title);
     metaHtml += `
-        <a href="${lbUrl}" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">
-            <svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>
+        <a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">
+            <svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>
             Letterboxd
         </a>`;
-
     modalMeta.innerHTML = metaHtml;
+
     playBtn.onclick = () => startVideo(item);
     detailsView.style.display = 'flex';
     playerView.classList.add('hidden');
     videoFrame.src = '';
     modal.classList.remove('hidden');
+    document.body.classList.add('modal-open');
 }
 
 function startVideo(item) {
@@ -542,16 +590,13 @@ function startVideo(item) {
     playerView.classList.remove('hidden');
     videoFrame.src = `https://drive.google.com/file/d/${item.id}/preview`;
 
-    let lbUrl = item.letterboxd_slug
-        ? `https://letterboxd.com/film/${item.letterboxd_slug}/`
-        : `https://letterboxd.com/film/${createSlug(item.original_title || item.title)}/`;
+    // Mantém o backdrop de fundo no player também
+    applyModalBackdrop(item);
 
-    let genresHtml = '';
-    if (item.genres && item.genres.length > 0) {
-        genresHtml = `<div class="modal-genres" style="margin-top: 10px;">` +
-            item.genres.map(g => `<span class="genre-tag">${g}</span>`).join('') +
-            `</div>`;
-    }
+    const lbSlug = item.letterboxd_slug || createSlug(item.original_title || item.title);
+    const genresHtml = (item.genres || []).length
+        ? `<div class="modal-genres" style="margin-top:10px;">${item.genres.map(g => `<span class="genre-tag">${g}</span>`).join('')}</div>`
+        : '';
 
     let metaHtml = '<div class="modal-meta-tags">';
     if (item.release_date) {
@@ -561,43 +606,37 @@ function startVideo(item) {
     if (item.rating) {
         metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)}</div>`;
     }
-    metaHtml += `
-        <a href="${lbUrl}" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">
-            <svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>
-            Letterboxd
-        </a>`;
+    metaHtml += `<a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link"><svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg> Letterboxd</a>`;
     metaHtml += '</div>';
 
     playerInfoArea.innerHTML = `
-        <div class="details-info" style="width: 100%;">
-            <h2 id="modal-title" style="margin-top: 20px;">${item.title}</h2>
-            <h3 id="modal-original-title">${item.original_title || ''}</h3>
+        <div class="details-info" style="width:100%;">
+            <h2 style="margin-top:20px;">${item.title}</h2>
+            <h3 style="font-size:1rem;font-weight:400;color:var(--text-secondary);font-style:italic;">${item.original_title || ''}</h3>
             ${genresHtml}
             ${metaHtml}
             <p class="modal-synopsis">${item.synopsis || ''}</p>
-        </div>
-    `;
+        </div>`;
 }
 
 function closeModal() {
     modal.classList.add('hidden');
+    document.body.classList.remove('modal-open');
     videoFrame.src = '';
     document.body.style.overflow = '';
-
+    // Volta a URL sem re-renderizar nada — grid continua no mesmo estado
     if (window.location.pathname.startsWith('/watch/')) {
         const lastPage = navigationStack[navigationStack.length - 1];
         let targetUrl = '/';
         if (lastPage) {
             if (lastPage.type === 'category') targetUrl = `/category/${lastPage.id}`;
-            else if (lastPage.type === 'folder') targetUrl = `/folder/${lastPage.id}`;
+            else if (lastPage.type === 'folder')   targetUrl = `/folder/${lastPage.id}`;
         }
-        navigateTo(targetUrl);
+        history.replaceState(null, null, targetUrl);
     }
 }
 
-window.onclick = function(event) {
-    if (event.target === modal) closeModal();
-};
+window.onclick = (e) => { if (e.target === modal) closeModal(); };
 
 function renderBreadcrumbs() {
     breadcrumbsContainer.innerHTML = '';
@@ -606,19 +645,18 @@ function renderBreadcrumbs() {
         span.className = 'breadcrumb-item';
         span.innerText = crumb.name;
         span.onclick = () => {
-            if (index === 0) {
-                loadHome();
-            } else if (navigationStack[index].type === 'category') {
+            if (index === 0) loadHome();
+            else if (navigationStack[index].type === 'category') {
                 while (navigationStack.length > index + 1) navigationStack.pop();
                 loadCategory(navigationStack[index].name, navigationStack[index].id, navigationStack[index].categoryType);
             }
         };
         breadcrumbsContainer.appendChild(span);
         if (index < navigationStack.length - 1) {
-            const separator = document.createElement('span');
-            separator.className = 'breadcrumb-separator';
-            separator.innerText = '/';
-            breadcrumbsContainer.appendChild(separator);
+            const sep = document.createElement('span');
+            sep.className = 'breadcrumb-separator';
+            sep.innerText = '/';
+            breadcrumbsContainer.appendChild(sep);
         }
     });
 }
