@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.1.0] - 2026-03-11
+- Feature:  Add LazyLoadObserver lib to js for upgrade response time and optimize some process.
+
 ## [0.0.8] - 2026-01-26
 - Feature: Admin Dashboard (`/admin`) implemented for media management.
 - Feature: Admin Dashboard includes a searchable table to list all media items.

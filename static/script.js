@@ -20,6 +20,7 @@ const modalContent = document.querySelector('.modal-content');
 let navigationStack = [];
 let allHomeData = [];
 let currentList = [];
+let lazyLoadObserver;
 
 function createSlug(text) {
     return text.toString().toLowerCase()
@@ -32,6 +33,7 @@ function createSlug(text) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    initLazyLoading();
     initApp();
     
     searchInput.addEventListener('input', (e) => {
@@ -88,6 +90,41 @@ function initBackgroundEffects() {
         animation.onfinish = () => line.remove();
         
     }, 800); // Tenta criar uma linha a cada 0.8 segundos
+}
+
+function initLazyLoading() {
+    if ('IntersectionObserver' in window) {
+        lazyLoadObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    loadCardImage(entry.target);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { rootMargin: '200px' }); // Carrega a imagem 200px antes de aparecer na tela
+    } else {
+        // Fallback para navegadores muito antigos
+        lazyLoadObserver = { observe: (card) => loadCardImage(card) };
+    }
+}
+
+function loadCardImage(card) {
+    const poster = card.dataset.poster;
+    if (!poster) return;
+
+    const img = new Image();
+    img.src = poster;
+    img.onload = () => {
+        if (card.classList.contains('category-card')) {
+            card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${poster}')`;
+            card.style.backgroundSize = 'cover';
+            card.style.backgroundPosition = 'center';
+        } else {
+            card.style.backgroundImage = `url('${poster}')`;
+        }
+        card.classList.remove('loading');
+    };
+    img.onerror = () => card.classList.remove('loading');
 }
 
 async function initApp() {
@@ -215,17 +252,8 @@ function renderCategories(items) {
         
         if (cat.poster) {
             card.classList.add('loading');
-            const img = new Image();
-            img.src = cat.poster;
-            img.onload = () => {
-                card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${cat.poster}')`;
-                card.style.backgroundSize = 'cover';
-                card.style.backgroundPosition = 'center';
-                card.classList.remove('loading');
-            };
-            img.onerror = () => {
-                card.classList.remove('loading');
-            };
+            card.dataset.poster = cat.poster;
+            if (lazyLoadObserver) lazyLoadObserver.observe(card);
         }
 
         card.innerHTML = `
@@ -292,15 +320,8 @@ function renderGrid(items) {
 
         if (item.poster) {
             card.classList.add('loading');
-            const img = new Image();
-            img.src = item.poster;
-            img.onload = () => {
-                card.style.backgroundImage = `url('${item.poster}')`;
-                card.classList.remove('loading');
-            };
-            img.onerror = () => {
-                card.classList.remove('loading');
-            };
+            card.dataset.poster = item.poster;
+            if (lazyLoadObserver) lazyLoadObserver.observe(card);
         }
         
         const icon = item.poster ? '' : (item.type === 'folder' ? '📁' : '▶️');
