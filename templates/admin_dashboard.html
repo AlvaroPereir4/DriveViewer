@@ -223,7 +223,10 @@
                     <td data-label="Drive ID">{{ media.drive_id }}</td>
                     <td data-label="Ações" class="media-actions">
                         <a href="{{ url_for('admin_edit', id=media.id) }}">Editar</a>
-                        <a href="{{ url_for('admin_delete', id=media.id) }}" class="delete-btn" onclick="return confirm('Tem certeza que deseja excluir esta mídia?');">Excluir</a>
+                        <form method="POST" action="{{ url_for('admin_delete', id=media.id) }}" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta mídia?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="delete-btn" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:inherit;padding:0;">Excluir</button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}

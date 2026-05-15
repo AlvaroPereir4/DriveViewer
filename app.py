@@ -9,6 +9,10 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import text
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -23,8 +27,15 @@ SERVICE_ACCOUNT_FILE = 'api_key.json'
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.secret_key = os.environ.get('SECRET_KEY', 'chave_nova_para_forcar_logout_v2')
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+app.secret_key = os.environ.get('SECRET_KEY')
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY não definida no ambiente.")
 app.permanent_session_lifetime = timedelta(hours=24)
+
+csrf = CSRFProtect(app)
+limiter = Limiter(get_remote_address, app=app, default_limits=[])
 
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///users.db')
 if db_url.startswith("postgres://"):
@@ -210,6 +221,7 @@ def inject_globals():
 DRIVE_SERVICE = get_drive_service()
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10 per minute", methods=["POST"])
 def login():
     if request.method == 'POST':
         login_input = request.form.get('username')
@@ -228,9 +240,7 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        if client_ip and ',' in client_ip:
-            client_ip = client_ip.split(',')[0].strip()
+        client_ip = request.remote_addr
 
         last_reg = RegistrationLog.query.filter_by(ip_address=client_ip).order_by(RegistrationLog.timestamp.desc()).first()
         
@@ -295,6 +305,7 @@ def register():
     return render_template('register.html')
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
+@limiter.limit("5 per hour", methods=["POST"])
 def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -398,7 +409,7 @@ def admin_edit(id):
         
     return render_template('admin_edit.html', media=media)
 
-@app.route('/admin/delete/<int:id>')
+@app.route('/admin/delete/<int:id>', methods=['POST'])
 @admin_required
 def admin_delete(id):
     media = Media.query.get_or_404(id)

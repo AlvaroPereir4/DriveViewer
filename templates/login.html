@@ -21,6 +21,7 @@
         {% endwith %}
 
         <form method="POST" action="/login">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <input type="text" name="username" placeholder="Usuário ou E-mail" required autocomplete="off">
             </div>

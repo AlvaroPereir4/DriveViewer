@@ -23,6 +23,12 @@ let currentList = [];
 let lazyLoadObserver;
 
 // --- HELPERS ---
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+}
+
 function createSlug(text) {
     return text.toString().toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -275,8 +281,8 @@ function renderCategories(items) {
         }
         card.innerHTML = `
             <div class="card-content" style="text-align:center; background: linear-gradient(to top, rgba(12,11,11,0.95), transparent); z-index:2;">
-                <div class="card-title">${cat.title}</div>
-                <div class="card-type">${cat.count} Títulos</div>
+                <div class="card-title">${esc(cat.title)}</div>
+                <div class="card-type">${esc(String(cat.count))} Títulos</div>
             </div>`;
         card.onclick = () => loadCategory(cat.title, cat.filter, cat.type);
         wrapper.appendChild(card);
@@ -351,7 +357,7 @@ function renderGrid(items) {
 
         // Metadado simples (estado não-expandido)
         let metaInfo = '';
-        if (item.year)             metaInfo = `<div class="card-type">${item.year}</div>`;
+        if (item.year)             metaInfo = `<div class="card-type">${esc(String(item.year))}</div>`;
         else if (item.type === 'folder') metaInfo = '<div class="card-type">Pasta</div>';
 
         // ---- Conteúdo do painel expandido ----
@@ -379,7 +385,7 @@ function renderGrid(items) {
             : '';
 
         const originalTitleHtml = (item.original_title && item.original_title !== item.title)
-            ? `<div class="hover-original-title">${item.original_title}</div>`
+            ? `<div class="hover-original-title">${esc(item.original_title)}</div>`
             : '';
 
         // Carrega backdrop no primeiro hover
@@ -402,13 +408,13 @@ function renderGrid(items) {
             <div class="card-backdrop"></div>
             <div class="poster-layer"></div>
             <div class="card-content">
-                <div class="card-title">${item.title}</div>
+                <div class="card-title">${esc(item.title)}</div>
                 ${metaInfo}
             </div>
             <div class="card-details-panel">
                 <div class="details-content">
                     <div class="hover-title-block">
-                        <div class="hover-title">${item.title}</div>
+                        <div class="hover-title">${esc(item.title)}</div>
                         ${originalTitleHtml}
                     </div>
 
@@ -418,9 +424,9 @@ function renderGrid(items) {
 
                     ${genreTagsHtml ? `<div class="hover-genres">${genreTagsHtml}</div>` : ''}
 
-                    ${synopsis ? `<div class="hover-synopsis-wrap"><p class="hover-desc">${synopsis}</p></div>` : ''}
+                    ${synopsis ? `<div class="hover-synopsis-wrap"><p class="hover-desc">${esc(synopsis)}</p></div>` : ''}
 
-                    ${releaseStr ? `<div class="hover-release">${releaseStr}</div>` : ''}
+                    ${releaseStr ? `<div class="hover-release">${esc(releaseStr)}</div>` : ''}
                 </div>
             </div>
             <button class="corner-play-btn" title="Assistir">▶</button>`;
@@ -534,9 +540,9 @@ function applyModalBackdrop(item) {
 function openDetailsModal(item, updateUrl = true) {
     if (updateUrl) history.pushState(null, null, `/watch/${createSlug(item.title)}`);
     document.body.style.overflow = 'hidden';
-    modalTitle.innerText = item.title;
-    modalOriginalTitle.innerText = item.original_title || '';
-    modalSynopsis.innerText = item.synopsis || 'Sinopse indisponível.';
+    modalTitle.textContent = item.title;
+    modalOriginalTitle.textContent = item.original_title || '';
+    modalSynopsis.textContent = item.synopsis || 'Sinopse indisponível.';
 
     applyModalBackdrop(item);
 
@@ -611,11 +617,11 @@ function startVideo(item) {
 
     playerInfoArea.innerHTML = `
         <div class="details-info" style="width:100%;">
-            <h2 style="margin-top:20px;">${item.title}</h2>
-            <h3 style="font-size:1rem;font-weight:400;color:var(--text-secondary);font-style:italic;">${item.original_title || ''}</h3>
+            <h2 style="margin-top:20px;">${esc(item.title)}</h2>
+            <h3 style="font-size:1rem;font-weight:400;color:var(--text-secondary);font-style:italic;">${esc(item.original_title || '')}</h3>
             ${genresHtml}
             ${metaHtml}
-            <p class="modal-synopsis">${item.synopsis || ''}</p>
+            <p class="modal-synopsis">${esc(item.synopsis || '')}</p>
         </div>`;
 }
 

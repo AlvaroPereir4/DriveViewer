@@ -17,6 +17,10 @@ env/
 
 # --- Project Specific ---
 
+# Scripts e notas locais
+Scripts/
+
+
 # Credentials (CRITICAL)
 api_key.json
 

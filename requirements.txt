@@ -8,3 +8,5 @@ python-dotenv~=1.2.1
 requests~=2.32.5
 protobuf~=6.33.1
 SQLAlchemy~=2.0.45
+flask-wtf
+flask-limiter

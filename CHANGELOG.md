@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.1.1] - 2026-05-14
+- Fix: Improved security coverage on specific endpoints
+- 
 ## [0.1.0] - 2026-03-11
 - Feature: Added LazyLoadObserver library to improve response time and optimize resource loading.
 - Feature: Added space/cosmic meteor background animation to replace TV scanline effect.
