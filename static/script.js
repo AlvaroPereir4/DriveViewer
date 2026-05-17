@@ -22,7 +22,6 @@ let allHomeData = [];
 let currentList = [];
 let lazyLoadObserver;
 
-// --- HELPERS ---
 function esc(str) {
     const d = document.createElement('div');
     d.textContent = str || '';
@@ -36,14 +35,10 @@ function createSlug(text) {
         .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 }
 
-/**
- * Gera HTML de estrelas a partir de nota TMDB (0–10)
- * Converte para escala 0–5 com meia-estrela
- */
 function buildStars(rating) {
     if (!rating) return '';
     const score = Math.min(10, Math.max(0, rating));
-    const stars5 = score / 2; // converte 0-10 → 0-5
+    const stars5 = score / 2;
     let html = '';
     for (let i = 1; i <= 5; i++) {
         if (stars5 >= i) {
@@ -67,13 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
         searchTimeout = setTimeout(() => {
             const term = e.target.value.toLowerCase();
             const filtered = currentList.filter(item => item.title.toLowerCase().includes(term));
-            renderGrid(filtered, true); // true = skip entrance animation
+            renderGrid(filtered, true);
         }, 150);
     });
 
     window.addEventListener('popstate', router);
 
-    // Spotlight global — throttled via rAF
     let rafPending = false;
     document.addEventListener('mousemove', (e) => {
         if (rafPending) return;
@@ -85,7 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, { passive: true });
 
-    // ESC fecha modal
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
     });
@@ -93,29 +86,22 @@ document.addEventListener('DOMContentLoaded', () => {
     initBackgroundEffects();
 });
 
-// --- EFEITOS DE FUNDO ---
 function initBackgroundEffects() {
     const container = document.createElement('div');
     container.className = 'background-effects';
     document.body.appendChild(container);
 
     function spawnMeteor() {
-        // Só cria meteoro se o modal estiver fechado
         if (!document.getElementById('video-modal').classList.contains('hidden')) return;
 
         const meteor = document.createElement('div');
         meteor.className = 'meteor';
-
-        // Comprimento variado — bem maior que antes
         const len = Math.random() * 180 + 80;
         meteor.style.width = `${len}px`;
-
-        // Diagonal ~30–50 graus caindo da esquerda para direita e para baixo
-        const angle = Math.random() * 20 + 30; // 30° a 50°
+        const angle = Math.random() * 20 + 30;
         meteor.style.transform = `rotate(${angle}deg)`;
         meteor.style.transformOrigin = 'left center';
 
-        // Posição inicial — começa fora da tela pelo topo ou esquerda
         const startFromTop = Math.random() > 0.4;
         if (startFromTop) {
             meteor.style.top  = `${-20}px`;
@@ -125,14 +111,9 @@ function initBackgroundEffects() {
             meteor.style.left = `-${len + 20}px`;
         }
 
-        // Opacidade sutil
         const opacity = Math.random() * 0.45 + 0.2;
-
-        // Distância percorrida proporcional ao ângulo
         const dist = window.innerWidth * 1.3;
         const dy   = dist * Math.tan(angle * Math.PI / 180);
-
-        // Duração bem lenta: 18–38 segundos
         const duration = (Math.random() * 20 + 18) * 1000;
 
         const anim = meteor.animate([
@@ -146,15 +127,12 @@ function initBackgroundEffects() {
         container.appendChild(meteor);
     }
 
-    // Cria meteoros de forma espaçada
     setInterval(spawnMeteor, 2200);
-    // Alguns iniciais para não começar vazio
     setTimeout(spawnMeteor, 400);
     setTimeout(spawnMeteor, 1200);
     setTimeout(spawnMeteor, 2000);
 }
 
-// --- LAZY LOADING ---
 function initLazyLoading() {
     if ('IntersectionObserver' in window) {
         lazyLoadObserver = new IntersectionObserver((entries, observer) => {
@@ -335,9 +313,6 @@ async function _renderFolderView(folderId, folderName) {
     }
 }
 
-// ============================================================
-// RENDER GRID — cards de filmes com delay de 1.5s
-// ============================================================
 function renderGrid(items, skipAnimation = false) {
     appContainer.innerHTML = '';
     items.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
@@ -364,12 +339,10 @@ function renderGrid(items, skipAnimation = false) {
             if (lazyLoadObserver) lazyLoadObserver.observe(card);
         }
 
-        // Metadado simples (estado não-expandido)
         let metaInfo = '';
         if (item.year)             metaInfo = `<div class="card-type">${esc(String(item.year))}</div>`;
         else if (item.type === 'folder') metaInfo = '<div class="card-type">Pasta</div>';
 
-        // ---- Conteúdo do painel expandido ----
         const starsHtml = buildStars(item.rating);
 
         const ratingRow = item.rating ? `
@@ -397,7 +370,6 @@ function renderGrid(items, skipAnimation = false) {
             ? `<div class="hover-original-title">${esc(item.original_title)}</div>`
             : '';
 
-        // Carrega backdrop no primeiro hover
         if (item.backdrop) {
             card.addEventListener('mouseenter', () => {
                 const bd = card.querySelector('.card-backdrop');
@@ -426,27 +398,19 @@ function renderGrid(items, skipAnimation = false) {
                         <div class="hover-title">${esc(item.title)}</div>
                         ${originalTitleHtml}
                     </div>
-
                     <div class="hover-divider"></div>
-
                     ${ratingRow}
-
                     ${genreTagsHtml ? `<div class="hover-genres">${genreTagsHtml}</div>` : ''}
-
                     ${synopsis ? `<div class="hover-synopsis-wrap"><p class="hover-desc">${esc(synopsis)}</p></div>` : ''}
-
                     ${releaseStr ? `<div class="hover-release">${esc(releaseStr)}</div>` : ''}
                 </div>
             </div>
             <button class="corner-play-btn" title="Assistir">▶</button>`;
 
-        // Pastas navegam no clique; filmes: só o botão de play faz algo
         if (item.type === 'folder' || item.type === 'drive_folders') {
             card.onclick = () => loadFolder(item.id);
         }
-        // Nenhum card.onclick para filmes — só o botão abaixo
 
-        // Botão play: abre o modal de detalhes direto
         const cornerPlay = card.querySelector('.corner-play-btn');
         if (cornerPlay) {
             cornerPlay.addEventListener('click', (e) => {
@@ -459,7 +423,6 @@ function renderGrid(items, skipAnimation = false) {
         appContainer.appendChild(wrapper);
     });
 
-    // ---- HOVER: Netflix-style (colapso instantâneo ao trocar) + baralho + borda ----
     const allWrappers = [...appContainer.querySelectorAll('.card-wrapper:not(.category-wrapper)')];
     let currentExpanded = null;
 
@@ -478,10 +441,8 @@ function renderGrid(items, skipAnimation = false) {
 
     allWrappers.forEach((w, i) => {
         w.addEventListener('mouseenter', () => {
-            // Se há outro card expandido, colapsa instantaneamente
             if (currentExpanded && currentExpanded !== w) {
                 collapseCard(currentExpanded, true);
-                // Limpa baralho do card anterior
                 allWrappers.forEach(wr => wr.classList.remove(
                     'neighbor-left-1','neighbor-left-2',
                     'neighbor-right-1','neighbor-right-2'
@@ -489,7 +450,6 @@ function renderGrid(items, skipAnimation = false) {
             }
             currentExpanded = w;
 
-            // Detecta borda
             const rect = w.getBoundingClientRect();
             const expandedW = rect.width * 1.85;
             w.classList.remove('expand-left', 'expand-right');
@@ -499,7 +459,6 @@ function renderGrid(items, skipAnimation = false) {
                 w.classList.add('expand-left');
             }
 
-            // Baralho
             [[i-1,'neighbor-left-1'],[i-2,'neighbor-left-2'],
              [i+1,'neighbor-right-1'],[i+2,'neighbor-right-2']]
                 .forEach(([idx, cls]) => { if (allWrappers[idx]) allWrappers[idx].classList.add(cls); });
@@ -529,6 +488,10 @@ function handleItemClick(item) {
 }
 
 function applyModalBackdrop(item) {
+    modalContent.classList.remove('loading');
+    modalContent.style.backgroundImage = 'none';
+    modalContent.style.background = '#060504';
+
     if (item.backdrop) {
         const img = new Image();
         img.src = item.backdrop;
@@ -540,9 +503,6 @@ function applyModalBackdrop(item) {
             modalContent.style.backgroundSize = 'cover';
             modalContent.style.backgroundPosition = 'center 20%';
         };
-    } else {
-        modalContent.style.backgroundImage = 'none';
-        modalContent.style.background = '#060504';
     }
 }
 
@@ -605,9 +565,6 @@ function startVideo(item) {
     playerView.classList.remove('hidden');
     videoFrame.src = `https://drive.google.com/file/d/${item.id}/preview`;
 
-    // Mantém o backdrop de fundo no player também
-    applyModalBackdrop(item);
-
     const lbSlug = item.letterboxd_slug || createSlug(item.original_title || item.title);
     const genresHtml = (item.genres || []).length
         ? `<div class="modal-genres" style="margin-top:10px;">${item.genres.map(g => `<span class="genre-tag">${g}</span>`).join('')}</div>`
@@ -639,7 +596,6 @@ function closeModal() {
     document.body.classList.remove('modal-open');
     videoFrame.src = '';
     document.body.style.overflow = '';
-    // Volta a URL sem re-renderizar nada — grid continua no mesmo estado
     if (window.location.pathname.startsWith('/watch/')) {
         const lastPage = navigationStack[navigationStack.length - 1];
         let targetUrl = '/';

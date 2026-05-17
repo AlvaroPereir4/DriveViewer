@@ -4,6 +4,8 @@
 - Security: Improved security coverage on specific endpoints.
 - Perf: Throttle mousemove spotlight via requestAnimationFrame and scope will-change to hover only.
 - Perf: Debounce search input, skip entrance animation on filter and replace forced reflow with double rAF on card collapse.
+- Refactor: Front end useless comments removed.
+- Fix: Loading of background image in front of video player. 
 
 ## [0.1.0] - 2026-03-11
 - Feature: Added LazyLoadObserver library to improve response time and optimize resource loading.
