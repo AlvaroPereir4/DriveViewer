@@ -61,19 +61,29 @@ document.addEventListener('DOMContentLoaded', () => {
     initLazyLoading();
     initApp();
 
+    let searchTimeout;
     searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = currentList.filter(item => item.title.toLowerCase().includes(term));
-        renderGrid(filtered);
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const term = e.target.value.toLowerCase();
+            const filtered = currentList.filter(item => item.title.toLowerCase().includes(term));
+            renderGrid(filtered, true); // true = skip entrance animation
+        }, 150);
     });
 
     window.addEventListener('popstate', router);
 
-    // Spotlight global
+    // Spotlight global — throttled via rAF
+    let rafPending = false;
     document.addEventListener('mousemove', (e) => {
-        document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
-        document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
-    });
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(() => {
+            document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+            document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+            rafPending = false;
+        });
+    }, { passive: true });
 
     // ESC fecha modal
     document.addEventListener('keydown', (e) => {
@@ -328,7 +338,7 @@ async function _renderFolderView(folderId, folderName) {
 // ============================================================
 // RENDER GRID — cards de filmes com delay de 1.5s
 // ============================================================
-function renderGrid(items) {
+function renderGrid(items, skipAnimation = false) {
     appContainer.innerHTML = '';
     items.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
     itemsCountLabel.innerText = `Exibindo ${items.length} iten(s)`;
@@ -338,13 +348,12 @@ function renderGrid(items) {
         return;
     }
 
-    const EXPAND_DELAY = 0; // sem delay
-    const EDGE_MARGIN  = 100;  // px antes da borda da tela
+    const EDGE_MARGIN = 100;
 
     items.forEach((item, index) => {
         const wrapper = document.createElement('div');
-        wrapper.className = 'card-wrapper';
-        wrapper.style.setProperty('--item-index', Math.min(index, 25));
+        wrapper.className = skipAnimation ? 'card-wrapper no-entrance' : 'card-wrapper';
+        if (!skipAnimation) wrapper.style.setProperty('--item-index', Math.min(index, 25));
 
         const card = document.createElement('div');
         card.className = 'card';
@@ -459,9 +468,9 @@ function renderGrid(items) {
         if (instant) {
             w.classList.add('no-transition');
             w.classList.remove('is-expanded');
-            // força reflow para aplicar no-transition antes de remover a classe
-            w.offsetWidth;
-            w.classList.remove('no-transition');
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => w.classList.remove('no-transition'));
+            });
         } else {
             w.classList.remove('is-expanded');
         }

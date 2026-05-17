@@ -1,8 +1,10 @@
 # Changelog
 
-## [0.1.1] - 2026-05-14
-- Fix: Improved security coverage on specific endpoints
-- 
+## [0.1.1] - 2026-05-14 - 2026-05-17
+- Security: Improved security coverage on specific endpoints.
+- Perf: Throttle mousemove spotlight via requestAnimationFrame and scope will-change to hover only.
+- Perf: Debounce search input, skip entrance animation on filter and replace forced reflow with double rAF on card collapse.
+
 ## [0.1.0] - 2026-03-11
 - Feature: Added LazyLoadObserver library to improve response time and optimize resource loading.
 - Feature: Added space/cosmic meteor background animation to replace TV scanline effect.

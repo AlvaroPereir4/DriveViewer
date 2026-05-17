@@ -122,8 +122,10 @@ body.in-player .background-effects {
     animation: cardEntrance 0.5s cubic-bezier(0.22,1,0.36,1) backwards;
     animation-delay: calc(var(--item-index, 0) * 0.04s);
     transition: transform 0.38s cubic-bezier(0.22,1,0.36,1);
-    will-change: transform;
 }
+
+/* Sem animação de entrada quando renderizado pela search */
+.card-wrapper.no-entrance { animation: none; }
 
 .card-wrapper:hover { z-index: 500 !important; }
 
@@ -155,10 +157,12 @@ body.in-player .background-effects {
         right     0.38s cubic-bezier(0.22, 1, 0.36, 1),
         box-shadow 0.38s ease,
         border-color 0.38s ease;
-    will-change: width, left;
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     border: 1px solid transparent;
 }
+
+/* Promove pra GPU layer só durante o hover */
+.card-wrapper:hover .card { will-change: width, left; }
 
 /* Colapso instantâneo ao trocar de card (Netflix style) */
 .card-wrapper.no-transition .card,
