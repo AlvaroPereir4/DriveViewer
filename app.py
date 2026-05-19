@@ -72,6 +72,22 @@ class Media(db.Model):
     media_type = db.Column(db.String(20))
     genres = db.Column(db.String(200))
     letterboxd_slug = db.Column(db.String(200))
+    tmdb_id = db.Column(db.Integer)
+    runtime = db.Column(db.String(20))
+    tagline = db.Column(db.String(400))
+    status = db.Column(db.String(50))
+    number_of_seasons = db.Column(db.Integer)
+    director = db.Column(db.String(200))
+    cast_list = db.Column(db.String(500))
+    trailer_key = db.Column(db.String(100))
+    production_companies = db.Column(db.String(300))
+    production_countries = db.Column(db.String(200))
+    spoken_languages = db.Column(db.String(200))
+    budget = db.Column(db.BigInteger)
+    revenue = db.Column(db.BigInteger)
+    vote_count = db.Column(db.Integer)
+    popularity = db.Column(db.Float)
+    belongs_to_collection = db.Column(db.String(200))
 
 GENRE_MAP = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
@@ -570,14 +586,35 @@ def browse_folder(folder_id):
 def run_migrations():
     try:
         inspector = db.inspect(db.engine)
-        if inspector.has_table("media"):
-            columns = [col['name'] for col in inspector.get_columns('media')]
-            if 'letterboxd_slug' not in columns:
-                print("Aplicando migração: Adicionando coluna letterboxd_slug...")
-                with db.engine.connect() as conn:
-                    conn.execute(text("ALTER TABLE media ADD COLUMN letterboxd_slug VARCHAR(200)"))
-                    conn.commit()
-                print("Migração concluída com sucesso.")
+        if not inspector.has_table("media"):
+            return
+
+        columns = [col['name'] for col in inspector.get_columns('media')]
+        new_columns = {
+            'letterboxd_slug':      'VARCHAR(200)',
+            'tmdb_id':              'INTEGER',
+            'runtime':              'VARCHAR(20)',
+            'tagline':              'VARCHAR(400)',
+            'status':               'VARCHAR(50)',
+            'number_of_seasons':    'INTEGER',
+            'director':             'VARCHAR(200)',
+            'cast_list':            'VARCHAR(500)',
+            'trailer_key':          'VARCHAR(100)',
+            'production_companies': 'VARCHAR(300)',
+            'production_countries': 'VARCHAR(200)',
+            'spoken_languages':     'VARCHAR(200)',
+            'budget':               'BIGINT',
+            'revenue':              'BIGINT',
+            'vote_count':           'INTEGER',
+            'popularity':           'FLOAT',
+            'belongs_to_collection':'VARCHAR(200)',
+        }
+        with db.engine.connect() as conn:
+            for col, col_type in new_columns.items():
+                if col not in columns:
+                    print(f"Migração: adicionando coluna '{col}'...")
+                    conn.execute(text(f"ALTER TABLE media ADD COLUMN {col} {col_type}"))
+            conn.commit()
     except Exception as e:
         print(f"Erro ao verificar/executar migrações: {e}")
 

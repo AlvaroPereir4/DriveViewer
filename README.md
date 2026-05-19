@@ -102,6 +102,34 @@ Fluxo seguro para redefinição de credenciais:
 
 ---
 
+## Enrichment Libraries
+
+The catalog is enriched through external APIs, turning raw Drive files into full media entries.
+
+### TMDB — The Movie Database
+**Endpoint:** `https://api.themoviedb.org/3`
+
+Primary source for movie and series metadata. The following fields are fetched and persisted:
+
+| Field | Description |
+|---|---|
+| `title` | Localized title (pt-BR) |
+| `original_title` | Original release title |
+| `overview` | Plot synopsis |
+| `poster_path` | Vertical poster image path (2:3 ratio) |
+| `backdrop_path` | Horizontal backdrop image path |
+| `release_date` / `first_air_date` | Theatrical or premiere date |
+| `vote_average` | Community rating (0–10 scale) |
+| `genre_ids` | Numeric genre IDs mapped to human-readable strings via `GENRE_MAP` |
+| `media_type` | Content type: `movie` or `tv` |
+
+Images are not stored locally — only paths are saved and full URLs are assembled at runtime using the official TMDB CDN (`https://image.tmdb.org/t/p/`).
+
+### Letterboxd
+No API is consumed — the integration is a **direct deep-link** to the film's page using the slug derived from the original title. Gives users quick access to community reviews and ratings without additional API calls.
+
+---
+
 ## 🌐 Demo ao Vivo
 
 O projeto está implantado e rodando na Vercel! Sinta-se à vontade para acessar, criar uma conta e explorar as funcionalidades:
