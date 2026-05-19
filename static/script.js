@@ -14,10 +14,17 @@ const modalOriginalTitle = document.getElementById('modal-original-title');
 const modalGenres = document.getElementById('modal-genres');
 const modalMeta = document.getElementById('modal-meta');
 const playBtn = document.getElementById('play-btn');
+const trailerBtn = document.getElementById('trailer-btn');
 const playerInfoArea = document.getElementById('player-info-area');
 const modalContent = document.querySelector('.modal-content');
+const modalTagline = document.getElementById('modal-tagline');
+const modalCollection = document.getElementById('modal-collection');
+const modalCrew = document.getElementById('modal-crew');
+const modalFinancials = document.getElementById('modal-financials');
+const modalProduction = document.getElementById('modal-production');
 
 let navigationStack = [];
+let currentModalItem = null;
 let allHomeData = [];
 let currentList = [];
 let lazyLoadObserver;
@@ -506,53 +513,122 @@ function applyModalBackdrop(item) {
     }
 }
 
+// --- SVG ICONS ---
+const SVG_CALENDAR = `<svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+const SVG_STAR     = `<svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+const SVG_CLOCK    = `<svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+const SVG_LB       = `<svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>`;
+
+function formatMoney(val) {
+    if (!val || val === 0) return null;
+    if (val >= 1_000_000_000) return `$${(val / 1_000_000_000).toFixed(1)}B`;
+    if (val >= 1_000_000)     return `$${(val / 1_000_000).toFixed(0)}M`;
+    return `$${val.toLocaleString()}`;
+}
+
+function statusBadgeClass(status) {
+    if (!status) return 'status-neutral';
+    const s = status.toLowerCase();
+    if (s.includes('return') || s.includes('produc')) return 'status-active';
+    if (s.includes('release') || s.includes('ended') || s.includes('canceled')) return 'status-done';
+    return 'status-neutral';
+}
+
 function openDetailsModal(item, updateUrl = true) {
+    currentModalItem = item;
     if (updateUrl) history.pushState(null, null, `/watch/${createSlug(item.title)}`);
     document.body.style.overflow = 'hidden';
+
+    // — Títulos —
     modalTitle.textContent = item.title;
-    modalOriginalTitle.textContent = item.original_title || '';
+    modalOriginalTitle.textContent = item.original_title && item.original_title !== item.title ? item.original_title : '';
+
+    // — Tagline —
+    modalTagline.textContent = item.tagline ? `"${item.tagline}"` : '';
+    modalTagline.style.display = item.tagline ? 'block' : 'none';
+
+    // — Coleção —
+    modalCollection.innerHTML = item.belongs_to_collection
+        ? `<span class="collection-badge">${esc(item.belongs_to_collection)}</span>`
+        : '';
+
     modalSynopsis.textContent = item.synopsis || 'Sinopse indisponível.';
 
     applyModalBackdrop(item);
 
+    // — Poster —
     const posterWrapper = document.querySelector('.details-poster-wrapper');
     if (item.poster) {
         posterWrapper.classList.add('loading');
         modalPoster.style.display = 'none';
         modalPoster.src = item.poster;
-        modalPoster.onload = () => { posterWrapper.classList.remove('loading'); modalPoster.style.display = 'block'; };
+        modalPoster.onload  = () => { posterWrapper.classList.remove('loading'); modalPoster.style.display = 'block'; };
         modalPoster.onerror = () => posterWrapper.classList.remove('loading');
     } else {
         posterWrapper.classList.remove('loading');
         modalPoster.style.display = 'none';
     }
 
+    // — Gêneros —
     modalGenres.innerHTML = '';
     (item.genres || []).forEach(genre => {
         const span = document.createElement('span');
         span.className = 'genre-tag';
-        span.innerText = genre;
+        span.textContent = genre;
         modalGenres.appendChild(span);
     });
 
-    let metaHtml = '';
-    if (item.release_date) {
-        const dateStr = new Date(item.release_date).toLocaleDateString('pt-BR');
-        metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${dateStr}</div>`;
-    }
-    if (item.rating) {
-        metaHtml += `<div class="meta-item" title="Nota TMDB"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)} (TMDB)</div>`;
-    }
-
+    // — Meta row —
     const lbSlug = item.letterboxd_slug || createSlug(item.original_title || item.title);
-    metaHtml += `
-        <a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">
-            <svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>
-            Letterboxd
-        </a>`;
+    let metaHtml = '';
+    if (item.year)    metaHtml += `<div class="meta-item">${SVG_CALENDAR} ${esc(String(item.year))}</div>`;
+    if (item.runtime) metaHtml += `<div class="meta-item">${SVG_CLOCK} ${esc(item.runtime)}</div>`;
+    if (item.rating)  metaHtml += `<div class="meta-item" title="${item.vote_count ? item.vote_count.toLocaleString() + ' votos' : ''}">
+                                       ${SVG_STAR} ${item.rating.toFixed(1)}
+                                       ${item.vote_count ? `<span class="vote-count">(${(item.vote_count/1000).toFixed(0)}k)</span>` : ''}
+                                   </div>`;
+    if (item.number_of_seasons) metaHtml += `<div class="meta-item">📺 ${item.number_of_seasons} Temporada${item.number_of_seasons > 1 ? 's' : ''}</div>`;
+    if (item.status)  metaHtml += `<span class="status-badge ${statusBadgeClass(item.status)}">${esc(item.status)}</span>`;
+    metaHtml += `<a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">${SVG_LB} Letterboxd</a>`;
     modalMeta.innerHTML = metaHtml;
 
-    playBtn.onclick = () => startVideo(item);
+    // — Crew —
+    let crewHtml = '';
+    if (item.director) crewHtml += `<div class="crew-row"><span class="crew-label">Direção</span><span class="crew-value">${esc(item.director)}</span></div>`;
+    if (item.cast_list) {
+        const chips = item.cast_list.split(',').map(n => `<span class="cast-chip">${esc(n.trim())}</span>`).join('');
+        crewHtml += `<div class="crew-row"><span class="crew-label">Elenco</span><div class="cast-chips">${chips}</div></div>`;
+    }
+    modalCrew.innerHTML = crewHtml;
+
+    // — Financeiro —
+    const budget  = formatMoney(item.budget);
+    const revenue = formatMoney(item.revenue);
+    if (budget || revenue) {
+        modalFinancials.innerHTML = `<div class="financials-row">
+            ${budget  ? `<div class="financial-item"><span class="financial-label">Orçamento</span><span class="financial-value">${budget}</span></div>` : ''}
+            ${revenue ? `<div class="financial-item"><span class="financial-label">Bilheteria</span><span class="financial-value">${revenue}</span></div>` : ''}
+        </div>`;
+        modalFinancials.style.display = 'block';
+    } else {
+        modalFinancials.style.display = 'none';
+    }
+
+    // — Produção —
+    const prodParts = [item.production_companies, item.production_countries, item.spoken_languages].filter(Boolean);
+    modalProduction.innerHTML = prodParts.length
+        ? `<div class="production-row">${prodParts.map(p => `<span>${esc(p)}</span>`).join('<span class="prod-sep">·</span>')}</div>`
+        : '';
+
+    // — Botões —
+    if (item.trailer_key) {
+        trailerBtn.classList.remove('hidden');
+        trailerBtn.onclick = () => startVideo(item, 'trailer');
+    } else {
+        trailerBtn.classList.add('hidden');
+    }
+    playBtn.onclick = () => startVideo(item, 'drive');
+
     detailsView.style.display = 'flex';
     playerView.classList.add('hidden');
     videoFrame.src = '';
@@ -560,33 +636,48 @@ function openDetailsModal(item, updateUrl = true) {
     document.body.classList.add('modal-open');
 }
 
-function startVideo(item) {
+function backToDetails() {
+    videoFrame.src = '';
+    playerView.classList.add('hidden');
+    detailsView.style.display = 'flex';
+    document.getElementById('back-to-details-btn').classList.add('hidden');
+}
+
+function startVideo(item, type = 'drive') {
     detailsView.style.display = 'none';
     playerView.classList.remove('hidden');
-    videoFrame.src = `https://drive.google.com/file/d/${item.id}/preview`;
+
+    const backBtn = document.getElementById('back-to-details-btn');
+    if (type === 'trailer') {
+        backBtn.classList.remove('hidden');
+    } else {
+        backBtn.classList.add('hidden');
+    }
+
+    videoFrame.src = type === 'trailer'
+        ? `https://www.youtube.com/embed/${item.trailer_key}?autoplay=1`
+        : `https://drive.google.com/file/d/${item.id}/preview`;
+
+    applyModalBackdrop(item);
 
     const lbSlug = item.letterboxd_slug || createSlug(item.original_title || item.title);
     const genresHtml = (item.genres || []).length
-        ? `<div class="modal-genres" style="margin-top:10px;">${item.genres.map(g => `<span class="genre-tag">${g}</span>`).join('')}</div>`
+        ? `<div class="modal-genres">${item.genres.map(g => `<span class="genre-tag">${esc(g)}</span>`).join('')}</div>`
         : '';
-
-    let metaHtml = '<div class="modal-meta-tags">';
-    if (item.release_date) {
-        const dateStr = new Date(item.release_date).toLocaleDateString('pt-BR');
-        metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${dateStr}</div>`;
-    }
-    if (item.rating) {
-        metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)}</div>`;
-    }
-    metaHtml += `<a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link"><svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg> Letterboxd</a>`;
-    metaHtml += '</div>';
 
     playerInfoArea.innerHTML = `
         <div class="details-info" style="width:100%;">
             <h2 style="margin-top:20px;">${esc(item.title)}</h2>
-            <h3 style="font-size:1rem;font-weight:400;color:var(--text-secondary);font-style:italic;">${esc(item.original_title || '')}</h3>
+            ${item.original_title && item.original_title !== item.title ? `<h3 style="font-size:1rem;font-weight:400;color:var(--text-secondary);font-style:italic;">${esc(item.original_title)}</h3>` : ''}
+            ${item.tagline ? `<p class="modal-tagline" style="display:block;">"${esc(item.tagline)}"</p>` : ''}
             ${genresHtml}
-            ${metaHtml}
+            <div class="modal-meta-tags">
+                ${item.year    ? `<div class="meta-item">${SVG_CALENDAR} ${esc(String(item.year))}</div>` : ''}
+                ${item.runtime ? `<div class="meta-item">${SVG_CLOCK} ${esc(item.runtime)}</div>` : ''}
+                ${item.rating  ? `<div class="meta-item">${SVG_STAR} ${item.rating.toFixed(1)}</div>` : ''}
+                <a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link">${SVG_LB} Letterboxd</a>
+            </div>
+            ${item.director ? `<div class="crew-row" style="margin-top:8px;"><span class="crew-label">Direção</span><span class="crew-value">${esc(item.director)}</span></div>` : ''}
             <p class="modal-synopsis">${esc(item.synopsis || '')}</p>
         </div>`;
 }

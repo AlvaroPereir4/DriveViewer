@@ -140,7 +140,22 @@ def get_home_items():
             "release_date": m.release_date,
             "original_title": m.original_title,
             "genres": [g.strip() for g in m.genres.split(',')] if m.genres else [],
-            "letterboxd_slug": m.letterboxd_slug
+            "letterboxd_slug": m.letterboxd_slug,
+            "runtime": m.runtime,
+            "tagline": m.tagline,
+            "status": m.status,
+            "number_of_seasons": m.number_of_seasons,
+            "director": m.director,
+            "cast_list": m.cast_list,
+            "trailer_key": m.trailer_key,
+            "production_companies": m.production_companies,
+            "production_countries": m.production_countries,
+            "spoken_languages": m.spoken_languages,
+            "budget": m.budget,
+            "revenue": m.revenue,
+            "vote_count": m.vote_count,
+            "popularity": m.popularity,
+            "belongs_to_collection": m.belongs_to_collection,
         } for m in medias
     ]
     return home_items
@@ -413,17 +428,60 @@ def admin_edit(id):
         media.media_type = request.form.get('media_type')
         media.genres = request.form.get('genres')
         media.letterboxd_slug = request.form.get('letterboxd_slug')
-        
-        try:
-            media.vote_average = float(request.form.get('vote_average'))
-        except (ValueError, TypeError):
-            pass
-
+        media.tagline = request.form.get('tagline')
+        media.status = request.form.get('status')
+        media.runtime = request.form.get('runtime')
+        media.director = request.form.get('director')
+        media.cast_list = request.form.get('cast_list')
+        media.trailer_key = request.form.get('trailer_key')
+        media.production_companies = request.form.get('production_companies')
+        media.production_countries = request.form.get('production_countries')
+        media.spoken_languages = request.form.get('spoken_languages')
+        media.belongs_to_collection = request.form.get('belongs_to_collection')
+        try: media.vote_average = float(request.form.get('vote_average'))
+        except (ValueError, TypeError): pass
+        try: media.vote_count = int(request.form.get('vote_count'))
+        except (ValueError, TypeError): pass
+        try: media.popularity = float(request.form.get('popularity'))
+        except (ValueError, TypeError): pass
+        try: media.number_of_seasons = int(request.form.get('number_of_seasons'))
+        except (ValueError, TypeError): pass
+        try: media.tmdb_id = int(request.form.get('tmdb_id'))
+        except (ValueError, TypeError): pass
+        try: media.budget = int(request.form.get('budget'))
+        except (ValueError, TypeError): pass
+        try: media.revenue = int(request.form.get('revenue'))
+        except (ValueError, TypeError): pass
         db.session.commit()
         flash('Mídia atualizada com sucesso!', 'success')
         return redirect(url_for('admin_dashboard'))
-        
     return render_template('admin_edit.html', media=media)
+
+@app.route('/api/admin/media/<int:id>', methods=['POST'])
+@admin_required
+def api_update_media(id):
+    media = Media.query.get_or_404(id)
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    str_fields = ['title','original_title','drive_id','overview','poster_path','backdrop_path',
+                  'release_date','media_type','genres','letterboxd_slug','tagline','status',
+                  'runtime','director','cast_list','trailer_key','production_companies',
+                  'production_countries','spoken_languages','belongs_to_collection']
+    for f in str_fields:
+        if f in data:
+            setattr(media, f, data[f] or None)
+
+    for f, cast in [('vote_average', float), ('popularity', float),
+                    ('vote_count', int), ('number_of_seasons', int),
+                    ('tmdb_id', int), ('budget', int), ('revenue', int)]:
+        if f in data:
+            try: setattr(media, f, cast(data[f]) if data[f] not in (None, '') else None)
+            except (ValueError, TypeError): pass
+
+    db.session.commit()
+    return jsonify({'ok': True, 'title': media.title})
 
 @app.route('/admin/delete/<int:id>', methods=['POST'])
 @admin_required

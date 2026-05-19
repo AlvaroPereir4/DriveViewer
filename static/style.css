@@ -692,6 +692,132 @@ body.modal-open .background-effects { display: none; }
     max-width: 620px;
 }
 
+/* ============================================================
+   MODAL — NOVOS ELEMENTOS
+   ============================================================ */
+
+.modal-collection { margin-bottom: 6px; }
+.collection-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--accent-color);
+    border: 1px solid rgba(232,124,3,0.35);
+    background: rgba(232,124,3,0.08);
+    border-radius: 3px;
+    padding: 3px 10px;
+}
+
+.modal-tagline {
+    font-size: 0.97rem;
+    font-style: italic;
+    color: rgba(255,255,255,0.42);
+    line-height: 1.4;
+    margin-top: -6px;
+    display: none;
+}
+
+.vote-count {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.35);
+    margin-left: 2px;
+}
+
+.status-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: 3px 9px;
+    border: 1px solid;
+    align-self: center;
+}
+.status-done    { color: #6fcf97; border-color: rgba(111,207,151,0.3); background: rgba(111,207,151,0.08); }
+.status-active  { color: var(--accent-color); border-color: rgba(232,124,3,0.35); background: rgba(232,124,3,0.08); }
+.status-neutral { color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.15); background: transparent; }
+
+.modal-crew { display: flex; flex-direction: column; gap: 8px; }
+.crew-row { display: flex; align-items: flex-start; gap: 10px; }
+.crew-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(255,255,255,0.35);
+    min-width: 52px;
+    padding-top: 3px;
+    flex-shrink: 0;
+}
+.crew-value { font-size: 0.92rem; color: rgba(255,255,255,0.85); }
+.cast-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.cast-chip {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 3px 10px;
+    transition: background 0.2s, color 0.2s;
+}
+.cast-chip:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.modal-financials { display: none; }
+.financials-row { display: flex; gap: 28px; flex-wrap: wrap; }
+.financial-item { display: flex; flex-direction: column; gap: 2px; }
+.financial-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(255,255,255,0.3);
+}
+.financial-value { font-size: 1rem; font-weight: 600; color: rgba(255,255,255,0.75); }
+
+.production-row {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.28);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.5;
+}
+.prod-sep { color: rgba(255,255,255,0.15); }
+
+.modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.trailer-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 22px;
+    height: 52px;
+    border-radius: 26px;
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.75);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.trailer-action-btn svg { width: 18px; height: 18px; }
+.trailer-action-btn:hover {
+    border-color: rgba(255,255,255,0.6);
+    color: #fff;
+    background: rgba(255,255,255,0.06);
+}
+.trailer-action-btn.hidden { display: none !important; }
+
 .play-action-btn {
     width: 72px; height: 72px; border-radius: 50%;
     background: var(--accent-color);
@@ -715,6 +841,22 @@ body.modal-open .background-effects { display: none; }
 .player-view {
     padding: 40px 50px 52px;
 }
+
+.back-to-details-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.45);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.88rem;
+    cursor: pointer;
+    padding: 0 0 16px 0;
+    transition: color 0.2s;
+}
+.back-to-details-btn:hover { color: rgba(255,255,255,0.85); }
+.back-to-details-btn.hidden { display: none; }
 
 .video-wrapper {
     position: relative;
