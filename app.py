@@ -571,10 +571,28 @@ def add_media():
                 'language': 'pt-BR'
             }
             try:
+                # 1. Detalhes principais
                 response = requests.get(details_url, params=params)
                 response.raise_for_status()
                 item = response.json()
 
+                # 2. Créditos (diretor + elenco)
+                try:
+                    credits_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/credits"
+                    cr = requests.get(credits_url, params={'api_key': TMDB_API_KEY}, timeout=8)
+                    credits = cr.json() if cr.ok else {}
+                except Exception:
+                    credits = {}
+
+                # 3. Vídeos (trailer)
+                try:
+                    videos_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/videos"
+                    vr = requests.get(videos_url, params={'api_key': TMDB_API_KEY, 'language': 'en-US'}, timeout=8)
+                    videos = vr.json() if vr.ok else {}
+                except Exception:
+                    videos = {}
+
+                # --- Campos básicos ---
                 genres_list = [GENRE_MAP.get(g['id'], g['name']) for g in item.get('genres', [])]
                 genres_str = ", ".join(genres_list)
 
@@ -582,10 +600,36 @@ def add_media():
                     title = item.get('title')
                     original_title = item.get('original_title')
                     release_date = item.get('release_date')
-                else: # tv
+                    runtime_min = item.get('runtime') or 0
+                    runtime_str = f"{runtime_min // 60}h {runtime_min % 60}min" if runtime_min else None
+                    number_of_seasons = None
+                    collection = item.get('belongs_to_collection', {})
+                    collection_name = collection.get('name') if collection else None
+                else:
                     title = item.get('name')
                     original_title = item.get('original_name')
                     release_date = item.get('first_air_date')
+                    runtime_str = None
+                    number_of_seasons = item.get('number_of_seasons')
+                    collection_name = None
+
+                # --- Equipe ---
+                crew = credits.get('crew', [])
+                cast = credits.get('cast', [])
+                director = next((p['name'] for p in crew if p.get('job') == 'Director'), None)
+                cast_list = ", ".join(p['name'] for p in cast[:8])
+
+                # --- Trailer ---
+                trailer_key = None
+                for v in videos.get('results', []):
+                    if v.get('site') == 'YouTube' and v.get('type') == 'Trailer':
+                        trailer_key = v.get('key')
+                        break
+
+                # --- Produção ---
+                production_companies = ", ".join(c['name'] for c in item.get('production_companies', [])[:4])
+                production_countries = ", ".join(c['name'] for c in item.get('production_countries', []))
+                spoken_languages = ", ".join(l.get('english_name', l.get('name', '')) for l in item.get('spoken_languages', []))
 
                 new_media = Media(
                     drive_id=drive_id,
@@ -596,8 +640,24 @@ def add_media():
                     backdrop_path=item.get('backdrop_path'),
                     release_date=release_date,
                     vote_average=item.get('vote_average'),
+                    vote_count=item.get('vote_count'),
+                    popularity=item.get('popularity'),
                     media_type=media_type,
-                    genres=genres_str
+                    genres=genres_str,
+                    tmdb_id=int(tmdb_id),
+                    tagline=item.get('tagline'),
+                    status=item.get('status'),
+                    runtime=runtime_str,
+                    number_of_seasons=number_of_seasons,
+                    belongs_to_collection=collection_name,
+                    budget=item.get('budget'),
+                    revenue=item.get('revenue'),
+                    director=director,
+                    cast_list=cast_list,
+                    trailer_key=trailer_key,
+                    production_companies=production_companies,
+                    production_countries=production_countries,
+                    spoken_languages=spoken_languages,
                 )
                 db.session.add(new_media)
                 db.session.commit()

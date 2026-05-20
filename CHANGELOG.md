@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.2] - 2026-05-17 - 2026-05-19
+- Enrich: Added 15 new TMDB fields: `tagline`, `runtime`, `status`, `number_of_seasons`, `director`, `cast_list`, `trailer_key`, `belongs_to_collection`, `vote_count`, `popularity`, `production_companies`, `production_countries`, `spoken_languages`, `budget`, `revenue`.
+- Enrich: New media added via admin now auto-fetches all enriched fields (credits + videos) on creation, no manual enrichment step needed.
+- Feature: Trailer playback integrated into the movie modal with a dedicated Trailer button.
+- Feature: Back-to-details button in the player view to return without closing the modal.
+- Feature: Modal redesigned to display enriched data — tagline, collection badge, director/cast chips, financials, production info and status badge.
+- Admin: Dashboard fully rewritten as an inline spreadsheet-style editor — edit any field without opening a separate page.
+- Admin: Edit panel opens with a smooth slide-down animation per row.
+- Admin: Sections laid out horizontally to minimize vertical scrolling.
+- Admin: Table columns are now sortable by Title, Type, Year, Rating and ID with asc/desc toggle.
+- Admin: Smart ID extraction — paste a full YouTube or Google Drive URL into ID fields and only the ID is saved.
+- Admin: Validation on media add — blocks duplicate Drive ID already in the catalog.
+- Fix: CSRF token missing on Add Media search and add forms.
+- Fix: Credits and videos TMDB requests now handled gracefully — media is saved even if secondary calls fail.
+
 ## [0.1.1] - 2026-05-14 - 2026-05-17
 - Security: Improved security coverage on specific endpoints.
 - Perf: Throttle mousemove spotlight via requestAnimationFrame and scope will-change to hover only.

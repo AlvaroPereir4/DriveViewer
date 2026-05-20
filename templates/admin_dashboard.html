@@ -9,7 +9,7 @@
     <style>
         body.login-body { height: auto; overflow-y: auto; display: block; }
 
-        .admin-container { max-width: 1500px; margin: 20px auto; padding: 20px; }
+        .admin-container { max-width: 1700px; margin: 20px auto; padding: 20px 32px; }
 
         .admin-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -40,6 +40,14 @@
             color: rgba(255,255,255,0.45); font-size: 0.72rem;
             text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
         }
+        th.sortable {
+            cursor: pointer; user-select: none;
+            transition: color 0.2s;
+        }
+        th.sortable:hover { color: rgba(255,255,255,0.75); }
+        th.sortable.asc::after  { content: ' ↑'; color: var(--accent-color); }
+        th.sortable.desc::after { content: ' ↓'; color: var(--accent-color); }
+        th.sortable.asc, th.sortable.desc { color: rgba(255,255,255,0.85); }
         .media-row td {
             padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
             color: var(--text-secondary); vertical-align: middle;
@@ -74,43 +82,77 @@
             border-bottom: 2px solid var(--accent-color) !important;
             background: rgba(232,124,3,0.03) !important;
         }
+        .edit-panel-inner {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
+        }
+        .edit-panel-row.open .edit-panel-inner {
+            max-height: 900px;
+            opacity: 1;
+        }
+        /* Layout principal do painel: seções side-by-side */
         .edit-panel {
-            padding: 20px 24px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px 20px;
+            padding: 18px 24px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
         }
 
-        .edit-field { display: flex; flex-direction: column; gap: 4px; }
-        .edit-field.span2 { grid-column: span 2; }
-        .edit-field.span3 { grid-column: span 3; }
+        .edit-sections-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+        }
+        .edit-sections-row:last-of-type {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        .edit-section {
+            padding: 0 18px;
+            border-right: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .edit-section:first-child { padding-left: 0; }
+        .edit-section:last-child { padding-right: 0; border-right: none; }
+
+        .edit-section-label {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px;
+            color: rgba(255,255,255,0.2); border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 5px; margin-bottom: 2px; white-space: nowrap;
+        }
+
+        .edit-field { display: flex; flex-direction: column; gap: 3px; }
 
         .edit-field label {
-            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px;
-            color: rgba(255,255,255,0.3); font-weight: 600;
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.28); font-weight: 600;
         }
         .edit-field input, .edit-field textarea, .edit-field select {
-            padding: 7px 10px; background: rgba(255,255,255,0.05);
+            padding: 6px 9px; background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
-            color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.88rem;
-            transition: border-color 0.2s;
+            color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.85rem;
+            transition: border-color 0.2s, background 0.2s;
+            width: 100%; box-sizing: border-box;
         }
         .edit-field input:focus, .edit-field textarea:focus, .edit-field select:focus {
             border-color: var(--accent-color); outline: none;
             background: rgba(255,255,255,0.07);
         }
-        .edit-field textarea { resize: vertical; min-height: 70px; }
-
-        .edit-section-label {
-            grid-column: span 3;
-            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
-            color: rgba(255,255,255,0.2); border-bottom: 1px solid rgba(255,255,255,0.06);
-            padding-bottom: 4px; margin-top: 8px;
-        }
+        .edit-field textarea { resize: vertical; min-height: 64px; }
 
         .edit-actions {
-            grid-column: span 3; display: flex; justify-content: flex-end;
-            gap: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);
+            display: flex; justify-content: flex-end; align-items: center;
+            gap: 10px; padding: 10px 0 4px; border-top: 1px solid rgba(255,255,255,0.06);
+            margin-top: 4px; width: 100%;
         }
         .btn-save-inline {
             background: var(--accent-color); color: #000; border: none;
@@ -165,11 +207,11 @@
             <thead>
                 <tr>
                     <th style="width:46px"></th>
-                    <th>Título</th>
-                    <th>Tipo</th>
-                    <th>Ano</th>
-                    <th>Nota</th>
-                    <th>Drive ID</th>
+                    <th class="sortable" data-col="title" onclick="sortTable('title')">Título</th>
+                    <th class="sortable" data-col="type" onclick="sortTable('type')">Tipo</th>
+                    <th class="sortable" data-col="year" onclick="sortTable('year')">Ano</th>
+                    <th class="sortable" data-col="rating" onclick="sortTable('rating')">Nota</th>
+                    <th class="sortable" data-col="id" onclick="sortTable('id')">ID</th>
                     <th style="width:130px"></th>
                 </tr>
             </thead>
@@ -206,138 +248,142 @@
                 <!-- Painel de edição inline -->
                 <tr class="edit-panel-row" id="edit-{{ media.id }}">
                     <td colspan="7" class="edit-panel-cell">
+                        <div class="edit-panel-inner">
                         <div class="edit-panel">
 
-                            <div class="edit-section-label">Identificação</div>
+                            <!-- LINHA 1: Identificação | Conteúdo | Datas+Status | Avaliações -->
+                            <div class="edit-sections-row" style="grid-template-columns: 2fr 2.5fr 1.4fr 1.4fr;">
 
-                            <div class="edit-field">
-                                <label>Título</label>
-                                <input type="text" name="title" value="{{ media.title }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Título Original</label>
-                                <input type="text" name="original_title" value="{{ media.original_title or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Tipo</label>
-                                <select name="media_type">
-                                    <option value="movie" {% if media.media_type == 'movie' %}selected{% endif %}>Filme</option>
-                                    <option value="tv" {% if media.media_type == 'tv' %}selected{% endif %}>Série</option>
-                                </select>
-                            </div>
-                            <div class="edit-field">
-                                <label>Google Drive ID</label>
-                                <input type="text" name="drive_id" value="{{ media.drive_id }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>TMDB ID</label>
-                                <input type="number" name="tmdb_id" value="{{ media.tmdb_id or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Letterboxd Slug</label>
-                                <input type="text" name="letterboxd_slug" value="{{ media.letterboxd_slug or '' }}">
-                            </div>
+                                <div class="edit-section">
+                                    <div class="edit-section-label">Identificação</div>
+                                    <div class="edit-field">
+                                        <label>Título</label>
+                                        <input type="text" name="title" value="{{ media.title }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Título Original</label>
+                                        <input type="text" name="original_title" value="{{ media.original_title or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Tipo</label>
+                                        <select name="media_type">
+                                            <option value="movie" {% if media.media_type == 'movie' %}selected{% endif %}>Filme</option>
+                                            <option value="tv" {% if media.media_type == 'tv' %}selected{% endif %}>Série</option>
+                                        </select>
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Google Drive ID</label>
+                                        <input type="text" name="drive_id" value="{{ media.drive_id }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>TMDB ID</label>
+                                        <input type="number" name="tmdb_id" value="{{ media.tmdb_id or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Letterboxd Slug</label>
+                                        <input type="text" name="letterboxd_slug" value="{{ media.letterboxd_slug or '' }}">
+                                    </div>
+                                </div>
 
-                            <div class="edit-section-label">Conteúdo</div>
+                                <div class="edit-section">
+                                    <div class="edit-section-label">Conteúdo</div>
+                                    <div class="edit-field">
+                                        <label>Sinopse</label>
+                                        <textarea name="overview" style="min-height:90px;">{{ media.overview or '' }}</textarea>
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Tagline</label>
+                                        <input type="text" name="tagline" value="{{ media.tagline or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Gêneros (vírgula)</label>
+                                        <input type="text" name="genres" value="{{ media.genres or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Coleção / Franquia</label>
+                                        <input type="text" name="belongs_to_collection" value="{{ media.belongs_to_collection or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Trailer YouTube Key</label>
+                                        <input type="text" name="trailer_key" value="{{ media.trailer_key or '' }}">
+                                    </div>
+                                </div>
 
-                            <div class="edit-field span3">
-                                <label>Sinopse</label>
-                                <textarea name="overview">{{ media.overview or '' }}</textarea>
-                            </div>
-                            <div class="edit-field span2">
-                                <label>Tagline</label>
-                                <input type="text" name="tagline" value="{{ media.tagline or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Gêneros (vírgula)</label>
-                                <input type="text" name="genres" value="{{ media.genres or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Coleção / Franquia</label>
-                                <input type="text" name="belongs_to_collection" value="{{ media.belongs_to_collection or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Trailer YouTube Key</label>
-                                <input type="text" name="trailer_key" value="{{ media.trailer_key or '' }}">
-                            </div>
+                                <div class="edit-section">
+                                    <div class="edit-section-label">Datas e Status</div>
+                                    <div class="edit-field">
+                                        <label>Lançamento</label>
+                                        <input type="text" name="release_date" value="{{ media.release_date or '' }}" placeholder="AAAA-MM-DD">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Status</label>
+                                        <input type="text" name="status" value="{{ media.status or '' }}" placeholder="Released / Ended…">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Runtime</label>
+                                        <input type="text" name="runtime" value="{{ media.runtime or '' }}" placeholder="2h 10min">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Nº de Temporadas</label>
+                                        <input type="number" name="number_of_seasons" value="{{ media.number_of_seasons or '' }}">
+                                    </div>
+                                    <div class="edit-section-label" style="margin-top:8px;">Avaliações</div>
+                                    <div class="edit-field">
+                                        <label>Nota (0–10)</label>
+                                        <input type="number" step="0.1" name="vote_average" value="{{ media.vote_average or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Nº de Votos</label>
+                                        <input type="number" name="vote_count" value="{{ media.vote_count or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Popularidade</label>
+                                        <input type="number" step="0.01" name="popularity" value="{{ media.popularity or '' }}">
+                                    </div>
+                                </div>
 
-                            <div class="edit-section-label">Datas e Status</div>
+                                <div class="edit-section">
+                                    <div class="edit-section-label">Equipe</div>
+                                    <div class="edit-field">
+                                        <label>Direção</label>
+                                        <input type="text" name="director" value="{{ media.director or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Elenco (vírgula)</label>
+                                        <textarea name="cast_list" style="min-height:64px;">{{ media.cast_list or '' }}</textarea>
+                                    </div>
+                                    <div class="edit-section-label" style="margin-top:8px;">Imagens</div>
+                                    <div class="edit-field">
+                                        <label>Poster Path</label>
+                                        <input type="text" name="poster_path" value="{{ media.poster_path or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Backdrop Path</label>
+                                        <input type="text" name="backdrop_path" value="{{ media.backdrop_path or '' }}">
+                                    </div>
+                                    <div class="edit-section-label" style="margin-top:8px;">Produção</div>
+                                    <div class="edit-field">
+                                        <label>Produtoras</label>
+                                        <input type="text" name="production_companies" value="{{ media.production_companies or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Países</label>
+                                        <input type="text" name="production_countries" value="{{ media.production_countries or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Idiomas</label>
+                                        <input type="text" name="spoken_languages" value="{{ media.spoken_languages or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Orçamento (USD)</label>
+                                        <input type="number" name="budget" value="{{ media.budget or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Bilheteria (USD)</label>
+                                        <input type="number" name="revenue" value="{{ media.revenue or '' }}">
+                                    </div>
+                                </div>
 
-                            <div class="edit-field">
-                                <label>Data de Lançamento</label>
-                                <input type="text" name="release_date" value="{{ media.release_date or '' }}" placeholder="AAAA-MM-DD">
-                            </div>
-                            <div class="edit-field">
-                                <label>Status</label>
-                                <input type="text" name="status" value="{{ media.status or '' }}" placeholder="Released / Ended…">
-                            </div>
-                            <div class="edit-field">
-                                <label>Runtime</label>
-                                <input type="text" name="runtime" value="{{ media.runtime or '' }}" placeholder="2h 10min">
-                            </div>
-                            <div class="edit-field">
-                                <label>Nº de Temporadas</label>
-                                <input type="number" name="number_of_seasons" value="{{ media.number_of_seasons or '' }}">
-                            </div>
-
-                            <div class="edit-section-label">Avaliações</div>
-
-                            <div class="edit-field">
-                                <label>Nota (0–10)</label>
-                                <input type="number" step="0.1" name="vote_average" value="{{ media.vote_average or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Nº de Votos</label>
-                                <input type="number" name="vote_count" value="{{ media.vote_count or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Popularidade</label>
-                                <input type="number" step="0.01" name="popularity" value="{{ media.popularity or '' }}">
-                            </div>
-
-                            <div class="edit-section-label">Equipe</div>
-
-                            <div class="edit-field">
-                                <label>Direção</label>
-                                <input type="text" name="director" value="{{ media.director or '' }}">
-                            </div>
-                            <div class="edit-field span2">
-                                <label>Elenco Principal (vírgula)</label>
-                                <input type="text" name="cast_list" value="{{ media.cast_list or '' }}">
-                            </div>
-
-                            <div class="edit-section-label">Produção</div>
-
-                            <div class="edit-field">
-                                <label>Produtoras</label>
-                                <input type="text" name="production_companies" value="{{ media.production_companies or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Países</label>
-                                <input type="text" name="production_countries" value="{{ media.production_countries or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Idiomas</label>
-                                <input type="text" name="spoken_languages" value="{{ media.spoken_languages or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Orçamento (USD)</label>
-                                <input type="number" name="budget" value="{{ media.budget or '' }}">
-                            </div>
-                            <div class="edit-field">
-                                <label>Bilheteria (USD)</label>
-                                <input type="number" name="revenue" value="{{ media.revenue or '' }}">
-                            </div>
-
-                            <div class="edit-section-label">Imagens</div>
-
-                            <div class="edit-field span2">
-                                <label>Poster Path (TMDB)</label>
-                                <input type="text" name="poster_path" value="{{ media.poster_path or '' }}">
-                            </div>
-                            <div class="edit-field span2">
-                                <label>Backdrop Path (TMDB)</label>
-                                <input type="text" name="backdrop_path" value="{{ media.backdrop_path or '' }}">
                             </div>
 
                             <div class="edit-actions">
@@ -346,6 +392,7 @@
                                 <button type="button" class="btn-save-inline" onclick="saveMedia({{ media.id }})">Salvar</button>
                             </div>
 
+                        </div>
                         </div>
                     </td>
                 </tr>
@@ -359,12 +406,137 @@
     </footer>
 
     <script>
+        // Mouse glow
+        let rafPending = false;
         document.addEventListener('mousemove', (e) => {
-            document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
-            document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
-        });
+            if (rafPending) return;
+            rafPending = true;
+            requestAnimationFrame(() => {
+                document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+                document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+                rafPending = false;
+            });
+        }, { passive: true });
 
-        // Filtro
+        // ─── Extração de ID ───────────────────────────────────────────────
+
+        function extractYouTubeId(val) {
+            // youtu.be/ID  |  ?v=ID  |  /embed/ID  — ou já é o ID puro
+            const patterns = [
+                /(?:youtube\.com\/watch\?.*v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
+            ];
+            for (const re of patterns) {
+                const m = val.match(re);
+                if (m) return m[1];
+            }
+            // Se já parece um ID limpo (11 chars alphanum+_-)
+            if (/^[A-Za-z0-9_-]{11}$/.test(val.trim())) return val.trim();
+            return val;
+        }
+
+        function extractDriveId(val) {
+            // /d/ID/  |  id=ID  — ou já é o ID puro
+            let m = val.match(/\/d\/([A-Za-z0-9_-]+)/);
+            if (m) return m[1];
+            m = val.match(/[?&]id=([A-Za-z0-9_-]+)/);
+            if (m) return m[1];
+            return val.trim();
+        }
+
+        // Aplica extração nos campos ao sair (blur)
+        document.addEventListener('blur', (e) => {
+            const el = e.target;
+            if (!el.name) return;
+            if (el.name === 'trailer_key') {
+                const clean = extractYouTubeId(el.value.trim());
+                if (clean !== el.value.trim()) {
+                    el.value = clean;
+                    flashField(el);
+                }
+            }
+            if (el.name === 'drive_id') {
+                const clean = extractDriveId(el.value.trim());
+                if (clean !== el.value.trim()) {
+                    el.value = clean;
+                    flashField(el);
+                }
+            }
+        }, true);
+
+        function flashField(el) {
+            el.style.transition = 'border-color 0.2s, background 0.2s';
+            el.style.borderColor = 'var(--accent-color)';
+            el.style.background = 'rgba(232,124,3,0.12)';
+            setTimeout(() => {
+                el.style.borderColor = '';
+                el.style.background = '';
+            }, 1000);
+        }
+
+        // ─── Ordenação ────────────────────────────────────────────────────
+
+        let sortState = { col: null, dir: 1 };
+
+        function sortTable(col) {
+            const tbody = document.querySelector('#mediaTable tbody');
+            // Pega apenas as linhas de dados (não os painéis de edição)
+            const pairs = [...tbody.querySelectorAll('tr.media-row')].map(row => {
+                const editRow = document.getElementById('edit-' + row.id.replace('row-', ''));
+                return { row, editRow };
+            });
+
+            // Alterna direção se for a mesma coluna
+            if (sortState.col === col) {
+                sortState.dir *= -1;
+            } else {
+                sortState.col = col;
+                sortState.dir = 1;
+            }
+
+            // Atualiza ícones nos headers
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('asc', 'desc');
+                if (th.dataset.col === col) {
+                    th.classList.add(sortState.dir === 1 ? 'asc' : 'desc');
+                }
+            });
+
+            pairs.sort((a, b) => {
+                let va, vb;
+                switch (col) {
+                    case 'title':
+                        va = a.row.querySelector('.row-title')?.textContent.trim().toLowerCase() || '';
+                        vb = b.row.querySelector('.row-title')?.textContent.trim().toLowerCase() || '';
+                        return va.localeCompare(vb) * sortState.dir;
+                    case 'type':
+                        va = a.row.querySelector('.row-type')?.textContent.trim() || '';
+                        vb = b.row.querySelector('.row-type')?.textContent.trim() || '';
+                        return va.localeCompare(vb) * sortState.dir;
+                    case 'year':
+                        va = parseInt(a.row.cells[3]?.textContent) || 0;
+                        vb = parseInt(b.row.cells[3]?.textContent) || 0;
+                        return (va - vb) * sortState.dir;
+                    case 'rating':
+                        va = parseFloat(a.row.cells[4]?.textContent) || 0;
+                        vb = parseFloat(b.row.cells[4]?.textContent) || 0;
+                        return (va - vb) * sortState.dir;
+                    case 'id':
+                        va = parseInt(a.row.id.replace('row-', '')) || 0;
+                        vb = parseInt(b.row.id.replace('row-', '')) || 0;
+                        return (va - vb) * sortState.dir;
+                }
+                return 0;
+            });
+
+            // Reinserindo na ordem certa (linha + painel de edição juntos)
+            pairs.forEach(({ row, editRow }) => {
+                tbody.appendChild(row);
+                if (editRow) tbody.appendChild(editRow);
+            });
+        }
+
+        // ─── Filtro ───────────────────────────────────────────────────────
+
         document.getElementById('tableSearch').addEventListener('input', function() {
             const filter = this.value.toUpperCase();
             document.querySelectorAll('.media-row').forEach(row => {
@@ -376,7 +548,8 @@
             });
         });
 
-        // Toggle painel
+        // ─── Toggle painel ────────────────────────────────────────────────
+
         function toggleEdit(id, btn) {
             const panel = document.getElementById('edit-' + id);
             const isOpen = panel.classList.contains('open');
@@ -388,12 +561,13 @@
             if (!isOpen) {
                 panel.classList.add('open');
                 if (btn) btn.classList.add('active');
-                // Scroll suave até o painel
-                setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+                // Aguarda o display:table-row antes do scroll
+                setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
             }
         }
 
-        // Salvar via fetch
+        // ─── Salvar via fetch ─────────────────────────────────────────────
+
         async function saveMedia(id) {
             const panel = document.getElementById('edit-' + id);
             const inputs = panel.querySelectorAll('input, textarea, select');
@@ -401,8 +575,10 @@
             inputs.forEach(el => { if (el.name) data[el.name] = el.value; });
 
             const statusEl = document.getElementById('status-' + id);
+            const saveBtn = panel.querySelector('.btn-save-inline');
             statusEl.textContent = 'Salvando…';
             statusEl.className = 'save-status visible';
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.style.opacity = '0.6'; }
 
             try {
                 const res = await fetch(`/api/admin/media/${id}`, {
@@ -417,16 +593,17 @@
                 if (json.ok) {
                     statusEl.textContent = '✓ Salvo';
                     statusEl.className = 'save-status visible';
-                    // Atualiza o título na linha
                     const titleCell = document.querySelector('#row-' + id + ' .row-title');
                     if (titleCell) titleCell.textContent = json.title;
                     setTimeout(() => { statusEl.className = 'save-status'; }, 2500);
                 } else {
-                    throw new Error(json.error);
+                    throw new Error(json.error || 'Erro desconhecido');
                 }
             } catch (e) {
-                statusEl.textContent = '✗ Erro ao salvar';
+                statusEl.textContent = '✗ ' + e.message;
                 statusEl.className = 'save-status visible error';
+            } finally {
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
             }
         }
     </script>
