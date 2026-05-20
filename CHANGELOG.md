@@ -15,7 +15,7 @@
 - Fix: CSRF token missing on Add Media search and add forms.
 - Fix: Credits and videos TMDB requests now handled gracefully — media is saved even if secondary calls fail.
 
-## [0.1.1] - 2026-05-14 - 2026-05-17
+## [0.1.1] - 2026-05-14 - 2026-05-19
 - Security: Improved security coverage on specific endpoints.
 - Perf: Throttle mousemove spotlight via requestAnimationFrame and scope will-change to hover only.
 - Perf: Debounce search input, skip entrance animation on filter and replace forced reflow with double rAF on card collapse.
