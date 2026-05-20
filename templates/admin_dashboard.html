@@ -7,164 +7,173 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;600&display=swap" rel="stylesheet">
     <style>
-        /* Sobrescreve o estilo do body para permitir scroll */
-        body.login-body {
-            height: auto;
-            overflow-y: auto;
-            display: block;
-        }
+        body.login-body { height: auto; overflow-y: auto; display: block; }
 
-        .admin-container {
-            max-width: 1400px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: var(--card-bg);
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
+        .admin-container { max-width: 1700px; margin: 20px auto; padding: 20px 32px; }
+
         .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px; flex-wrap: wrap; gap: 15px;
         }
-        .admin-header h1 {
-            font-size: 2rem;
-            color: var(--text-primary);
-            margin: 0;
-        }
-        .admin-controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
+        .admin-header h1 { font-size: 2rem; color: var(--text-primary); margin: 0; }
+        .admin-controls { display: flex; gap: 12px; align-items: center; }
         .admin-search {
-            padding: 10px 15px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 5px;
-            color: #fff;
-            font-family: 'Outfit', sans-serif;
-            width: 250px;
-            transition: border-color 0.3s;
+            padding: 9px 14px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 5px;
+            color: #fff; font-family: 'Outfit', sans-serif; width: 240px; transition: border-color 0.3s;
         }
-        .admin-search:focus {
-            border-color: var(--accent-color);
-            outline: none;
+        .admin-search:focus { border-color: var(--accent-color); outline: none; }
+        .btn-primary {
+            background-color: var(--accent-color); color: #000; padding: 9px 16px;
+            border-radius: 5px; text-decoration: none; font-weight: 600;
+            transition: background-color 0.2s; white-space: nowrap; border: none;
+            cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 0.95rem;
         }
-        .admin-actions a {
-            background-color: var(--accent-color);
-            color: #000;
-            padding: 10px 15px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: background-color 0.3s;
-            white-space: nowrap;
-        }
-        .admin-actions a:hover {
-            background-color: var(--accent-hover);
-        }
-        .media-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        .media-table th, .media-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            color: var(--text-secondary);
-        }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+
+        /* TABELA */
+        .media-table { width: 100%; border-collapse: collapse; }
         .media-table th {
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 0.95rem;
-            text-transform: uppercase;
+            padding: 10px 12px; text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.45); font-size: 0.72rem;
+            text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
         }
-        .media-table tbody tr:hover {
-            background-color: rgba(255,255,255,0.03);
-        }
-        .media-table td img {
-            width: 50px;
-            height: 75px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        .media-actions a {
-            color: var(--accent-color);
-            text-decoration: none;
-            margin-right: 10px;
+        th.sortable {
+            cursor: pointer; user-select: none;
             transition: color 0.2s;
         }
-        .media-actions a:hover {
-            color: var(--accent-hover);
+        th.sortable:hover { color: rgba(255,255,255,0.75); }
+        th.sortable.asc::after  { content: ' ↑'; color: var(--accent-color); }
+        th.sortable.desc::after { content: ' ↓'; color: var(--accent-color); }
+        th.sortable.asc, th.sortable.desc { color: rgba(255,255,255,0.85); }
+        .media-row td {
+            padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-secondary); vertical-align: middle;
         }
-        .media-actions .delete-btn {
-            color: #dc3545; /* Red color for delete */
+        .media-row:hover td { background: rgba(255,255,255,0.02); }
+        .media-row td img { width: 36px; height: 54px; object-fit: cover; border-radius: 3px; display: block; }
+        .no-poster { width: 36px; height: 54px; background: #222; border-radius: 3px; }
+
+        .row-title { color: var(--text-primary); font-weight: 600; font-size: 0.95rem; }
+        .row-type { font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.3); }
+
+        .btn-edit {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.6); padding: 5px 12px; border-radius: 4px;
+            cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 0.82rem;
+            transition: all 0.2s; white-space: nowrap;
         }
-        .media-actions .delete-btn:hover {
-            color: #c82333;
+        .btn-edit:hover, .btn-edit.active { background: rgba(232,124,3,0.15); border-color: var(--accent-color); color: var(--accent-color); }
+
+        .btn-delete {
+            background: none; border: none; color: rgba(220,53,69,0.5);
+            cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 0.82rem;
+            padding: 5px 8px; transition: color 0.2s;
+        }
+        .btn-delete:hover { color: #dc3545; }
+
+        /* PAINEL DE EDIÇÃO INLINE */
+        .edit-panel-row { display: none; }
+        .edit-panel-row.open { display: table-row; }
+        .edit-panel-cell {
+            padding: 0 !important;
+            border-bottom: 2px solid var(--accent-color) !important;
+            background: rgba(232,124,3,0.03) !important;
+        }
+        .edit-panel-inner {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
+        }
+        .edit-panel-row.open .edit-panel-inner {
+            max-height: 900px;
+            opacity: 1;
+        }
+        /* Layout principal do painel: seções side-by-side */
+        .edit-panel {
+            padding: 18px 24px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
         }
 
-        /* Responsividade */
-        @media (max-width: 768px) {
-            .admin-container {
-                margin: 10px;
-                padding: 15px;
-            }
-            .admin-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .admin-controls {
-                flex-direction: column;
-                width: 100%;
-            }
-            .admin-search {
-                width: 100%;
-            }
-            .admin-actions a {
-                display: block;
-                text-align: center;
-            }
-            .media-table, .media-table tbody, .media-table tr, .media-table td, .media-table th {
-                display: block;
-            }
-            .media-table thead {
-                display: none;
-            }
-            .media-table tr {
-                margin-bottom: 15px;
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 8px;
-            }
-            .media-table td {
-                text-align: right;
-                padding-left: 50%;
-                position: relative;
-            }
-            .media-table td::before {
-                content: attr(data-label);
-                position: absolute;
-                left: 15px;
-                width: calc(50% - 30px);
-                text-align: left;
-                font-weight: 600;
-                color: var(--text-primary);
-            }
-            .media-table td:last-child {
-                border-bottom: none;
-            }
-            .media-table td img {
-                float: right;
-                margin-left: 10px;
-            }
+        .edit-sections-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 14px;
+            margin-bottom: 14px;
         }
+        .edit-sections-row:last-of-type {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        .edit-section {
+            padding: 0 18px;
+            border-right: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .edit-section:first-child { padding-left: 0; }
+        .edit-section:last-child { padding-right: 0; border-right: none; }
+
+        .edit-section-label {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px;
+            color: rgba(255,255,255,0.2); border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 5px; margin-bottom: 2px; white-space: nowrap;
+        }
+
+        .edit-field { display: flex; flex-direction: column; gap: 3px; }
+
+        .edit-field label {
+            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.28); font-weight: 600;
+        }
+        .edit-field input, .edit-field textarea, .edit-field select {
+            padding: 6px 9px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+            color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.85rem;
+            transition: border-color 0.2s, background 0.2s;
+            width: 100%; box-sizing: border-box;
+        }
+        .edit-field input:focus, .edit-field textarea:focus, .edit-field select:focus {
+            border-color: var(--accent-color); outline: none;
+            background: rgba(255,255,255,0.07);
+        }
+        .edit-field textarea { resize: vertical; min-height: 64px; }
+
+        .edit-actions {
+            display: flex; justify-content: flex-end; align-items: center;
+            gap: 10px; padding: 10px 0 4px; border-top: 1px solid rgba(255,255,255,0.06);
+            margin-top: 4px; width: 100%;
+        }
+        .btn-save-inline {
+            background: var(--accent-color); color: #000; border: none;
+            padding: 8px 20px; border-radius: 4px; cursor: pointer;
+            font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .btn-save-inline:hover { background: var(--accent-hover); }
+        .btn-cancel-inline {
+            background: none; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.5);
+            padding: 8px 16px; border-radius: 4px; cursor: pointer;
+            font-family: 'Outfit', sans-serif; font-size: 0.9rem; transition: all 0.2s;
+        }
+        .btn-cancel-inline:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.8); }
+
+        .save-status {
+            font-size: 0.82rem; align-self: center; color: #6fcf97;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .save-status.visible { opacity: 1; }
+        .save-status.error { color: #dc3545; }
     </style>
 </head>
 <body class="login-body">
@@ -181,17 +190,15 @@
         <div class="admin-header">
             <h1>Painel Administrativo</h1>
             <div class="admin-controls">
-                <input type="text" id="tableSearch" class="admin-search" placeholder="Filtrar por título..." onkeyup="filterTable()">
-                <div class="admin-actions">
-                    <a href="{{ url_for('add_media') }}">Adicionar Nova Mídia</a>
-                </div>
+                <input type="text" id="tableSearch" class="admin-search" placeholder="Filtrar por título...">
+                <a href="{{ url_for('add_media') }}" class="btn-primary">+ Adicionar Mídia</a>
             </div>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}" style="margin-bottom: 20px;">{{ message }}</div>
+                    <div class="alert alert-{{ category }}" style="margin-bottom: 16px;">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
@@ -199,37 +206,197 @@
         <table class="media-table" id="mediaTable">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Capa</th>
-                    <th>Título</th>
-                    <th>Tipo</th>
-                    <th>Drive ID</th>
-                    <th>Ações</th>
+                    <th style="width:46px"></th>
+                    <th class="sortable" data-col="title" onclick="sortTable('title')">Título</th>
+                    <th class="sortable" data-col="type" onclick="sortTable('type')">Tipo</th>
+                    <th class="sortable" data-col="year" onclick="sortTable('year')">Ano</th>
+                    <th class="sortable" data-col="rating" onclick="sortTable('rating')">Nota</th>
+                    <th class="sortable" data-col="id" onclick="sortTable('id')">ID</th>
+                    <th style="width:130px"></th>
                 </tr>
             </thead>
             <tbody>
-                {% for media in medias %}
-                <tr>
-                    <td data-label="ID">{{ media.id }}</td>
-                    <td data-label="Capa">
+            {% for media in medias %}
+                <!-- Linha de exibição -->
+                <tr class="media-row" id="row-{{ media.id }}">
+                    <td>
                         {% if media.poster_path %}
-                            <img src="https://image.tmdb.org/t/p/w92{{ media.poster_path }}" alt="{{ media.title }}">
+                            <img src="https://image.tmdb.org/t/p/w92{{ media.poster_path }}" alt="">
                         {% else %}
-                            <div style="width: 50px; height: 75px; background: #333; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #666; border-radius: 4px;">Sem Capa</div>
+                            <div class="no-poster"></div>
                         {% endif %}
                     </td>
-                    <td data-label="Título" class="title-cell">{{ media.title }}</td>
-                    <td data-label="Tipo">{{ media.media_type }}</td>
-                    <td data-label="Drive ID">{{ media.drive_id }}</td>
-                    <td data-label="Ações" class="media-actions">
-                        <a href="{{ url_for('admin_edit', id=media.id) }}">Editar</a>
-                        <form method="POST" action="{{ url_for('admin_delete', id=media.id) }}" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta mídia?');">
+                    <td>
+                        <div class="row-title title-cell">{{ media.title }}</div>
+                        {% if media.original_title and media.original_title != media.title %}
+                            <div style="font-size:0.78rem;color:rgba(255,255,255,0.3);font-style:italic;">{{ media.original_title }}</div>
+                        {% endif %}
+                    </td>
+                    <td><span class="row-type">{{ media.media_type }}</span></td>
+                    <td>{{ media.release_date[:4] if media.release_date else '—' }}</td>
+                    <td>{{ '%.1f'|format(media.vote_average) if media.vote_average else '—' }}</td>
+                    <td style="font-size:0.78rem;color:rgba(255,255,255,0.3);font-family:monospace;">{{ media.drive_id[:18] }}…</td>
+                    <td>
+                        <button class="btn-edit" onclick="toggleEdit({{ media.id }}, this)">Editar</button>
+                        <form method="POST" action="{{ url_for('admin_delete', id=media.id) }}" style="display:inline;" onsubmit="return confirm('Deletar {{ media.title }}?');">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="delete-btn" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:inherit;padding:0;">Excluir</button>
+                            <button type="submit" class="btn-delete">✕</button>
                         </form>
                     </td>
                 </tr>
-                {% endfor %}
+
+                <!-- Painel de edição inline -->
+                <tr class="edit-panel-row" id="edit-{{ media.id }}">
+                    <td colspan="7" class="edit-panel-cell">
+                        <div class="edit-panel-inner">
+                        <div class="edit-panel">
+
+                            <!-- LINHA 1: Identificação | Conteúdo | Datas+Status | Avaliações -->
+                            <div class="edit-sections-row" style="grid-template-columns: 2fr 2.5fr 1.4fr 1.4fr;">
+
+                                <div class="edit-section">
+                                    <div class="edit-section-label">Identificação</div>
+                                    <div class="edit-field">
+                                        <label>Título</label>
+                                        <input type="text" name="title" value="{{ media.title }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Título Original</label>
+                                        <input type="text" name="original_title" value="{{ media.original_title or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Tipo</label>
+                                        <select name="media_type">
+                                            <option value="movie" {% if media.media_type == 'movie' %}selected{% endif %}>Filme</option>
+                                            <option value="tv" {% if media.media_type == 'tv' %}selected{% endif %}>Série</option>
+                                        </select>
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Google Drive ID</label>
+                                        <input type="text" name="drive_id" value="{{ media.drive_id }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>TMDB ID</label>
+                                        <input type="number" name="tmdb_id" value="{{ media.tmdb_id or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Letterboxd Slug</label>
+                                        <input type="text" name="letterboxd_slug" value="{{ media.letterboxd_slug or '' }}">
+                                    </div>
+                                </div>
+
+                                <div class="edit-section">
+                                    <div class="edit-section-label">Conteúdo</div>
+                                    <div class="edit-field">
+                                        <label>Sinopse</label>
+                                        <textarea name="overview" style="min-height:90px;">{{ media.overview or '' }}</textarea>
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Tagline</label>
+                                        <input type="text" name="tagline" value="{{ media.tagline or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Gêneros (vírgula)</label>
+                                        <input type="text" name="genres" value="{{ media.genres or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Coleção / Franquia</label>
+                                        <input type="text" name="belongs_to_collection" value="{{ media.belongs_to_collection or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Trailer YouTube Key</label>
+                                        <input type="text" name="trailer_key" value="{{ media.trailer_key or '' }}">
+                                    </div>
+                                </div>
+
+                                <div class="edit-section">
+                                    <div class="edit-section-label">Datas e Status</div>
+                                    <div class="edit-field">
+                                        <label>Lançamento</label>
+                                        <input type="text" name="release_date" value="{{ media.release_date or '' }}" placeholder="AAAA-MM-DD">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Status</label>
+                                        <input type="text" name="status" value="{{ media.status or '' }}" placeholder="Released / Ended…">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Runtime</label>
+                                        <input type="text" name="runtime" value="{{ media.runtime or '' }}" placeholder="2h 10min">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Nº de Temporadas</label>
+                                        <input type="number" name="number_of_seasons" value="{{ media.number_of_seasons or '' }}">
+                                    </div>
+                                    <div class="edit-section-label" style="margin-top:8px;">Avaliações</div>
+                                    <div class="edit-field">
+                                        <label>Nota (0–10)</label>
+                                        <input type="number" step="0.1" name="vote_average" value="{{ media.vote_average or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Nº de Votos</label>
+                                        <input type="number" name="vote_count" value="{{ media.vote_count or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Popularidade</label>
+                                        <input type="number" step="0.01" name="popularity" value="{{ media.popularity or '' }}">
+                                    </div>
+                                </div>
+
+                                <div class="edit-section">
+                                    <div class="edit-section-label">Equipe</div>
+                                    <div class="edit-field">
+                                        <label>Direção</label>
+                                        <input type="text" name="director" value="{{ media.director or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Elenco (vírgula)</label>
+                                        <textarea name="cast_list" style="min-height:64px;">{{ media.cast_list or '' }}</textarea>
+                                    </div>
+                                    <div class="edit-section-label" style="margin-top:8px;">Imagens</div>
+                                    <div class="edit-field">
+                                        <label>Poster Path</label>
+                                        <input type="text" name="poster_path" value="{{ media.poster_path or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Backdrop Path</label>
+                                        <input type="text" name="backdrop_path" value="{{ media.backdrop_path or '' }}">
+                                    </div>
+                                    <div class="edit-section-label" style="margin-top:8px;">Produção</div>
+                                    <div class="edit-field">
+                                        <label>Produtoras</label>
+                                        <input type="text" name="production_companies" value="{{ media.production_companies or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Países</label>
+                                        <input type="text" name="production_countries" value="{{ media.production_countries or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Idiomas</label>
+                                        <input type="text" name="spoken_languages" value="{{ media.spoken_languages or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Orçamento (USD)</label>
+                                        <input type="number" name="budget" value="{{ media.budget or '' }}">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Bilheteria (USD)</label>
+                                        <input type="number" name="revenue" value="{{ media.revenue or '' }}">
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="edit-actions">
+                                <span class="save-status" id="status-{{ media.id }}"></span>
+                                <button type="button" class="btn-cancel-inline" onclick="toggleEdit({{ media.id }})">Cancelar</button>
+                                <button type="button" class="btn-save-inline" onclick="saveMedia({{ media.id }})">Salvar</button>
+                            </div>
+
+                        </div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>
@@ -239,31 +406,204 @@
     </footer>
 
     <script>
+        // Mouse glow
+        let rafPending = false;
         document.addEventListener('mousemove', (e) => {
-            document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
-            document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+            if (rafPending) return;
+            rafPending = true;
+            requestAnimationFrame(() => {
+                document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+                document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+                rafPending = false;
+            });
+        }, { passive: true });
+
+        // ─── Extração de ID ───────────────────────────────────────────────
+
+        function extractYouTubeId(val) {
+            // youtu.be/ID  |  ?v=ID  |  /embed/ID  — ou já é o ID puro
+            const patterns = [
+                /(?:youtube\.com\/watch\?.*v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
+            ];
+            for (const re of patterns) {
+                const m = val.match(re);
+                if (m) return m[1];
+            }
+            // Se já parece um ID limpo (11 chars alphanum+_-)
+            if (/^[A-Za-z0-9_-]{11}$/.test(val.trim())) return val.trim();
+            return val;
+        }
+
+        function extractDriveId(val) {
+            // /d/ID/  |  id=ID  — ou já é o ID puro
+            let m = val.match(/\/d\/([A-Za-z0-9_-]+)/);
+            if (m) return m[1];
+            m = val.match(/[?&]id=([A-Za-z0-9_-]+)/);
+            if (m) return m[1];
+            return val.trim();
+        }
+
+        // Aplica extração nos campos ao sair (blur)
+        document.addEventListener('blur', (e) => {
+            const el = e.target;
+            if (!el.name) return;
+            if (el.name === 'trailer_key') {
+                const clean = extractYouTubeId(el.value.trim());
+                if (clean !== el.value.trim()) {
+                    el.value = clean;
+                    flashField(el);
+                }
+            }
+            if (el.name === 'drive_id') {
+                const clean = extractDriveId(el.value.trim());
+                if (clean !== el.value.trim()) {
+                    el.value = clean;
+                    flashField(el);
+                }
+            }
+        }, true);
+
+        function flashField(el) {
+            el.style.transition = 'border-color 0.2s, background 0.2s';
+            el.style.borderColor = 'var(--accent-color)';
+            el.style.background = 'rgba(232,124,3,0.12)';
+            setTimeout(() => {
+                el.style.borderColor = '';
+                el.style.background = '';
+            }, 1000);
+        }
+
+        // ─── Ordenação ────────────────────────────────────────────────────
+
+        let sortState = { col: null, dir: 1 };
+
+        function sortTable(col) {
+            const tbody = document.querySelector('#mediaTable tbody');
+            // Pega apenas as linhas de dados (não os painéis de edição)
+            const pairs = [...tbody.querySelectorAll('tr.media-row')].map(row => {
+                const editRow = document.getElementById('edit-' + row.id.replace('row-', ''));
+                return { row, editRow };
+            });
+
+            // Alterna direção se for a mesma coluna
+            if (sortState.col === col) {
+                sortState.dir *= -1;
+            } else {
+                sortState.col = col;
+                sortState.dir = 1;
+            }
+
+            // Atualiza ícones nos headers
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('asc', 'desc');
+                if (th.dataset.col === col) {
+                    th.classList.add(sortState.dir === 1 ? 'asc' : 'desc');
+                }
+            });
+
+            pairs.sort((a, b) => {
+                let va, vb;
+                switch (col) {
+                    case 'title':
+                        va = a.row.querySelector('.row-title')?.textContent.trim().toLowerCase() || '';
+                        vb = b.row.querySelector('.row-title')?.textContent.trim().toLowerCase() || '';
+                        return va.localeCompare(vb) * sortState.dir;
+                    case 'type':
+                        va = a.row.querySelector('.row-type')?.textContent.trim() || '';
+                        vb = b.row.querySelector('.row-type')?.textContent.trim() || '';
+                        return va.localeCompare(vb) * sortState.dir;
+                    case 'year':
+                        va = parseInt(a.row.cells[3]?.textContent) || 0;
+                        vb = parseInt(b.row.cells[3]?.textContent) || 0;
+                        return (va - vb) * sortState.dir;
+                    case 'rating':
+                        va = parseFloat(a.row.cells[4]?.textContent) || 0;
+                        vb = parseFloat(b.row.cells[4]?.textContent) || 0;
+                        return (va - vb) * sortState.dir;
+                    case 'id':
+                        va = parseInt(a.row.id.replace('row-', '')) || 0;
+                        vb = parseInt(b.row.id.replace('row-', '')) || 0;
+                        return (va - vb) * sortState.dir;
+                }
+                return 0;
+            });
+
+            // Reinserindo na ordem certa (linha + painel de edição juntos)
+            pairs.forEach(({ row, editRow }) => {
+                tbody.appendChild(row);
+                if (editRow) tbody.appendChild(editRow);
+            });
+        }
+
+        // ─── Filtro ───────────────────────────────────────────────────────
+
+        document.getElementById('tableSearch').addEventListener('input', function() {
+            const filter = this.value.toUpperCase();
+            document.querySelectorAll('.media-row').forEach(row => {
+                const title = row.querySelector('.title-cell')?.textContent || '';
+                const show = title.toUpperCase().includes(filter);
+                row.style.display = show ? '' : 'none';
+                const editRow = document.getElementById('edit-' + row.id.replace('row-', ''));
+                if (editRow) editRow.style.display = show && editRow.classList.contains('open') ? '' : 'none';
+            });
         });
 
-        function filterTable() {
-            var input, filter, table, tr, td, i, txtValue;
-            input = document.getElementById("tableSearch");
-            filter = input.value.toUpperCase();
-            table = document.getElementById("mediaTable");
-            tr = table.getElementsByTagName("tr");
+        // ─── Toggle painel ────────────────────────────────────────────────
 
-            for (i = 1; i < tr.length; i++) { // Começa em 1 para pular o cabeçalho
-                // Tenta pegar a célula com a classe 'title-cell' (índice 2 na estrutura desktop)
-                // No mobile a estrutura é a mesma, apenas visualmente diferente
-                td = tr[i].getElementsByClassName("title-cell")[0];
-                
-                if (td) {
-                    txtValue = td.textContent || td.innerText;
-                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                        tr[i].style.display = "";
-                    } else {
-                        tr[i].style.display = "none";
-                    }
-                }       
+        function toggleEdit(id, btn) {
+            const panel = document.getElementById('edit-' + id);
+            const isOpen = panel.classList.contains('open');
+
+            // Fecha todos os outros
+            document.querySelectorAll('.edit-panel-row.open').forEach(p => p.classList.remove('open'));
+            document.querySelectorAll('.btn-edit.active').forEach(b => b.classList.remove('active'));
+
+            if (!isOpen) {
+                panel.classList.add('open');
+                if (btn) btn.classList.add('active');
+                // Aguarda o display:table-row antes do scroll
+                setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+            }
+        }
+
+        // ─── Salvar via fetch ─────────────────────────────────────────────
+
+        async function saveMedia(id) {
+            const panel = document.getElementById('edit-' + id);
+            const inputs = panel.querySelectorAll('input, textarea, select');
+            const data = {};
+            inputs.forEach(el => { if (el.name) data[el.name] = el.value; });
+
+            const statusEl = document.getElementById('status-' + id);
+            const saveBtn = panel.querySelector('.btn-save-inline');
+            statusEl.textContent = 'Salvando…';
+            statusEl.className = 'save-status visible';
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.style.opacity = '0.6'; }
+
+            try {
+                const res = await fetch(`/api/admin/media/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(data)
+                });
+                const json = await res.json();
+                if (json.ok) {
+                    statusEl.textContent = '✓ Salvo';
+                    statusEl.className = 'save-status visible';
+                    const titleCell = document.querySelector('#row-' + id + ' .row-title');
+                    if (titleCell) titleCell.textContent = json.title;
+                    setTimeout(() => { statusEl.className = 'save-status'; }, 2500);
+                } else {
+                    throw new Error(json.error || 'Erro desconhecido');
+                }
+            } catch (e) {
+                statusEl.textContent = '✗ ' + e.message;
+                statusEl.className = 'save-status visible error';
+            } finally {
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = ''; }
             }
         }
     </script>

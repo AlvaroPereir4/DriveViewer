@@ -122,6 +122,7 @@
         {% endwith %}
 
         <form method="POST" action="/add-media" class="search-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="action" value="search">
             <select name="media_type">
                 <option value="movie" {% if media_type == 'movie' %}selected{% endif %}>Filme</option>
@@ -148,10 +149,11 @@
                                 {% endif %}
                             </div>
                             <form method="POST" action="/add-media" class="add-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="add_to_db">
                                 <input type="hidden" name="tmdb_id" value="{{ item.id }}">
                                 <input type="hidden" name="media_type" value="{{ item.media_type }}">
-                                <input type="text" name="drive_id" placeholder="Cole o ID do Google Drive" required>
+                                <input type="text" name="drive_id" placeholder="Cole o link ou ID do Google Drive" required onblur="parseDriveId(this)">
                                 <button type="submit" class="add-btn">Adicionar</button>
                             </form>
                         </div>
@@ -172,6 +174,16 @@
             document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
             document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
         });
+
+        function parseDriveId(el) {
+            const val = el.value.trim();
+            const m = val.match(/\/d\/([A-Za-z0-9_-]+)/) || val.match(/[?&]id=([A-Za-z0-9_-]+)/);
+            if (m) {
+                el.value = m[1];
+                el.style.borderColor = '#28a745';
+                setTimeout(() => el.style.borderColor = '', 1200);
+            }
+        }
     </script>
 </body>
 </html>

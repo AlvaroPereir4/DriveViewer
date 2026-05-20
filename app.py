@@ -72,6 +72,22 @@ class Media(db.Model):
     media_type = db.Column(db.String(20))
     genres = db.Column(db.String(200))
     letterboxd_slug = db.Column(db.String(200))
+    tmdb_id = db.Column(db.Integer)
+    runtime = db.Column(db.String(20))
+    tagline = db.Column(db.String(400))
+    status = db.Column(db.String(50))
+    number_of_seasons = db.Column(db.Integer)
+    director = db.Column(db.String(200))
+    cast_list = db.Column(db.String(500))
+    trailer_key = db.Column(db.String(100))
+    production_companies = db.Column(db.String(300))
+    production_countries = db.Column(db.String(200))
+    spoken_languages = db.Column(db.String(200))
+    budget = db.Column(db.BigInteger)
+    revenue = db.Column(db.BigInteger)
+    vote_count = db.Column(db.Integer)
+    popularity = db.Column(db.Float)
+    belongs_to_collection = db.Column(db.String(200))
 
 GENRE_MAP = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
@@ -124,7 +140,22 @@ def get_home_items():
             "release_date": m.release_date,
             "original_title": m.original_title,
             "genres": [g.strip() for g in m.genres.split(',')] if m.genres else [],
-            "letterboxd_slug": m.letterboxd_slug
+            "letterboxd_slug": m.letterboxd_slug,
+            "runtime": m.runtime,
+            "tagline": m.tagline,
+            "status": m.status,
+            "number_of_seasons": m.number_of_seasons,
+            "director": m.director,
+            "cast_list": m.cast_list,
+            "trailer_key": m.trailer_key,
+            "production_companies": m.production_companies,
+            "production_countries": m.production_countries,
+            "spoken_languages": m.spoken_languages,
+            "budget": m.budget,
+            "revenue": m.revenue,
+            "vote_count": m.vote_count,
+            "popularity": m.popularity,
+            "belongs_to_collection": m.belongs_to_collection,
         } for m in medias
     ]
     return home_items
@@ -397,17 +428,60 @@ def admin_edit(id):
         media.media_type = request.form.get('media_type')
         media.genres = request.form.get('genres')
         media.letterboxd_slug = request.form.get('letterboxd_slug')
-        
-        try:
-            media.vote_average = float(request.form.get('vote_average'))
-        except (ValueError, TypeError):
-            pass
-
+        media.tagline = request.form.get('tagline')
+        media.status = request.form.get('status')
+        media.runtime = request.form.get('runtime')
+        media.director = request.form.get('director')
+        media.cast_list = request.form.get('cast_list')
+        media.trailer_key = request.form.get('trailer_key')
+        media.production_companies = request.form.get('production_companies')
+        media.production_countries = request.form.get('production_countries')
+        media.spoken_languages = request.form.get('spoken_languages')
+        media.belongs_to_collection = request.form.get('belongs_to_collection')
+        try: media.vote_average = float(request.form.get('vote_average'))
+        except (ValueError, TypeError): pass
+        try: media.vote_count = int(request.form.get('vote_count'))
+        except (ValueError, TypeError): pass
+        try: media.popularity = float(request.form.get('popularity'))
+        except (ValueError, TypeError): pass
+        try: media.number_of_seasons = int(request.form.get('number_of_seasons'))
+        except (ValueError, TypeError): pass
+        try: media.tmdb_id = int(request.form.get('tmdb_id'))
+        except (ValueError, TypeError): pass
+        try: media.budget = int(request.form.get('budget'))
+        except (ValueError, TypeError): pass
+        try: media.revenue = int(request.form.get('revenue'))
+        except (ValueError, TypeError): pass
         db.session.commit()
         flash('Mídia atualizada com sucesso!', 'success')
         return redirect(url_for('admin_dashboard'))
-        
     return render_template('admin_edit.html', media=media)
+
+@app.route('/api/admin/media/<int:id>', methods=['POST'])
+@admin_required
+def api_update_media(id):
+    media = Media.query.get_or_404(id)
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    str_fields = ['title','original_title','drive_id','overview','poster_path','backdrop_path',
+                  'release_date','media_type','genres','letterboxd_slug','tagline','status',
+                  'runtime','director','cast_list','trailer_key','production_companies',
+                  'production_countries','spoken_languages','belongs_to_collection']
+    for f in str_fields:
+        if f in data:
+            setattr(media, f, data[f] or None)
+
+    for f, cast in [('vote_average', float), ('popularity', float),
+                    ('vote_count', int), ('number_of_seasons', int),
+                    ('tmdb_id', int), ('budget', int), ('revenue', int)]:
+        if f in data:
+            try: setattr(media, f, cast(data[f]) if data[f] not in (None, '') else None)
+            except (ValueError, TypeError): pass
+
+    db.session.commit()
+    return jsonify({'ok': True, 'title': media.title})
 
 @app.route('/admin/delete/<int:id>', methods=['POST'])
 @admin_required
@@ -497,10 +571,28 @@ def add_media():
                 'language': 'pt-BR'
             }
             try:
+                # 1. Detalhes principais
                 response = requests.get(details_url, params=params)
                 response.raise_for_status()
                 item = response.json()
 
+                # 2. Créditos (diretor + elenco)
+                try:
+                    credits_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/credits"
+                    cr = requests.get(credits_url, params={'api_key': TMDB_API_KEY}, timeout=8)
+                    credits = cr.json() if cr.ok else {}
+                except Exception:
+                    credits = {}
+
+                # 3. Vídeos (trailer)
+                try:
+                    videos_url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/videos"
+                    vr = requests.get(videos_url, params={'api_key': TMDB_API_KEY, 'language': 'en-US'}, timeout=8)
+                    videos = vr.json() if vr.ok else {}
+                except Exception:
+                    videos = {}
+
+                # --- Campos básicos ---
                 genres_list = [GENRE_MAP.get(g['id'], g['name']) for g in item.get('genres', [])]
                 genres_str = ", ".join(genres_list)
 
@@ -508,10 +600,36 @@ def add_media():
                     title = item.get('title')
                     original_title = item.get('original_title')
                     release_date = item.get('release_date')
-                else: # tv
+                    runtime_min = item.get('runtime') or 0
+                    runtime_str = f"{runtime_min // 60}h {runtime_min % 60}min" if runtime_min else None
+                    number_of_seasons = None
+                    collection = item.get('belongs_to_collection', {})
+                    collection_name = collection.get('name') if collection else None
+                else:
                     title = item.get('name')
                     original_title = item.get('original_name')
                     release_date = item.get('first_air_date')
+                    runtime_str = None
+                    number_of_seasons = item.get('number_of_seasons')
+                    collection_name = None
+
+                # --- Equipe ---
+                crew = credits.get('crew', [])
+                cast = credits.get('cast', [])
+                director = next((p['name'] for p in crew if p.get('job') == 'Director'), None)
+                cast_list = ", ".join(p['name'] for p in cast[:8])
+
+                # --- Trailer ---
+                trailer_key = None
+                for v in videos.get('results', []):
+                    if v.get('site') == 'YouTube' and v.get('type') == 'Trailer':
+                        trailer_key = v.get('key')
+                        break
+
+                # --- Produção ---
+                production_companies = ", ".join(c['name'] for c in item.get('production_companies', [])[:4])
+                production_countries = ", ".join(c['name'] for c in item.get('production_countries', []))
+                spoken_languages = ", ".join(l.get('english_name', l.get('name', '')) for l in item.get('spoken_languages', []))
 
                 new_media = Media(
                     drive_id=drive_id,
@@ -522,8 +640,24 @@ def add_media():
                     backdrop_path=item.get('backdrop_path'),
                     release_date=release_date,
                     vote_average=item.get('vote_average'),
+                    vote_count=item.get('vote_count'),
+                    popularity=item.get('popularity'),
                     media_type=media_type,
-                    genres=genres_str
+                    genres=genres_str,
+                    tmdb_id=int(tmdb_id),
+                    tagline=item.get('tagline'),
+                    status=item.get('status'),
+                    runtime=runtime_str,
+                    number_of_seasons=number_of_seasons,
+                    belongs_to_collection=collection_name,
+                    budget=item.get('budget'),
+                    revenue=item.get('revenue'),
+                    director=director,
+                    cast_list=cast_list,
+                    trailer_key=trailer_key,
+                    production_companies=production_companies,
+                    production_countries=production_countries,
+                    spoken_languages=spoken_languages,
                 )
                 db.session.add(new_media)
                 db.session.commit()
@@ -570,14 +704,35 @@ def browse_folder(folder_id):
 def run_migrations():
     try:
         inspector = db.inspect(db.engine)
-        if inspector.has_table("media"):
-            columns = [col['name'] for col in inspector.get_columns('media')]
-            if 'letterboxd_slug' not in columns:
-                print("Aplicando migração: Adicionando coluna letterboxd_slug...")
-                with db.engine.connect() as conn:
-                    conn.execute(text("ALTER TABLE media ADD COLUMN letterboxd_slug VARCHAR(200)"))
-                    conn.commit()
-                print("Migração concluída com sucesso.")
+        if not inspector.has_table("media"):
+            return
+
+        columns = [col['name'] for col in inspector.get_columns('media')]
+        new_columns = {
+            'letterboxd_slug':      'VARCHAR(200)',
+            'tmdb_id':              'INTEGER',
+            'runtime':              'VARCHAR(20)',
+            'tagline':              'VARCHAR(400)',
+            'status':               'VARCHAR(50)',
+            'number_of_seasons':    'INTEGER',
+            'director':             'VARCHAR(200)',
+            'cast_list':            'VARCHAR(500)',
+            'trailer_key':          'VARCHAR(100)',
+            'production_companies': 'VARCHAR(300)',
+            'production_countries': 'VARCHAR(200)',
+            'spoken_languages':     'VARCHAR(200)',
+            'budget':               'BIGINT',
+            'revenue':              'BIGINT',
+            'vote_count':           'INTEGER',
+            'popularity':           'FLOAT',
+            'belongs_to_collection':'VARCHAR(200)',
+        }
+        with db.engine.connect() as conn:
+            for col, col_type in new_columns.items():
+                if col not in columns:
+                    print(f"Migração: adicionando coluna '{col}'...")
+                    conn.execute(text(f"ALTER TABLE media ADD COLUMN {col} {col_type}"))
+            conn.commit()
     except Exception as e:
         print(f"Erro ao verificar/executar migrações: {e}")
 

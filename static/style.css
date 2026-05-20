@@ -28,7 +28,6 @@ body {
     position: relative;
 }
 
-/* Grain sutil no fundo — textura sem dor de cabeça */
 body::after {
     content: "";
     position: fixed;
@@ -45,12 +44,11 @@ body::after {
 .background-effects {
     position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
-    z-index: 900;        /* acima das capas mas abaixo do modal */
+    z-index: 900;
     pointer-events: none;
     overflow: hidden;
 }
 
-/* Esconde meteoros quando modal está aberto ou no player */
 .modal:not(.hidden) ~ .background-effects,
 body.in-player .background-effects {
     display: none;
@@ -65,9 +63,6 @@ body.in-player .background-effects {
     pointer-events: none;
 }
 
-/* ============================================================
-   NAVBAR
-   ============================================================ */
 .navbar {
     display: flex; align-items: center;
     padding: 20px 4%;
@@ -100,9 +95,6 @@ body.in-player .background-effects {
 .search-container input:focus { border-color: var(--accent-color); width: 250px; }
 .items-count { padding: 0 4%; margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary); text-align: right; }
 
-/* ============================================================
-   GRID — cards ligeiramente menores
-   ============================================================ */
 .content-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(13%, 1fr));
@@ -112,9 +104,6 @@ body.in-player .background-effects {
     flex: 1;
 }
 
-/* ============================================================
-   CARD WRAPPER
-   ============================================================ */
 .card-wrapper {
     position: relative;
     aspect-ratio: 2/3;
@@ -122,9 +111,9 @@ body.in-player .background-effects {
     animation: cardEntrance 0.5s cubic-bezier(0.22,1,0.36,1) backwards;
     animation-delay: calc(var(--item-index, 0) * 0.04s);
     transition: transform 0.38s cubic-bezier(0.22,1,0.36,1);
-    will-change: transform;
 }
 
+.card-wrapper.no-entrance { animation: none; }
 .card-wrapper:hover { z-index: 500 !important; }
 
 @keyframes cardEntrance {
@@ -132,15 +121,11 @@ body.in-player .background-effects {
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Baralho */
 .card-wrapper.neighbor-left-1  { transform: translateX(-44px) scale(0.91); }
 .card-wrapper.neighbor-left-2  { transform: translateX(-22px) scale(0.96); }
 .card-wrapper.neighbor-right-1 { transform: translateX(44px)  scale(0.91); }
 .card-wrapper.neighbor-right-2 { transform: translateX(22px)  scale(0.96); }
 
-/* ============================================================
-   CARD BASE
-   ============================================================ */
 .card {
     position: absolute;
     top: 0; left: 0;
@@ -155,12 +140,12 @@ body.in-player .background-effects {
         right     0.38s cubic-bezier(0.22, 1, 0.36, 1),
         box-shadow 0.38s ease,
         border-color 0.38s ease;
-    will-change: width, left;
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     border: 1px solid transparent;
 }
 
-/* Colapso instantâneo ao trocar de card (Netflix style) */
+.card-wrapper:hover .card { will-change: width, left; }
+
 .card-wrapper.no-transition .card,
 .card-wrapper.no-transition .poster-layer,
 .card-wrapper.no-transition .card-backdrop,
@@ -170,9 +155,6 @@ body.in-player .background-effects {
     transition: none !important;
 }
 
-/* ============================================================
-   CARD EXPANDIDO — classe .is-expanded
-   ============================================================ */
 .card-wrapper.is-expanded .card {
     width: 185%;
     left: 50%;
@@ -197,16 +179,12 @@ body.in-player .background-effects {
     transform: none;
 }
 
-/* ============================================================
-   POSTER LAYER — desliza suavemente para a esquerda
-   ============================================================ */
 .poster-layer {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
     background-size: cover;
     background-position: center top;
-    /* Só anima width e border-radius — height fixo evita truncação */
     transition:
         width 0.42s cubic-bezier(0.16, 1, 0.3, 1),
         border-radius 0.42s ease,
@@ -221,9 +199,6 @@ body.in-player .background-effects {
     box-shadow: 6px 0 28px rgba(0,0,0,0.9);
 }
 
-/* ============================================================
-   BACKDROP
-   ============================================================ */
 .card-backdrop {
     position: absolute; top: 0; left: 0;
     width: 100%; height: 100%;
@@ -256,9 +231,6 @@ body.in-player .background-effects {
     100% { opacity: 1;   filter: brightness(1) saturate(1); }
 }
 
-/* ============================================================
-   CARD-CONTENT (título simples)
-   ============================================================ */
 .card-content {
     position: absolute; bottom: 0; left: 0;
     width: 100%;
@@ -273,9 +245,6 @@ body.in-player .background-effects {
 .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card-type { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* ============================================================
-   PAINEL DE DETALHES — lado direito, preenche verticalmente
-   ============================================================ */
 .card-details-panel {
     position: absolute;
     top: 0; right: 0;
@@ -301,10 +270,8 @@ body.in-player .background-effects {
     letter-spacing: 0.3px;
 }
 
-/* Esconde meteoros quando modal aberto */
 body.modal-open .background-effects { display: none; }
 
-/* Botão play grande no canto inferior direito */
 .corner-play-btn {
     position: absolute;
     bottom: 16px;
@@ -338,14 +305,12 @@ body.modal-open .background-effects { display: none; }
     transform: scale(1.1) !important;
 }
 
-/* Corpo — 13% de padding nas laterais */
 .details-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 11px;
-    /* ~13% do painel expandido nas laterais, espaço vertical generoso */
     padding: 14% 13% 14% 10%;
     text-shadow: 0 1px 6px rgba(0,0,0,0.9), 0 2px 15px rgba(0,0,0,0.7);
     width: 100%;
@@ -357,7 +322,6 @@ body.modal-open .background-effects { display: none; }
 }
 .card-wrapper.is-expanded .details-content { opacity: 1; transform: translateX(0); }
 
-/* TOPO */
 .hover-header {
     display: flex;
     align-items: flex-start;
@@ -402,13 +366,11 @@ body.modal-open .background-effects { display: none; }
     margin-top: 4px;
 }
 
-/* Divisória */
 .hover-divider {
     width: 100%; height: 1px;
     background: linear-gradient(90deg, rgba(255,255,255,0.22), transparent);
 }
 
-/* ESTRELAS */
 .hover-rating-row {
     display: flex;
     align-items: center;
@@ -446,7 +408,6 @@ body.modal-open .background-effects { display: none; }
     white-space: nowrap;
 }
 
-/* GÊNEROS */
 .hover-genres { display: flex; flex-wrap: wrap; gap: 5px; }
 
 .hover-genre-tag {
@@ -460,7 +421,6 @@ body.modal-open .background-effects { display: none; }
     background: rgba(255,255,255,0.06);
 }
 
-/* SINOPSE */
 .hover-synopsis-wrap { flex: 1; display: flex; align-items: flex-start; overflow: hidden; }
 
 .hover-desc {
@@ -470,11 +430,6 @@ body.modal-open .background-effects { display: none; }
     overflow: hidden;
 }
 
-/* ============================================================
-   EFEITO DE BORDA QUEIMADA — estética A24 / película
-   ============================================================ */
-
-/* Gerado via SVG inline como data URI — ruído nas bordas */
 .card-wrapper.is-expanded .card::before {
     content: '';
     position: absolute;
@@ -483,23 +438,14 @@ body.modal-open .background-effects { display: none; }
     pointer-events: none;
     border-radius: 6px;
 
-    /* Vinheta nas bordas — degradê radial que escurece as extremidades */
     background:
-        /* Canto superior esquerdo */
         radial-gradient(ellipse 30% 20% at 0% 0%,   rgba(0,0,0,0.7) 0%, transparent 100%),
-        /* Canto superior direito */
         radial-gradient(ellipse 30% 20% at 100% 0%, rgba(0,0,0,0.7) 0%, transparent 100%),
-        /* Canto inferior esquerdo */
         radial-gradient(ellipse 30% 20% at 0% 100%,   rgba(0,0,0,0.7) 0%, transparent 100%),
-        /* Canto inferior direito */
         radial-gradient(ellipse 30% 20% at 100% 100%, rgba(0,0,0,0.7) 0%, transparent 100%),
-        /* Borda superior */
         linear-gradient(180deg, rgba(0,0,0,0.45) 0%, transparent 12%),
-        /* Borda inferior */
         linear-gradient(0deg,   rgba(0,0,0,0.45) 0%, transparent 12%),
-        /* Borda esquerda */
         linear-gradient(90deg,  rgba(0,0,0,0.35) 0%, transparent 8%),
-        /* Borda direita */
         linear-gradient(270deg, rgba(0,0,0,0.35) 0%, transparent 8%);
 
     opacity: 0;
@@ -510,7 +456,6 @@ body.modal-open .background-effects { display: none; }
     opacity: 1;
 }
 
-/* Linha de pixel burn horizontal — efeito de rolo de filme */
 .card-wrapper.is-expanded .card .card-backdrop::before {
     content: '';
     position: absolute;
@@ -518,7 +463,6 @@ body.modal-open .background-effects { display: none; }
     z-index: 2;
     pointer-events: none;
 
-    /* Ruído de pixel simulado: gradiente repetido bem fino */
     background-image:
         repeating-linear-gradient(
             0deg,
@@ -527,7 +471,7 @@ body.modal-open .background-effects { display: none; }
             rgba(0,0,0,0.03) 2px,
             rgba(0,0,0,0.03) 3px
         ),
-        /* Pixel "queimado" nas bordas — ruído com clip irregular */
+
         repeating-linear-gradient(
             90deg,
             rgba(0,0,0,0.0) 0px,
@@ -536,7 +480,6 @@ body.modal-open .background-effects { display: none; }
             rgba(255,255,255,0.012) 5px
         );
 
-    /* Máscara que concentra o efeito nas bordas */
     -webkit-mask-image:
         radial-gradient(ellipse 100% 100% at 50% 50%,
             transparent 55%,
@@ -553,9 +496,6 @@ body.modal-open .background-effects { display: none; }
         );
 }
 
-/* ============================================================
-   CATEGORY CARD — visual simples, SEM expansão
-   ============================================================ */
 .card.category-card {
     border: 1px solid rgba(255,255,255,0.1);
     background: linear-gradient(135deg, #1a1817, #24211f);
@@ -565,7 +505,6 @@ body.modal-open .background-effects { display: none; }
 
 .card-wrapper.category-wrapper { transition: transform 0.3s ease; }
 
-/* Override total: nunca deixa category-card expandir */
 .card-wrapper.category-wrapper .card,
 .card-wrapper.category-wrapper.is-expanded .card {
     width: 100% !important;
@@ -581,12 +520,10 @@ body.modal-open .background-effects { display: none; }
     transform: scale(1.04) !important;
 }
 
-/* Esconde elementos de filme nas categorias */
 .card-wrapper.category-wrapper .card-details-panel { display: none !important; }
 .card-wrapper.category-wrapper .card-backdrop      { display: none !important; }
 .card-wrapper.category-wrapper .poster-layer       { display: none !important; }
 
-/* card-content das categorias sempre visível */
 .card-wrapper.category-wrapper .card-content {
     opacity: 1 !important;
     pointer-events: auto !important;
@@ -606,9 +543,6 @@ body.modal-open .background-effects { display: none; }
     text-shadow: 0 0 10px rgba(255,255,255,0.6);
 }
 
-/* ============================================================
-   MODAL
-   ============================================================ */
 .modal {
     position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
@@ -643,7 +577,6 @@ body.modal-open .background-effects { display: none; }
 .modal-content::-webkit-scrollbar { width: 6px; }
 .modal-content::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 3px; }
 
-/* Backdrop como hero image no topo */
 .modal-backdrop-hero {
     position: absolute; top: 0; left: 0;
     width: 100%; height: 100%;
@@ -660,7 +593,6 @@ body.modal-open .background-effects { display: none; }
         linear-gradient(to top, rgba(6,5,4,1) 0%, transparent 40%);
 }
 
-/* Conteúdo do modal acima do backdrop */
 .modal-inner {
     position: relative;
     z-index: 2;
@@ -760,7 +692,132 @@ body.modal-open .background-effects { display: none; }
     max-width: 620px;
 }
 
-/* Botão de play no modal de detalhes */
+/* ============================================================
+   MODAL — NOVOS ELEMENTOS
+   ============================================================ */
+
+.modal-collection { margin-bottom: 6px; }
+.collection-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--accent-color);
+    border: 1px solid rgba(232,124,3,0.35);
+    background: rgba(232,124,3,0.08);
+    border-radius: 3px;
+    padding: 3px 10px;
+}
+
+.modal-tagline {
+    font-size: 0.97rem;
+    font-style: italic;
+    color: rgba(255,255,255,0.42);
+    line-height: 1.4;
+    margin-top: -6px;
+    display: none;
+}
+
+.vote-count {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.35);
+    margin-left: 2px;
+}
+
+.status-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: 3px 9px;
+    border: 1px solid;
+    align-self: center;
+}
+.status-done    { color: #6fcf97; border-color: rgba(111,207,151,0.3); background: rgba(111,207,151,0.08); }
+.status-active  { color: var(--accent-color); border-color: rgba(232,124,3,0.35); background: rgba(232,124,3,0.08); }
+.status-neutral { color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.15); background: transparent; }
+
+.modal-crew { display: flex; flex-direction: column; gap: 8px; }
+.crew-row { display: flex; align-items: flex-start; gap: 10px; }
+.crew-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(255,255,255,0.35);
+    min-width: 52px;
+    padding-top: 3px;
+    flex-shrink: 0;
+}
+.crew-value { font-size: 0.92rem; color: rgba(255,255,255,0.85); }
+.cast-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.cast-chip {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 3px 10px;
+    transition: background 0.2s, color 0.2s;
+}
+.cast-chip:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.modal-financials { display: none; }
+.financials-row { display: flex; gap: 28px; flex-wrap: wrap; }
+.financial-item { display: flex; flex-direction: column; gap: 2px; }
+.financial-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(255,255,255,0.3);
+}
+.financial-value { font-size: 1rem; font-weight: 600; color: rgba(255,255,255,0.75); }
+
+.production-row {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.28);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.5;
+}
+.prod-sep { color: rgba(255,255,255,0.15); }
+
+.modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.trailer-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 22px;
+    height: 52px;
+    border-radius: 26px;
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.75);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.trailer-action-btn svg { width: 18px; height: 18px; }
+.trailer-action-btn:hover {
+    border-color: rgba(255,255,255,0.6);
+    color: #fff;
+    background: rgba(255,255,255,0.06);
+}
+.trailer-action-btn.hidden { display: none !important; }
+
 .play-action-btn {
     width: 72px; height: 72px; border-radius: 50%;
     background: var(--accent-color);
@@ -779,12 +836,27 @@ body.modal-open .background-effects { display: none; }
 }
 .play-action-btn svg { width: 32px; height: 32px; margin-left: 4px; }
 
-/* ── Player view ── */
 .player-view.hidden { display: none; }
 
 .player-view {
     padding: 40px 50px 52px;
 }
+
+.back-to-details-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.45);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.88rem;
+    cursor: pointer;
+    padding: 0 0 16px 0;
+    transition: color 0.2s;
+}
+.back-to-details-btn:hover { color: rgba(255,255,255,0.85); }
+.back-to-details-btn.hidden { display: none; }
 
 .video-wrapper {
     position: relative;
@@ -793,6 +865,7 @@ body.modal-open .background-effects { display: none; }
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 20px 80px rgba(0,0,0,0.85);
+    z-index: 10;
 }
 .video-wrapper iframe {
     position: absolute; top: 0; left: 0;
@@ -818,7 +891,6 @@ body.modal-open .background-effects { display: none; }
     border-color: var(--accent-color);
 }
 
-/* Loading */
 .loading { position: relative; background-color: var(--card-bg); }
 .loading::before {
     content: ""; position: absolute; top: 50%; left: 50%;
@@ -830,7 +902,6 @@ body.modal-open .background-effects { display: none; }
 }
 @keyframes spinner { to { transform: translate(-50%, -50%) rotate(360deg); } }
 
-/* Login */
 .login-body { display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
 .login-container { background-color: transparent; padding: 40px; width: 100%; max-width: 400px; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; backdrop-filter: blur(10px); position: relative; z-index: 10; }
 .form-group { margin-bottom: 20px; }
@@ -840,15 +911,11 @@ body.modal-open .background-effects { display: none; }
 .login-btn:hover { background-color: var(--accent-color); color: #000; box-shadow: 0 0 20px rgba(232,124,3,0.3); }
 .alert { background-color: rgba(232,124,3,0.1); border: 1px solid var(--accent-color); color: var(--text-primary); padding: 10px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9rem; }
 
-/* Footer */
 .app-footer { text-align: center; padding: 20px; font-size: 0.8rem; color: var(--text-secondary); width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
 .app-footer a { color: var(--text-secondary); text-decoration: none; border-bottom: 1px dotted var(--text-secondary); }
 .app-footer a:hover { color: var(--accent-color); border-color: var(--accent-color); }
 .login-footer { position: absolute; bottom: 0; }
 
-/* ============================================================
-   RESPONSIVO
-   ============================================================ */
 @media (max-width: 768px) {
     .navbar { flex-direction: column; align-items: stretch; gap: 15px; padding: 15px; background: rgba(12,11,11,0.95); }
     .logo { text-align: center; margin-bottom: 5px; }
