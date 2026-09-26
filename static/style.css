@@ -97,8 +97,8 @@ body.in-player .background-effects {
 
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(13%, 1fr));
-    gap: 22px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 32px 28px;
     padding: 20px 4%;
     margin-top: 10px;
     flex: 1;
@@ -739,6 +739,14 @@ body.modal-open .background-effects { display: none; }
 .status-active  { color: var(--accent-color); border-color: rgba(232,124,3,0.35); background: rgba(232,124,3,0.08); }
 .status-neutral { color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.15); background: transparent; }
 
+.cert-badge {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px;
+    border-radius: 3px; padding: 3px 8px; align-self: center;
+    border: 1.5px solid rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.06);
+    font-family: 'Outfit', sans-serif;
+}
+
 .modal-crew { display: flex; flex-direction: column; gap: 8px; }
 .crew-row { display: flex; align-items: flex-start; gap: 10px; }
 .crew-label {
@@ -923,7 +931,7 @@ body.modal-open .background-effects { display: none; }
     .nav-actions { justify-content: space-between; width: 100%; }
     .search-container { flex: 1; margin-right: 15px; }
     .search-container input, .search-container input:focus { width: 100%; }
-    .content-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; padding: 10px; }
+    .content-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 10px; }
     .card-wrapper.is-expanded .card { width: 100% !important; left: 0 !important; transform: none !important; }
     .card-wrapper.is-expanded .poster-layer { width: 100% !important; height: 100% !important; top: 0 !important; transform: none !important; aspect-ratio: unset !important; border-radius: 0 !important; }
     .card-details-panel { display: none !important; }

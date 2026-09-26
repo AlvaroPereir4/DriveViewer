@@ -1,7 +1,7 @@
 # Changelog
 
 ## [0.1.2] - 2026-05-17 - 2026-05-19
-- Enrich: Added 15 new TMDB fields: `tagline`, `runtime`, `status`, `number_of_seasons`, `director`, `cast_list`, `trailer_key`, `belongs_to_collection`, `vote_count`, `popularity`, `production_companies`, `production_countries`, `spoken_languages`, `budget`, `revenue`.
+- Enrich: Added 15 new TMDB fields.
 - Enrich: New media added via admin now auto-fetches all enriched fields (credits + videos) on creation, no manual enrichment step needed.
 - Feature: Trailer playback integrated into the movie modal with a dedicated Trailer button.
 - Feature: Back-to-details button in the player view to return without closing the modal.

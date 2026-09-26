@@ -88,6 +88,7 @@ class Media(db.Model):
     vote_count = db.Column(db.Integer)
     popularity = db.Column(db.Float)
     belongs_to_collection = db.Column(db.String(200))
+    certification = db.Column(db.String(10))
 
 GENRE_MAP = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
@@ -122,15 +123,59 @@ def get_drive_service():
         print(f"ERRO ao conectar com o Google Drive: {e}")
     return None
 
-def get_home_items():
-    medias = Media.query.all()
-    
+def fetch_original_poster(tmdb_id, media_type, api_key, original_language='en'):
+    """Busca o poster original do filme/série — sem localização PT-BR."""
+    try:
+        url = f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}/images"
+        data = requests.get(url, params={'api_key': api_key}, timeout=8).json()
+        posters = data.get('posters', [])
+        if not posters:
+            return None
+        # Prioridade: idioma original → sem idioma (null) → primeiro disponível
+        for lang in (original_language, None, 'en'):
+            match = next((p['file_path'] for p in posters if p.get('iso_639_1') == lang), None)
+            if match:
+                return match
+        return posters[0]['file_path']
+    except Exception:
+        return None
 
-    home_items = [
+def fetch_certification(tmdb_id, media_type, api_key):
+    """Busca classificação etária — prioriza BR, fallback US."""
+    try:
+        if media_type == 'movie':
+            url = f"https://api.themoviedb.org/3/movie/{tmdb_id}/release_dates"
+            data = requests.get(url, params={'api_key': api_key}, timeout=8).json()
+            results = {r['iso_3166_1']: r for r in data.get('results', [])}
+            for country in ('BR', 'US'):
+                entry = results.get(country)
+                if entry:
+                    cert = next((d['certification'] for d in entry.get('release_dates', []) if d.get('certification')), None)
+                    if cert:
+                        return cert
+        else:
+            url = f"https://api.themoviedb.org/3/tv/{tmdb_id}/content_ratings"
+            data = requests.get(url, params={'api_key': api_key}, timeout=8).json()
+            results = {r['iso_3166_1']: r.get('rating') for r in data.get('results', [])}
+            return results.get('BR') or results.get('US')
+    except Exception:
+        pass
+    return None
+
+def get_home_items():
+    # Só campos necessários pro grid e categorias — payload leve
+    medias = Media.query.with_entities(
+        Media.drive_id, Media.title, Media.original_title,
+        Media.media_type, Media.poster_path, Media.backdrop_path,
+        Media.vote_average, Media.release_date, Media.genres,
+        Media.overview, Media.certification
+    ).all()
+
+    return [
         {
             "id": m.drive_id,
             "title": m.title,
-            "synopsis": m.overview,
+            "original_title": m.original_title,
             "type": "folder" if m.media_type == 'tv' else "video",
             "tag": 'series' if m.media_type == 'tv' else 'movie',
             "poster": f"https://image.tmdb.org/t/p/w500{m.poster_path}" if m.poster_path else None,
@@ -138,27 +183,48 @@ def get_home_items():
             "rating": m.vote_average,
             "year": m.release_date[:4] if m.release_date else "",
             "release_date": m.release_date,
-            "original_title": m.original_title,
             "genres": [g.strip() for g in m.genres.split(',')] if m.genres else [],
-            "letterboxd_slug": m.letterboxd_slug,
-            "runtime": m.runtime,
-            "tagline": m.tagline,
-            "status": m.status,
-            "number_of_seasons": m.number_of_seasons,
-            "director": m.director,
-            "cast_list": m.cast_list,
-            "trailer_key": m.trailer_key,
-            "production_companies": m.production_companies,
-            "production_countries": m.production_countries,
-            "spoken_languages": m.spoken_languages,
-            "budget": m.budget,
-            "revenue": m.revenue,
-            "vote_count": m.vote_count,
-            "popularity": m.popularity,
-            "belongs_to_collection": m.belongs_to_collection,
+            "synopsis": m.overview,
+            "certification": m.certification,
         } for m in medias
     ]
-    return home_items
+
+def get_media_detail(drive_id):
+    m = Media.query.filter_by(drive_id=drive_id).first()
+    if not m:
+        return None
+    return {
+        "id": m.drive_id,
+        "title": m.title,
+        "original_title": m.original_title,
+        "synopsis": m.overview,
+        "type": "folder" if m.media_type == 'tv' else "video",
+        "tag": 'series' if m.media_type == 'tv' else 'movie',
+        "poster": f"https://image.tmdb.org/t/p/w500{m.poster_path}" if m.poster_path else None,
+        "backdrop": f"https://image.tmdb.org/t/p/original{m.backdrop_path}" if m.backdrop_path else None,
+        "rating": m.vote_average,
+        "year": m.release_date[:4] if m.release_date else "",
+        "release_date": m.release_date,
+        "original_title": m.original_title,
+        "genres": [g.strip() for g in m.genres.split(',')] if m.genres else [],
+        "letterboxd_slug": m.letterboxd_slug,
+        "runtime": m.runtime,
+        "tagline": m.tagline,
+        "status": m.status,
+        "number_of_seasons": m.number_of_seasons,
+        "director": m.director,
+        "cast_list": m.cast_list,
+        "trailer_key": m.trailer_key,
+        "production_companies": m.production_companies,
+        "production_countries": m.production_countries,
+        "spoken_languages": m.spoken_languages,
+        "budget": m.budget,
+        "revenue": m.revenue,
+        "vote_count": m.vote_count,
+        "popularity": m.popularity,
+        "belongs_to_collection": m.belongs_to_collection,
+        "certification": m.certification,
+    }
 
 def get_drive_items(service, folder_id):
     if not service: return []
@@ -468,7 +534,7 @@ def api_update_media(id):
     str_fields = ['title','original_title','drive_id','overview','poster_path','backdrop_path',
                   'release_date','media_type','genres','letterboxd_slug','tagline','status',
                   'runtime','director','cast_list','trailer_key','production_companies',
-                  'production_countries','spoken_languages','belongs_to_collection']
+                  'production_countries','spoken_languages','belongs_to_collection','certification']
     for f in str_fields:
         if f in data:
             setattr(media, f, data[f] or None)
@@ -592,6 +658,15 @@ def add_media():
                 except Exception:
                     videos = {}
 
+                # 4. Classificação etária
+                certification = fetch_certification(tmdb_id, media_type, TMDB_API_KEY)
+
+                # 5. Poster original (sem localização PT-BR)
+                orig_lang = item.get('original_language', 'en')
+                original_poster = fetch_original_poster(tmdb_id, media_type, TMDB_API_KEY, orig_lang)
+                if original_poster:
+                    item['poster_path'] = original_poster
+
                 # --- Campos básicos ---
                 genres_list = [GENRE_MAP.get(g['id'], g['name']) for g in item.get('genres', [])]
                 genres_str = ", ".join(genres_list)
@@ -658,6 +733,7 @@ def add_media():
                     production_companies=production_companies,
                     production_countries=production_countries,
                     spoken_languages=spoken_languages,
+                    certification=certification,
                 )
                 db.session.add(new_media)
                 db.session.commit()
@@ -693,6 +769,14 @@ def home_content():
     items = get_home_items()
     return jsonify(items)
 
+@app.route('/api/media/<path:drive_id>')
+@login_required
+def media_detail(drive_id):
+    detail = get_media_detail(drive_id)
+    if not detail:
+        return jsonify({'error': 'Not found'}), 404
+    return jsonify(detail)
+
 @app.route('/api/browse/<path:folder_id>')
 @login_required
 def browse_folder(folder_id):
@@ -726,6 +810,7 @@ def run_migrations():
             'vote_count':           'INTEGER',
             'popularity':           'FLOAT',
             'belongs_to_collection':'VARCHAR(200)',
+            'certification':        'VARCHAR(10)',
         }
         with db.engine.connect() as conn:
             for col, col_type in new_columns.items():

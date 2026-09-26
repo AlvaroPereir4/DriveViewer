@@ -227,7 +227,7 @@ function _renderCategoryView(name, filterTag, type) {
     }
     renderBreadcrumbs();
     if (type === 'genre') {
-        currentList = allHomeData.filter(i => i.genres && i.genres.includes(filterTag));
+        currentList = allHomeData.filter(i => i.tag === 'movie' && i.genres && i.genres.includes(filterTag));
     } else {
         currentList = filterTag === 'movie'
             ? allHomeData.filter(i => i.tag === 'movie')
@@ -252,7 +252,7 @@ function renderCategories(items) {
     ];
 
     const genreMap = {};
-    items.forEach(item => {
+    movies.forEach(item => {
         (item.genres || []).forEach(genre => {
             if (!genreMap[genre]) genreMap[genre] = { title: genre, count: 0, items: [] };
             genreMap[genre].count++;
@@ -320,8 +320,66 @@ async function _renderFolderView(folderId, folderName) {
     }
 }
 
+let currentExpanded = null;
+const EDGE_MARGIN = 100;
+
+function collapseCard(w, instant = false) {
+    if (!w) return;
+    if (instant) {
+        w.classList.add('no-transition');
+        w.classList.remove('is-expanded');
+        requestAnimationFrame(() => requestAnimationFrame(() => w.classList.remove('no-transition')));
+    } else {
+        w.classList.remove('is-expanded');
+    }
+}
+
+function clearNeighbors() {
+    appContainer.querySelectorAll('.neighbor-left-1,.neighbor-left-2,.neighbor-right-1,.neighbor-right-2')
+        .forEach(el => el.classList.remove('neighbor-left-1','neighbor-left-2','neighbor-right-1','neighbor-right-2'));
+}
+
+function setupCardHover(w) {
+    w.addEventListener('mouseenter', () => {
+        if (currentExpanded && currentExpanded !== w) {
+            collapseCard(currentExpanded, true);
+            clearNeighbors();
+        }
+        currentExpanded = w;
+
+        const allWrappers = [...appContainer.querySelectorAll('.card-wrapper:not(.category-wrapper)')];
+        const i = allWrappers.indexOf(w);
+
+        const rect = w.getBoundingClientRect();
+        const expandedW = rect.width * 1.85;
+        w.classList.remove('expand-left', 'expand-right');
+        if (rect.left + rect.width / 2 - expandedW / 2 < EDGE_MARGIN) {
+            w.classList.add('expand-right');
+        } else if (rect.right - rect.width / 2 + expandedW / 2 > window.innerWidth - EDGE_MARGIN) {
+            w.classList.add('expand-left');
+        }
+
+        [[i-1,'neighbor-left-1'],[i-2,'neighbor-left-2'],
+         [i+1,'neighbor-right-1'],[i+2,'neighbor-right-2']]
+            .forEach(([idx, cls]) => { if (allWrappers[idx]) allWrappers[idx].classList.add(cls); });
+
+        w.classList.add('is-expanded');
+    });
+
+    w.addEventListener('mouseleave', () => {
+        if (currentExpanded === w) currentExpanded = null;
+        collapseCard(w, false);
+        w.classList.remove('expand-left', 'expand-right');
+        clearNeighbors();
+    });
+}
+
+let gridScrollObserver = null;
+
 function renderGrid(items, skipAnimation = false) {
     appContainer.innerHTML = '';
+    if (gridScrollObserver) { gridScrollObserver.disconnect(); gridScrollObserver = null; }
+
     items.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
     itemsCountLabel.innerText = `Exibindo ${items.length} iten(s)`;
 
@@ -330,9 +388,39 @@ function renderGrid(items, skipAnimation = false) {
         return;
     }
 
-    const EDGE_MARGIN = 100;
+    const PAGE_SIZE = 40;
+    let renderedCount = 0;
 
-    items.forEach((item, index) => {
+    function renderBatch(startIndex, skip) {
+        const batch = items.slice(startIndex, startIndex + PAGE_SIZE);
+        batch.forEach((item, i) => renderCard(item, startIndex + i, skip));
+        renderedCount = startIndex + batch.length;
+
+        // Remove sentinela anterior se existir
+        const old = appContainer.querySelector('.grid-sentinel');
+        if (old) old.remove();
+
+        if (renderedCount < items.length) {
+            const sentinel = document.createElement('div');
+            sentinel.className = 'grid-sentinel';
+            sentinel.style.cssText = 'grid-column:1/-1;height:1px;';
+            appContainer.appendChild(sentinel);
+
+            gridScrollObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    gridScrollObserver.disconnect();
+                    gridScrollObserver = null;
+                    renderBatch(renderedCount, true);
+                }
+            }, { rootMargin: '200px' });
+            gridScrollObserver.observe(sentinel);
+        }
+    }
+
+    renderBatch(0, skipAnimation);
+}
+
+function renderCard(item, index, skipAnimation = false) {
         const wrapper = document.createElement('div');
         wrapper.className = skipAnimation ? 'card-wrapper no-entrance' : 'card-wrapper';
         if (!skipAnimation) wrapper.style.setProperty('--item-index', Math.min(index, 25));
@@ -352,6 +440,7 @@ function renderGrid(items, skipAnimation = false) {
 
         const starsHtml = buildStars(item.rating);
 
+        const certHtml = item.certification ? `<span class="cert-badge">${esc(item.certification)}</span>` : '';
         const ratingRow = item.rating ? `
             <div class="hover-rating-row">
                 <div class="hover-stars">
@@ -359,8 +448,11 @@ function renderGrid(items, skipAnimation = false) {
                     <span class="hover-score-num">${item.rating.toFixed(1)}</span>
                     <span class="hover-score-src">TMDB</span>
                 </div>
-                ${item.year ? `<span class="hover-year-badge">${item.year}</span>` : ''}
-            </div>` : (item.year ? `<div class="hover-rating-row"><span class="hover-year-badge">${item.year}</span></div>` : '');
+                <div style="display:flex;gap:6px;align-items:center;">
+                    ${item.year ? `<span class="hover-year-badge">${item.year}</span>` : ''}
+                    ${certHtml}
+                </div>
+            </div>` : (item.year ? `<div class="hover-rating-row"><span class="hover-year-badge">${item.year}</span>${certHtml}</div>` : '');
 
         const genreTagsHtml = (item.genres || []).slice(0, 4)
             .map(g => `<span class="hover-genre-tag">${g}</span>`).join('');
@@ -426,63 +518,9 @@ function renderGrid(items, skipAnimation = false) {
             });
         }
 
+        setupCardHover(wrapper);
         wrapper.appendChild(card);
         appContainer.appendChild(wrapper);
-    });
-
-    const allWrappers = [...appContainer.querySelectorAll('.card-wrapper:not(.category-wrapper)')];
-    let currentExpanded = null;
-
-    function collapseCard(w, instant = false) {
-        if (!w) return;
-        if (instant) {
-            w.classList.add('no-transition');
-            w.classList.remove('is-expanded');
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => w.classList.remove('no-transition'));
-            });
-        } else {
-            w.classList.remove('is-expanded');
-        }
-    }
-
-    allWrappers.forEach((w, i) => {
-        w.addEventListener('mouseenter', () => {
-            if (currentExpanded && currentExpanded !== w) {
-                collapseCard(currentExpanded, true);
-                allWrappers.forEach(wr => wr.classList.remove(
-                    'neighbor-left-1','neighbor-left-2',
-                    'neighbor-right-1','neighbor-right-2'
-                ));
-            }
-            currentExpanded = w;
-
-            const rect = w.getBoundingClientRect();
-            const expandedW = rect.width * 1.85;
-            w.classList.remove('expand-left', 'expand-right');
-            if (rect.left + rect.width / 2 - expandedW / 2 < EDGE_MARGIN) {
-                w.classList.add('expand-right');
-            } else if (rect.right - rect.width / 2 + expandedW / 2 > window.innerWidth - EDGE_MARGIN) {
-                w.classList.add('expand-left');
-            }
-
-            [[i-1,'neighbor-left-1'],[i-2,'neighbor-left-2'],
-             [i+1,'neighbor-right-1'],[i+2,'neighbor-right-2']]
-                .forEach(([idx, cls]) => { if (allWrappers[idx]) allWrappers[idx].classList.add(cls); });
-
-            w.classList.add('is-expanded');
-        });
-
-        w.addEventListener('mouseleave', () => {
-            if (currentExpanded === w) currentExpanded = null;
-            collapseCard(w, false);
-            w.classList.remove('expand-left', 'expand-right');
-            allWrappers.forEach(wr => wr.classList.remove(
-                'neighbor-left-1','neighbor-left-2',
-                'neighbor-right-1','neighbor-right-2'
-            ));
-        });
-    });
 }
 
 function handleItemClick(item) {
@@ -534,7 +572,19 @@ function statusBadgeClass(status) {
     return 'status-neutral';
 }
 
-function openDetailsModal(item, updateUrl = true) {
+async function openDetailsModal(item, updateUrl = true) {
+    // Busca detalhes completos se ainda não foram carregados
+    if (!item._detailLoaded) {
+        try {
+            const res = await fetch(`/api/media/${encodeURIComponent(item.id)}`);
+            if (res.ok) {
+                const full = await res.json();
+                Object.assign(item, full);
+                item._detailLoaded = true;
+            }
+        } catch(e) { /* usa o que tem */ }
+    }
+
     currentModalItem = item;
     if (updateUrl) history.pushState(null, null, `/watch/${createSlug(item.title)}`);
     document.body.style.overflow = 'hidden';
@@ -581,6 +631,7 @@ function openDetailsModal(item, updateUrl = true) {
     // — Meta row —
     const lbSlug = item.letterboxd_slug || createSlug(item.original_title || item.title);
     let metaHtml = '';
+    if (item.certification) metaHtml += `<span class="cert-badge">${esc(item.certification)}</span>`;
     if (item.year)    metaHtml += `<div class="meta-item">${SVG_CALENDAR} ${esc(String(item.year))}</div>`;
     if (item.runtime) metaHtml += `<div class="meta-item">${SVG_CLOCK} ${esc(item.runtime)}</div>`;
     if (item.rating)  metaHtml += `<div class="meta-item" title="${item.vote_count ? item.vote_count.toLocaleString() + ' votos' : ''}">
@@ -588,7 +639,7 @@ function openDetailsModal(item, updateUrl = true) {
                                        ${item.vote_count ? `<span class="vote-count">(${(item.vote_count/1000).toFixed(0)}k)</span>` : ''}
                                    </div>`;
     if (item.number_of_seasons) metaHtml += `<div class="meta-item">📺 ${item.number_of_seasons} Temporada${item.number_of_seasons > 1 ? 's' : ''}</div>`;
-    if (item.status)  metaHtml += `<span class="status-badge ${statusBadgeClass(item.status)}">${esc(item.status)}</span>`;
+    if (item.status && item.tag !== 'movie') metaHtml += `<span class="status-badge ${statusBadgeClass(item.status)}">${esc(item.status)}</span>`;
     metaHtml += `<a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">${SVG_LB} Letterboxd</a>`;
     modalMeta.innerHTML = metaHtml;
 
@@ -648,10 +699,14 @@ function startVideo(item, type = 'drive') {
     playerView.classList.remove('hidden');
 
     const backBtn = document.getElementById('back-to-details-btn');
+    const blocker = document.querySelector('.iframe-blocker');
+
     if (type === 'trailer') {
         backBtn.classList.remove('hidden');
+        if (blocker) blocker.style.display = 'none';
     } else {
         backBtn.classList.add('hidden');
+        if (blocker) blocker.style.display = '';
     }
 
     videoFrame.src = type === 'trailer'

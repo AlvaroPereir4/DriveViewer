@@ -327,6 +327,10 @@
                                         <label>Nº de Temporadas</label>
                                         <input type="number" name="number_of_seasons" value="{{ media.number_of_seasons or '' }}">
                                     </div>
+                                    <div class="edit-field">
+                                        <label>Classificação Etária</label>
+                                        <input type="text" name="certification" value="{{ media.certification or '' }}" placeholder="L, 10, 12, 14, 16, 18">
+                                    </div>
                                     <div class="edit-section-label" style="margin-top:8px;">Avaliações</div>
                                     <div class="edit-field">
                                         <label>Nota (0–10)</label>
@@ -555,13 +559,16 @@
             const isOpen = panel.classList.contains('open');
 
             // Fecha todos os outros
-            document.querySelectorAll('.edit-panel-row.open').forEach(p => p.classList.remove('open'));
+            document.querySelectorAll('.edit-panel-row.open').forEach(p => {
+                p.classList.remove('open');
+                p.style.display = '';
+            });
             document.querySelectorAll('.btn-edit.active').forEach(b => b.classList.remove('active'));
 
             if (!isOpen) {
+                panel.style.display = ''; // limpa inline style do filtro
                 panel.classList.add('open');
                 if (btn) btn.classList.add('active');
-                // Aguarda o display:table-row antes do scroll
                 setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
             }
         }
