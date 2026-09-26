@@ -14,15 +14,21 @@ const modalOriginalTitle = document.getElementById('modal-original-title');
 const modalGenres = document.getElementById('modal-genres');
 const modalMeta = document.getElementById('modal-meta');
 const playBtn = document.getElementById('play-btn');
+const trailerBtn = document.getElementById('trailer-btn');
 const playerInfoArea = document.getElementById('player-info-area');
 const modalContent = document.querySelector('.modal-content');
+const modalTagline = document.getElementById('modal-tagline');
+const modalCollection = document.getElementById('modal-collection');
+const modalCrew = document.getElementById('modal-crew');
+const modalFinancials = document.getElementById('modal-financials');
+const modalProduction = document.getElementById('modal-production');
 
 let navigationStack = [];
+let currentModalItem = null;
 let allHomeData = [];
 let currentList = [];
 let lazyLoadObserver;
 
-// --- HELPERS ---
 function esc(str) {
     const d = document.createElement('div');
     d.textContent = str || '';
@@ -36,14 +42,10 @@ function createSlug(text) {
         .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 }
 
-/**
- * Gera HTML de estrelas a partir de nota TMDB (0–10)
- * Converte para escala 0–5 com meia-estrela
- */
 function buildStars(rating) {
     if (!rating) return '';
     const score = Math.min(10, Math.max(0, rating));
-    const stars5 = score / 2; // converte 0-10 → 0-5
+    const stars5 = score / 2;
     let html = '';
     for (let i = 1; i <= 5; i++) {
         if (stars5 >= i) {
@@ -61,21 +63,29 @@ document.addEventListener('DOMContentLoaded', () => {
     initLazyLoading();
     initApp();
 
+    let searchTimeout;
     searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = currentList.filter(item => item.title.toLowerCase().includes(term));
-        renderGrid(filtered);
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const term = e.target.value.toLowerCase();
+            const filtered = currentList.filter(item => item.title.toLowerCase().includes(term));
+            renderGrid(filtered, true);
+        }, 150);
     });
 
     window.addEventListener('popstate', router);
 
-    // Spotlight global
+    let rafPending = false;
     document.addEventListener('mousemove', (e) => {
-        document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
-        document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
-    });
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(() => {
+            document.body.style.setProperty('--mouse-x', `${e.clientX}px`);
+            document.body.style.setProperty('--mouse-y', `${e.clientY}px`);
+            rafPending = false;
+        });
+    }, { passive: true });
 
-    // ESC fecha modal
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
     });
@@ -83,29 +93,22 @@ document.addEventListener('DOMContentLoaded', () => {
     initBackgroundEffects();
 });
 
-// --- EFEITOS DE FUNDO ---
 function initBackgroundEffects() {
     const container = document.createElement('div');
     container.className = 'background-effects';
     document.body.appendChild(container);
 
     function spawnMeteor() {
-        // Só cria meteoro se o modal estiver fechado
         if (!document.getElementById('video-modal').classList.contains('hidden')) return;
 
         const meteor = document.createElement('div');
         meteor.className = 'meteor';
-
-        // Comprimento variado — bem maior que antes
         const len = Math.random() * 180 + 80;
         meteor.style.width = `${len}px`;
-
-        // Diagonal ~30–50 graus caindo da esquerda para direita e para baixo
-        const angle = Math.random() * 20 + 30; // 30° a 50°
+        const angle = Math.random() * 20 + 30;
         meteor.style.transform = `rotate(${angle}deg)`;
         meteor.style.transformOrigin = 'left center';
 
-        // Posição inicial — começa fora da tela pelo topo ou esquerda
         const startFromTop = Math.random() > 0.4;
         if (startFromTop) {
             meteor.style.top  = `${-20}px`;
@@ -115,14 +118,9 @@ function initBackgroundEffects() {
             meteor.style.left = `-${len + 20}px`;
         }
 
-        // Opacidade sutil
         const opacity = Math.random() * 0.45 + 0.2;
-
-        // Distância percorrida proporcional ao ângulo
         const dist = window.innerWidth * 1.3;
         const dy   = dist * Math.tan(angle * Math.PI / 180);
-
-        // Duração bem lenta: 18–38 segundos
         const duration = (Math.random() * 20 + 18) * 1000;
 
         const anim = meteor.animate([
@@ -136,15 +134,12 @@ function initBackgroundEffects() {
         container.appendChild(meteor);
     }
 
-    // Cria meteoros de forma espaçada
     setInterval(spawnMeteor, 2200);
-    // Alguns iniciais para não começar vazio
     setTimeout(spawnMeteor, 400);
     setTimeout(spawnMeteor, 1200);
     setTimeout(spawnMeteor, 2000);
 }
 
-// --- LAZY LOADING ---
 function initLazyLoading() {
     if ('IntersectionObserver' in window) {
         lazyLoadObserver = new IntersectionObserver((entries, observer) => {
@@ -232,7 +227,7 @@ function _renderCategoryView(name, filterTag, type) {
     }
     renderBreadcrumbs();
     if (type === 'genre') {
-        currentList = allHomeData.filter(i => i.genres && i.genres.includes(filterTag));
+        currentList = allHomeData.filter(i => i.tag === 'movie' && i.genres && i.genres.includes(filterTag));
     } else {
         currentList = filterTag === 'movie'
             ? allHomeData.filter(i => i.tag === 'movie')
@@ -257,7 +252,7 @@ function renderCategories(items) {
     ];
 
     const genreMap = {};
-    items.forEach(item => {
+    movies.forEach(item => {
         (item.genres || []).forEach(genre => {
             if (!genreMap[genre]) genreMap[genre] = { title: genre, count: 0, items: [] };
             genreMap[genre].count++;
@@ -325,11 +320,66 @@ async function _renderFolderView(folderId, folderName) {
     }
 }
 
-// ============================================================
-// RENDER GRID — cards de filmes com delay de 1.5s
-// ============================================================
-function renderGrid(items) {
+let currentExpanded = null;
+const EDGE_MARGIN = 100;
+
+function collapseCard(w, instant = false) {
+    if (!w) return;
+    if (instant) {
+        w.classList.add('no-transition');
+        w.classList.remove('is-expanded');
+        requestAnimationFrame(() => requestAnimationFrame(() => w.classList.remove('no-transition')));
+    } else {
+        w.classList.remove('is-expanded');
+    }
+}
+
+function clearNeighbors() {
+    appContainer.querySelectorAll('.neighbor-left-1,.neighbor-left-2,.neighbor-right-1,.neighbor-right-2')
+        .forEach(el => el.classList.remove('neighbor-left-1','neighbor-left-2','neighbor-right-1','neighbor-right-2'));
+}
+
+function setupCardHover(w) {
+    w.addEventListener('mouseenter', () => {
+        if (currentExpanded && currentExpanded !== w) {
+            collapseCard(currentExpanded, true);
+            clearNeighbors();
+        }
+        currentExpanded = w;
+
+        const allWrappers = [...appContainer.querySelectorAll('.card-wrapper:not(.category-wrapper)')];
+        const i = allWrappers.indexOf(w);
+
+        const rect = w.getBoundingClientRect();
+        const expandedW = rect.width * 1.85;
+        w.classList.remove('expand-left', 'expand-right');
+        if (rect.left + rect.width / 2 - expandedW / 2 < EDGE_MARGIN) {
+            w.classList.add('expand-right');
+        } else if (rect.right - rect.width / 2 + expandedW / 2 > window.innerWidth - EDGE_MARGIN) {
+            w.classList.add('expand-left');
+        }
+
+        [[i-1,'neighbor-left-1'],[i-2,'neighbor-left-2'],
+         [i+1,'neighbor-right-1'],[i+2,'neighbor-right-2']]
+            .forEach(([idx, cls]) => { if (allWrappers[idx]) allWrappers[idx].classList.add(cls); });
+
+        w.classList.add('is-expanded');
+    });
+
+    w.addEventListener('mouseleave', () => {
+        if (currentExpanded === w) currentExpanded = null;
+        collapseCard(w, false);
+        w.classList.remove('expand-left', 'expand-right');
+        clearNeighbors();
+    });
+}
+
+let gridScrollObserver = null;
+
+function renderGrid(items, skipAnimation = false) {
     appContainer.innerHTML = '';
+    if (gridScrollObserver) { gridScrollObserver.disconnect(); gridScrollObserver = null; }
+
     items.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
     itemsCountLabel.innerText = `Exibindo ${items.length} iten(s)`;
 
@@ -338,13 +388,42 @@ function renderGrid(items) {
         return;
     }
 
-    const EXPAND_DELAY = 0; // sem delay
-    const EDGE_MARGIN  = 100;  // px antes da borda da tela
+    const PAGE_SIZE = 40;
+    let renderedCount = 0;
 
-    items.forEach((item, index) => {
+    function renderBatch(startIndex, skip) {
+        const batch = items.slice(startIndex, startIndex + PAGE_SIZE);
+        batch.forEach((item, i) => renderCard(item, startIndex + i, skip));
+        renderedCount = startIndex + batch.length;
+
+        // Remove sentinela anterior se existir
+        const old = appContainer.querySelector('.grid-sentinel');
+        if (old) old.remove();
+
+        if (renderedCount < items.length) {
+            const sentinel = document.createElement('div');
+            sentinel.className = 'grid-sentinel';
+            sentinel.style.cssText = 'grid-column:1/-1;height:1px;';
+            appContainer.appendChild(sentinel);
+
+            gridScrollObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    gridScrollObserver.disconnect();
+                    gridScrollObserver = null;
+                    renderBatch(renderedCount, true);
+                }
+            }, { rootMargin: '200px' });
+            gridScrollObserver.observe(sentinel);
+        }
+    }
+
+    renderBatch(0, skipAnimation);
+}
+
+function renderCard(item, index, skipAnimation = false) {
         const wrapper = document.createElement('div');
-        wrapper.className = 'card-wrapper';
-        wrapper.style.setProperty('--item-index', Math.min(index, 25));
+        wrapper.className = skipAnimation ? 'card-wrapper no-entrance' : 'card-wrapper';
+        if (!skipAnimation) wrapper.style.setProperty('--item-index', Math.min(index, 25));
 
         const card = document.createElement('div');
         card.className = 'card';
@@ -355,14 +434,13 @@ function renderGrid(items) {
             if (lazyLoadObserver) lazyLoadObserver.observe(card);
         }
 
-        // Metadado simples (estado não-expandido)
         let metaInfo = '';
         if (item.year)             metaInfo = `<div class="card-type">${esc(String(item.year))}</div>`;
         else if (item.type === 'folder') metaInfo = '<div class="card-type">Pasta</div>';
 
-        // ---- Conteúdo do painel expandido ----
         const starsHtml = buildStars(item.rating);
 
+        const certHtml = item.certification ? `<span class="cert-badge">${esc(item.certification)}</span>` : '';
         const ratingRow = item.rating ? `
             <div class="hover-rating-row">
                 <div class="hover-stars">
@@ -370,8 +448,11 @@ function renderGrid(items) {
                     <span class="hover-score-num">${item.rating.toFixed(1)}</span>
                     <span class="hover-score-src">TMDB</span>
                 </div>
-                ${item.year ? `<span class="hover-year-badge">${item.year}</span>` : ''}
-            </div>` : (item.year ? `<div class="hover-rating-row"><span class="hover-year-badge">${item.year}</span></div>` : '');
+                <div style="display:flex;gap:6px;align-items:center;">
+                    ${item.year ? `<span class="hover-year-badge">${item.year}</span>` : ''}
+                    ${certHtml}
+                </div>
+            </div>` : (item.year ? `<div class="hover-rating-row"><span class="hover-year-badge">${item.year}</span>${certHtml}</div>` : '');
 
         const genreTagsHtml = (item.genres || []).slice(0, 4)
             .map(g => `<span class="hover-genre-tag">${g}</span>`).join('');
@@ -388,7 +469,6 @@ function renderGrid(items) {
             ? `<div class="hover-original-title">${esc(item.original_title)}</div>`
             : '';
 
-        // Carrega backdrop no primeiro hover
         if (item.backdrop) {
             card.addEventListener('mouseenter', () => {
                 const bd = card.querySelector('.card-backdrop');
@@ -417,27 +497,19 @@ function renderGrid(items) {
                         <div class="hover-title">${esc(item.title)}</div>
                         ${originalTitleHtml}
                     </div>
-
                     <div class="hover-divider"></div>
-
                     ${ratingRow}
-
                     ${genreTagsHtml ? `<div class="hover-genres">${genreTagsHtml}</div>` : ''}
-
                     ${synopsis ? `<div class="hover-synopsis-wrap"><p class="hover-desc">${esc(synopsis)}</p></div>` : ''}
-
                     ${releaseStr ? `<div class="hover-release">${esc(releaseStr)}</div>` : ''}
                 </div>
             </div>
             <button class="corner-play-btn" title="Assistir">▶</button>`;
 
-        // Pastas navegam no clique; filmes: só o botão de play faz algo
         if (item.type === 'folder' || item.type === 'drive_folders') {
             card.onclick = () => loadFolder(item.id);
         }
-        // Nenhum card.onclick para filmes — só o botão abaixo
 
-        // Botão play: abre o modal de detalhes direto
         const cornerPlay = card.querySelector('.corner-play-btn');
         if (cornerPlay) {
             cornerPlay.addEventListener('click', (e) => {
@@ -446,68 +518,9 @@ function renderGrid(items) {
             });
         }
 
+        setupCardHover(wrapper);
         wrapper.appendChild(card);
         appContainer.appendChild(wrapper);
-    });
-
-    // ---- HOVER: Netflix-style (colapso instantâneo ao trocar) + baralho + borda ----
-    const allWrappers = [...appContainer.querySelectorAll('.card-wrapper:not(.category-wrapper)')];
-    let currentExpanded = null;
-
-    function collapseCard(w, instant = false) {
-        if (!w) return;
-        if (instant) {
-            w.classList.add('no-transition');
-            w.classList.remove('is-expanded');
-            // força reflow para aplicar no-transition antes de remover a classe
-            w.offsetWidth;
-            w.classList.remove('no-transition');
-        } else {
-            w.classList.remove('is-expanded');
-        }
-    }
-
-    allWrappers.forEach((w, i) => {
-        w.addEventListener('mouseenter', () => {
-            // Se há outro card expandido, colapsa instantaneamente
-            if (currentExpanded && currentExpanded !== w) {
-                collapseCard(currentExpanded, true);
-                // Limpa baralho do card anterior
-                allWrappers.forEach(wr => wr.classList.remove(
-                    'neighbor-left-1','neighbor-left-2',
-                    'neighbor-right-1','neighbor-right-2'
-                ));
-            }
-            currentExpanded = w;
-
-            // Detecta borda
-            const rect = w.getBoundingClientRect();
-            const expandedW = rect.width * 1.85;
-            w.classList.remove('expand-left', 'expand-right');
-            if (rect.left + rect.width / 2 - expandedW / 2 < EDGE_MARGIN) {
-                w.classList.add('expand-right');
-            } else if (rect.right - rect.width / 2 + expandedW / 2 > window.innerWidth - EDGE_MARGIN) {
-                w.classList.add('expand-left');
-            }
-
-            // Baralho
-            [[i-1,'neighbor-left-1'],[i-2,'neighbor-left-2'],
-             [i+1,'neighbor-right-1'],[i+2,'neighbor-right-2']]
-                .forEach(([idx, cls]) => { if (allWrappers[idx]) allWrappers[idx].classList.add(cls); });
-
-            w.classList.add('is-expanded');
-        });
-
-        w.addEventListener('mouseleave', () => {
-            if (currentExpanded === w) currentExpanded = null;
-            collapseCard(w, false);
-            w.classList.remove('expand-left', 'expand-right');
-            allWrappers.forEach(wr => wr.classList.remove(
-                'neighbor-left-1','neighbor-left-2',
-                'neighbor-right-1','neighbor-right-2'
-            ));
-        });
-    });
 }
 
 function handleItemClick(item) {
@@ -520,6 +533,10 @@ function handleItemClick(item) {
 }
 
 function applyModalBackdrop(item) {
+    modalContent.classList.remove('loading');
+    modalContent.style.backgroundImage = 'none';
+    modalContent.style.background = '#060504';
+
     if (item.backdrop) {
         const img = new Image();
         img.src = item.backdrop;
@@ -531,59 +548,138 @@ function applyModalBackdrop(item) {
             modalContent.style.backgroundSize = 'cover';
             modalContent.style.backgroundPosition = 'center 20%';
         };
-    } else {
-        modalContent.style.backgroundImage = 'none';
-        modalContent.style.background = '#060504';
     }
 }
 
-function openDetailsModal(item, updateUrl = true) {
+// --- SVG ICONS ---
+const SVG_CALENDAR = `<svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+const SVG_STAR     = `<svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+const SVG_CLOCK    = `<svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+const SVG_LB       = `<svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>`;
+
+function formatMoney(val) {
+    if (!val || val === 0) return null;
+    if (val >= 1_000_000_000) return `$${(val / 1_000_000_000).toFixed(1)}B`;
+    if (val >= 1_000_000)     return `$${(val / 1_000_000).toFixed(0)}M`;
+    return `$${val.toLocaleString()}`;
+}
+
+function statusBadgeClass(status) {
+    if (!status) return 'status-neutral';
+    const s = status.toLowerCase();
+    if (s.includes('return') || s.includes('produc')) return 'status-active';
+    if (s.includes('release') || s.includes('ended') || s.includes('canceled')) return 'status-done';
+    return 'status-neutral';
+}
+
+async function openDetailsModal(item, updateUrl = true) {
+    // Busca detalhes completos se ainda não foram carregados
+    if (!item._detailLoaded) {
+        try {
+            const res = await fetch(`/api/media/${encodeURIComponent(item.id)}`);
+            if (res.ok) {
+                const full = await res.json();
+                Object.assign(item, full);
+                item._detailLoaded = true;
+            }
+        } catch(e) { /* usa o que tem */ }
+    }
+
+    currentModalItem = item;
     if (updateUrl) history.pushState(null, null, `/watch/${createSlug(item.title)}`);
     document.body.style.overflow = 'hidden';
+
+    // — Títulos —
     modalTitle.textContent = item.title;
-    modalOriginalTitle.textContent = item.original_title || '';
+    modalOriginalTitle.textContent = item.original_title && item.original_title !== item.title ? item.original_title : '';
+
+    // — Tagline —
+    modalTagline.textContent = item.tagline ? `"${item.tagline}"` : '';
+    modalTagline.style.display = item.tagline ? 'block' : 'none';
+
+    // — Coleção —
+    modalCollection.innerHTML = item.belongs_to_collection
+        ? `<span class="collection-badge">${esc(item.belongs_to_collection)}</span>`
+        : '';
+
     modalSynopsis.textContent = item.synopsis || 'Sinopse indisponível.';
 
     applyModalBackdrop(item);
 
+    // — Poster —
     const posterWrapper = document.querySelector('.details-poster-wrapper');
     if (item.poster) {
         posterWrapper.classList.add('loading');
         modalPoster.style.display = 'none';
         modalPoster.src = item.poster;
-        modalPoster.onload = () => { posterWrapper.classList.remove('loading'); modalPoster.style.display = 'block'; };
+        modalPoster.onload  = () => { posterWrapper.classList.remove('loading'); modalPoster.style.display = 'block'; };
         modalPoster.onerror = () => posterWrapper.classList.remove('loading');
     } else {
         posterWrapper.classList.remove('loading');
         modalPoster.style.display = 'none';
     }
 
+    // — Gêneros —
     modalGenres.innerHTML = '';
     (item.genres || []).forEach(genre => {
         const span = document.createElement('span');
         span.className = 'genre-tag';
-        span.innerText = genre;
+        span.textContent = genre;
         modalGenres.appendChild(span);
     });
 
-    let metaHtml = '';
-    if (item.release_date) {
-        const dateStr = new Date(item.release_date).toLocaleDateString('pt-BR');
-        metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${dateStr}</div>`;
-    }
-    if (item.rating) {
-        metaHtml += `<div class="meta-item" title="Nota TMDB"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)} (TMDB)</div>`;
-    }
-
+    // — Meta row —
     const lbSlug = item.letterboxd_slug || createSlug(item.original_title || item.title);
-    metaHtml += `
-        <a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">
-            <svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>
-            Letterboxd
-        </a>`;
+    let metaHtml = '';
+    if (item.certification) metaHtml += `<span class="cert-badge">${esc(item.certification)}</span>`;
+    if (item.year)    metaHtml += `<div class="meta-item">${SVG_CALENDAR} ${esc(String(item.year))}</div>`;
+    if (item.runtime) metaHtml += `<div class="meta-item">${SVG_CLOCK} ${esc(item.runtime)}</div>`;
+    if (item.rating)  metaHtml += `<div class="meta-item" title="${item.vote_count ? item.vote_count.toLocaleString() + ' votos' : ''}">
+                                       ${SVG_STAR} ${item.rating.toFixed(1)}
+                                       ${item.vote_count ? `<span class="vote-count">(${(item.vote_count/1000).toFixed(0)}k)</span>` : ''}
+                                   </div>`;
+    if (item.number_of_seasons) metaHtml += `<div class="meta-item">📺 ${item.number_of_seasons} Temporada${item.number_of_seasons > 1 ? 's' : ''}</div>`;
+    if (item.status && item.tag !== 'movie') metaHtml += `<span class="status-badge ${statusBadgeClass(item.status)}">${esc(item.status)}</span>`;
+    metaHtml += `<a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">${SVG_LB} Letterboxd</a>`;
     modalMeta.innerHTML = metaHtml;
 
-    playBtn.onclick = () => startVideo(item);
+    // — Crew —
+    let crewHtml = '';
+    if (item.director) crewHtml += `<div class="crew-row"><span class="crew-label">Direção</span><span class="crew-value">${esc(item.director)}</span></div>`;
+    if (item.cast_list) {
+        const chips = item.cast_list.split(',').map(n => `<span class="cast-chip">${esc(n.trim())}</span>`).join('');
+        crewHtml += `<div class="crew-row"><span class="crew-label">Elenco</span><div class="cast-chips">${chips}</div></div>`;
+    }
+    modalCrew.innerHTML = crewHtml;
+
+    // — Financeiro —
+    const budget  = formatMoney(item.budget);
+    const revenue = formatMoney(item.revenue);
+    if (budget || revenue) {
+        modalFinancials.innerHTML = `<div class="financials-row">
+            ${budget  ? `<div class="financial-item"><span class="financial-label">Orçamento</span><span class="financial-value">${budget}</span></div>` : ''}
+            ${revenue ? `<div class="financial-item"><span class="financial-label">Bilheteria</span><span class="financial-value">${revenue}</span></div>` : ''}
+        </div>`;
+        modalFinancials.style.display = 'block';
+    } else {
+        modalFinancials.style.display = 'none';
+    }
+
+    // — Produção —
+    const prodParts = [item.production_companies, item.production_countries, item.spoken_languages].filter(Boolean);
+    modalProduction.innerHTML = prodParts.length
+        ? `<div class="production-row">${prodParts.map(p => `<span>${esc(p)}</span>`).join('<span class="prod-sep">·</span>')}</div>`
+        : '';
+
+    // — Botões —
+    if (item.trailer_key) {
+        trailerBtn.classList.remove('hidden');
+        trailerBtn.onclick = () => startVideo(item, 'trailer');
+    } else {
+        trailerBtn.classList.add('hidden');
+    }
+    playBtn.onclick = () => startVideo(item, 'drive');
+
     detailsView.style.display = 'flex';
     playerView.classList.add('hidden');
     videoFrame.src = '';
@@ -591,36 +687,52 @@ function openDetailsModal(item, updateUrl = true) {
     document.body.classList.add('modal-open');
 }
 
-function startVideo(item) {
+function backToDetails() {
+    videoFrame.src = '';
+    playerView.classList.add('hidden');
+    detailsView.style.display = 'flex';
+    document.getElementById('back-to-details-btn').classList.add('hidden');
+}
+
+function startVideo(item, type = 'drive') {
     detailsView.style.display = 'none';
     playerView.classList.remove('hidden');
-    videoFrame.src = `https://drive.google.com/file/d/${item.id}/preview`;
 
-    // Mantém o backdrop de fundo no player também
+    const backBtn = document.getElementById('back-to-details-btn');
+    const blocker = document.querySelector('.iframe-blocker');
+
+    if (type === 'trailer') {
+        backBtn.classList.remove('hidden');
+        if (blocker) blocker.style.display = 'none';
+    } else {
+        backBtn.classList.add('hidden');
+        if (blocker) blocker.style.display = '';
+    }
+
+    videoFrame.src = type === 'trailer'
+        ? `https://www.youtube.com/embed/${item.trailer_key}?autoplay=1`
+        : `https://drive.google.com/file/d/${item.id}/preview`;
+
     applyModalBackdrop(item);
 
     const lbSlug = item.letterboxd_slug || createSlug(item.original_title || item.title);
     const genresHtml = (item.genres || []).length
-        ? `<div class="modal-genres" style="margin-top:10px;">${item.genres.map(g => `<span class="genre-tag">${g}</span>`).join('')}</div>`
+        ? `<div class="modal-genres">${item.genres.map(g => `<span class="genre-tag">${esc(g)}</span>`).join('')}</div>`
         : '';
-
-    let metaHtml = '<div class="modal-meta-tags">';
-    if (item.release_date) {
-        const dateStr = new Date(item.release_date).toLocaleDateString('pt-BR');
-        metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> ${dateStr}</div>`;
-    }
-    if (item.rating) {
-        metaHtml += `<div class="meta-item"><svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> ${item.rating.toFixed(1)}</div>`;
-    }
-    metaHtml += `<a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link"><svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg> Letterboxd</a>`;
-    metaHtml += '</div>';
 
     playerInfoArea.innerHTML = `
         <div class="details-info" style="width:100%;">
             <h2 style="margin-top:20px;">${esc(item.title)}</h2>
-            <h3 style="font-size:1rem;font-weight:400;color:var(--text-secondary);font-style:italic;">${esc(item.original_title || '')}</h3>
+            ${item.original_title && item.original_title !== item.title ? `<h3 style="font-size:1rem;font-weight:400;color:var(--text-secondary);font-style:italic;">${esc(item.original_title)}</h3>` : ''}
+            ${item.tagline ? `<p class="modal-tagline" style="display:block;">"${esc(item.tagline)}"</p>` : ''}
             ${genresHtml}
-            ${metaHtml}
+            <div class="modal-meta-tags">
+                ${item.year    ? `<div class="meta-item">${SVG_CALENDAR} ${esc(String(item.year))}</div>` : ''}
+                ${item.runtime ? `<div class="meta-item">${SVG_CLOCK} ${esc(item.runtime)}</div>` : ''}
+                ${item.rating  ? `<div class="meta-item">${SVG_STAR} ${item.rating.toFixed(1)}</div>` : ''}
+                <a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link">${SVG_LB} Letterboxd</a>
+            </div>
+            ${item.director ? `<div class="crew-row" style="margin-top:8px;"><span class="crew-label">Direção</span><span class="crew-value">${esc(item.director)}</span></div>` : ''}
             <p class="modal-synopsis">${esc(item.synopsis || '')}</p>
         </div>`;
 }
@@ -630,7 +742,6 @@ function closeModal() {
     document.body.classList.remove('modal-open');
     videoFrame.src = '';
     document.body.style.overflow = '';
-    // Volta a URL sem re-renderizar nada — grid continua no mesmo estado
     if (window.location.pathname.startsWith('/watch/')) {
         const lastPage = navigationStack[navigationStack.length - 1];
         let targetUrl = '/';

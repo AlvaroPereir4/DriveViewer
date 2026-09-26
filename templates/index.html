@@ -42,24 +42,38 @@
                     <img id="modal-poster" src="" alt="Capa" onerror="this.style.display='none'">
                 </div>
                 <div class="details-info">
+                    <div id="modal-collection" class="modal-collection"></div>
                     <h2 id="modal-title"></h2>
                     <h3 id="modal-original-title"></h3>
+                    <p id="modal-tagline" class="modal-tagline"></p>
                     <div id="modal-genres" class="modal-genres"></div>
                     <div id="modal-meta" class="modal-meta-tags"></div>
+                    <div id="modal-crew" class="modal-crew"></div>
                     <p id="modal-synopsis" class="modal-synopsis"></p>
-                    <button id="play-btn" class="play-action-btn" title="Assistir">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                    </button>
+                    <div id="modal-financials" class="modal-financials"></div>
+                    <div id="modal-production" class="modal-production"></div>
+                    <div class="modal-actions">
+                        <button id="trailer-btn" class="trailer-action-btn hidden" title="Assistir ao Trailer">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                            Trailer
+                        </button>
+                        <button id="play-btn" class="play-action-btn" title="Assistir">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- VISÃO 2: Player de Vídeo -->
             <div id="player-view" class="player-view hidden">
+                <button id="back-to-details-btn" class="back-to-details-btn hidden" onclick="backToDetails()">
+                    ← Voltar aos detalhes
+                </button>
                 <div class="video-wrapper">
                     <iframe id="video-frame" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
                     <div class="iframe-blocker"></div>
                 </div>
-                <div id="player-info-area"></div> <!-- Info replicada aqui via JS -->
+                <div id="player-info-area"></div>
             </div>
         </div>
     </div>
