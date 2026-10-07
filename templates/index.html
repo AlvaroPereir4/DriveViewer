@@ -5,36 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DriveViewer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="logo" onclick="loadHome()">DriveViewer</div>
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="nav-left">
+            <div class="logo" onclick="loadHome()">
+                <div class="logo-mark">D</div>
+                <span>Drive<span class="logo-accent">Viewer</span></span>
+            </div>
+            <nav class="nav-links">
+                <button class="nav-link-btn active" id="nav-home" onclick="loadHome()">Início</button>
+                <button class="nav-link-btn" id="nav-movies" onclick="loadCategory('Filmes', 'movie', 'main')">Filmes</button>
+                <button class="nav-link-btn" id="nav-series" onclick="loadCategory('Séries', 'series', 'main')">Séries</button>
+            </nav>
+        </div>
+
         <div id="breadcrumbs" class="breadcrumbs"></div>
+
         <div class="nav-actions">
             <div class="search-container">
-                <input type="text" id="search-input" placeholder="Buscar...">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="search-input" placeholder="Buscar filmes, séries...">
             </div>
             {% if is_admin %}
-            <a href="{{ url_for('admin_dashboard') }}" style="text-decoration: none; color: #ccc; margin-right: 15px; display: flex; align-items: center; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#ccc'" title="Admin">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-icon-link" title="Painel Admin">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             </a>
             {% endif %}
-            <a href="{{ url_for('settings') }}" class="settings-icon-link" title="Configurações">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.82 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <a href="{{ url_for('settings') }}" class="nav-icon-link" title="Configurações">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.82 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </a>
             <a href="{{ url_for('logout') }}" class="logout-btn">Sair</a>
         </div>
-    </nav>
+    </header>
 
+    <!-- HERO BILLBOARD (Destaque Principal) -->
+    <section id="hero-billboard" class="hero-section hidden">
+        <div class="hero-backdrop-wrapper">
+            <img id="hero-backdrop" src="" alt="Hero Backdrop" class="hero-backdrop-img">
+            <div class="hero-overlay-gradient"></div>
+        </div>
+        <div class="hero-content-wrapper">
+            <div class="hero-meta-badges">
+                <span class="hero-tag-badge">Destaque</span>
+                <span id="hero-genre" class="hero-meta-genre"></span>
+                <span class="hero-bullet">•</span>
+                <span id="hero-year" class="hero-meta-year"></span>
+                <span class="hero-bullet">•</span>
+                <span id="hero-rating" class="hero-meta-rating"></span>
+            </div>
+            <h1 id="hero-title" class="hero-title"></h1>
+            <p id="hero-synopsis" class="hero-synopsis"></p>
+            <div class="hero-actions">
+                <button id="hero-play-btn" class="btn btn-primary">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    <span>Assistir</span>
+                </button>
+                <button id="hero-details-btn" class="btn btn-secondary">
+                    <svg class="btn-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span>Detalhes</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- GENRE QUICK BAR -->
+    <div id="genre-quickbar" class="genre-quickbar hidden"></div>
+
+    <!-- MAIN APP CONTAINER -->
     <div id="items-count" class="items-count"></div>
     <main id="app-container" class="content-grid">
     </main>
 
+    <!-- MODAL DE DETALHES & PLAYER -->
     <div id="video-modal" class="modal hidden">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <button class="close-btn" onclick="closeModal()" title="Fechar">&times;</button>
             
             <!-- VISÃO 1: Detalhes do Filme (Capa + Info) -->
             <div id="details-view" class="details-view">
@@ -53,12 +102,13 @@
                     <div id="modal-financials" class="modal-financials"></div>
                     <div id="modal-production" class="modal-production"></div>
                     <div class="modal-actions">
-                        <button id="trailer-btn" class="trailer-action-btn hidden" title="Assistir ao Trailer">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                            Trailer
+                        <button id="play-btn" class="btn btn-primary" title="Assistir">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <span>Assistir</span>
                         </button>
-                        <button id="play-btn" class="play-action-btn" title="Assistir">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        <button id="trailer-btn" class="btn btn-secondary hidden" title="Assistir ao Trailer">
+                            <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                            <span>Trailer</span>
                         </button>
                     </div>
                 </div>
@@ -79,7 +129,7 @@
     </div>
 
     <footer class="app-footer">
-        <p>v{{ version }} | Developing in: <a href="{{ github_url }}" target="_blank">GitHub</a></p>
+        <p>DriveViewer • v{{ version }} • <a href="{{ github_url }}" target="_blank">GitHub</a></p>
     </footer>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>

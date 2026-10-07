@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriveViewer - Protótipo de Redesign</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fffbeeb',
+              400: '#fbbf24',
+              500: '#e87c03',
+              600: '#d97706',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #09080c;
+      color: #f3f4f6;
+    }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .hero-gradient {
+      background: linear-gradient(180deg, rgba(9,8,12,0.1) 0%, rgba(9,8,12,0.7) 65%, #09080c 100%),
+                  linear-gradient(90deg, #09080c 0%, rgba(9,8,12,0.85) 35%, transparent 70%);
+    }
+    .card-hover-shadow {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+    }
+    .glass-nav {
+      background: rgba(9, 8, 12, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+  </style>
+</head>
+<body class="bg-[#09080c] text-gray-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-black">
+
+  <!-- TOP NAVBAR -->
+  <header class="sticky top-0 z-50 glass-nav border-b border-white/5 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-8">
+      <div class="flex items-center gap-2 cursor-pointer group">
+        <div class="w-9 h-9 rounded-sm bg-gradient-to-tr from-amber-600 to-orange-400 flex items-center justify-center text-black font-extrabold text-xl shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+          D
+        </div>
+        <span class="text-xl font-bold tracking-tight text-white group-hover:text-amber-400 transition-colors">
+          Drive<span class="text-amber-500">Viewer</span>
+        </span>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-400">
+        <a href="#" class="text-white font-semibold flex items-center gap-1.5 py-1.5 px-4 rounded-sm bg-white/10 border border-white/10">
+          <span>Início</span>
+        </a>
+        <a href="#" class="hover:text-white transition-colors">Filmes</a>
+        <a href="#" class="hover:text-white transition-colors">Séries</a>
+        <a href="#" class="hover:text-white transition-colors">Gêneros</a>
+        <a href="#" class="hover:text-white transition-colors">Minha Lista</a>
+      </nav>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <div class="relative w-48 sm:w-64">
+        <input type="text" placeholder="Buscar filmes, séries..." 
+          class="w-full bg-white/5 border border-white/10 rounded-sm py-2 pl-10 pr-4 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all">
+        <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+
+      <div class="w-9 h-9 rounded-sm bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-semibold text-xs cursor-pointer hover:scale-105 transition-transform">
+        AV
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 pb-16">
+
+    <!-- HERO BILLBOARD (Destaque Principal de Streaming) -->
+    <section class="relative h-[65vh] min-h-[460px] max-h-[620px] w-full overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1600&auto=format&fit=crop" 
+           alt="Hero Backdrop" class="absolute inset-0 w-full h-full object-cover object-center">
+      
+      <div class="absolute inset-0 hero-gradient"></div>
+
+      <div class="relative max-w-7xl mx-auto h-full px-6 flex flex-col justify-end pb-12 z-10">
+        <div class="max-w-2xl space-y-4">
+          <div class="flex items-center gap-2 text-xs font-semibold tracking-wider text-amber-400 uppercase">
+            <span class="px-2.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30">Destaque do Drive</span>
+            <span class="text-gray-400">•</span>
+            <span class="text-gray-300">Ficção Científica</span>
+            <span class="text-gray-400">•</span>
+            <span class="text-gray-300">2024</span>
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-none drop-shadow-md">
+            Dune: Parte Dois
+          </h1>
+
+          <p class="text-sm sm:text-base text-gray-300 line-clamp-3 leading-relaxed drop-shadow">
+            Paul Atreides se une a Chani e aos Fremen enquanto busca vingança contra os conspiradores que destruíram sua família. Diante de uma escolha entre o amor de sua vida e o destino do universo.
+          </p>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button onclick="openDemoModal()" class="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-bold px-6 py-3 rounded-sm shadow-lg shadow-amber-500/25 transition-all transform hover:scale-105">
+              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <span>Assistir Agora</span>
+            </button>
+            <button onclick="openDemoModal()" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-medium px-5 py-3 rounded-sm border border-white/10 backdrop-blur-md transition-all">
+              <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>Mais Detalhes</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTENT SECTION (HORIZONTAL SWIMLANES & GRID DE RESPIRO) -->
+    <div class="max-w-7xl mx-auto px-6 space-y-10 -mt-6 relative z-20">
+
+      <!-- BANNER INFORMATIVO -->
+      <div class="bg-amber-500/10 border border-amber-500/20 rounded-md p-4 flex items-center justify-between gap-4 text-xs text-amber-200 shadow-xl backdrop-blur-md">
+        <div class="flex items-center gap-3">
+          <div class="p-2 rounded-lg bg-amber-500/20 text-amber-400 font-bold text-sm">💡</div>
+          <div>
+            <span class="font-bold text-amber-400">Solução para o "Passei o mouse sem querer":</span> 
+            Implementamos o <strong>Hover Intent (Delay de 300ms)</strong>. O card não explode de tamanho na tela toda! Ele apenas escala suavemente se você parar o cursor de propósito sobre o filme.
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 1: RECENTEMENTE ADICIONADOS -->
+      <section class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            <span class="w-2 h-5 bg-amber-500 rounded-sm inline-block"></span>
+            Adicionados Recentemente
+          </h2>
+          <a href="#" class="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors">Ver todos →</a>
+        </div>
+
+        <!-- Carousel / Grid limpo -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          
+          <!-- CARD 1 -->
+          <div onclick="openDemoModal()" class="group cursor-pointer">
+            <div class="relative aspect-[2/3] rounded-md overflow-hidden border border-white/10 bg-gray-900 card-hover-shadow group-hover:scale-[1.04] group-hover:border-amber-500/50 group-hover:shadow-2xl group-hover:shadow-amber-500/15">
+              <img src="https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover">
+              
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3.5 flex flex-col justify-between">
+                <div class="flex justify-end">
+                  <span class="bg-black/70 backdrop-blur-md border border-amber-500/30 text-amber-400 font-bold text-[11px] px-2 py-0.5 rounded-sm">★ 8.9</span>
+                </div>
+                <div class="space-y-2">
+                  <div class="w-10 h-10 rounded-sm bg-amber-500 text-black flex items-center justify-center font-bold text-sm shadow-lg shadow-amber-500/40">▶</div>
+                  <p class="text-xs font-bold text-white line-clamp-1">Interstellar</p>
+                  <p class="text-[10px] text-gray-300">Sci-Fi • 2h 49m</p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2.5">
+              <p class="text-xs font-semibold text-gray-200 truncate group-hover:text-amber-400 transition-colors">Interstellar</p>
+              <p class="text-[11px] text-gray-500">2014 • Christopher Nolan</p>
+            </div>
+          </div>
+
+          <!-- CARD 2 -->
+          <div onclick="openDemoModal()" class="group cursor-pointer">
+            <div class="relative aspect-[2/3] rounded-md overflow-hidden border border-white/10 bg-gray-900 card-hover-shadow group-hover:scale-[1.04] group-hover:border-amber-500/50 group-hover:shadow-2xl group-hover:shadow-amber-500/15">
+              <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover">
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3.5 flex flex-col justify-between">
+                <div class="flex justify-end">
+                  <span class="bg-black/70 backdrop-blur-md border border-amber-500/30 text-amber-400 font-bold text-[11px] px-2 py-0.5 rounded-sm">★ 8.5</span>
+                </div>
+                <div class="space-y-2">
+                  <div class="w-10 h-10 rounded-sm bg-amber-500 text-black flex items-center justify-center font-bold text-sm shadow-lg shadow-amber-500/40">▶</div>
+                  <p class="text-xs font-bold text-white line-clamp-1">Blade Runner 2049</p>
+                  <p class="text-[10px] text-gray-300">Cyberpunk • 2h 44m</p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2.5">
+              <p class="text-xs font-semibold text-gray-200 truncate group-hover:text-amber-400 transition-colors">Blade Runner 2049</p>
+              <p class="text-[11px] text-gray-500">2017 • Denis Villeneuve</p>
+            </div>
+          </div>
+
+          <!-- CARD 3 -->
+          <div onclick="openDemoModal()" class="group cursor-pointer">
+            <div class="relative aspect-[2/3] rounded-md overflow-hidden border border-white/10 bg-gray-900 card-hover-shadow group-hover:scale-[1.04] group-hover:border-amber-500/50 group-hover:shadow-2xl group-hover:shadow-amber-500/15">
+              <img src="https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover">
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3.5 flex flex-col justify-between">
+                <div class="flex justify-end">
+                  <span class="bg-black/70 backdrop-blur-md border border-amber-500/30 text-amber-400 font-bold text-[11px] px-2 py-0.5 rounded-sm">★ 9.0</span>
+                </div>
+                <div class="space-y-2">
+                  <div class="w-10 h-10 rounded-sm bg-amber-500 text-black flex items-center justify-center font-bold text-sm shadow-lg shadow-amber-500/40">▶</div>
+                  <p class="text-xs font-bold text-white line-clamp-1">The Dark Knight</p>
+                  <p class="text-[10px] text-gray-300">Ação • 2h 32m</p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2.5">
+              <p class="text-xs font-semibold text-gray-200 truncate group-hover:text-amber-400 transition-colors">The Dark Knight</p>
+              <p class="text-[11px] text-gray-500">2008 • Christopher Nolan</p>
+            </div>
+          </div>
+
+          <!-- CARD 4 -->
+          <div onclick="openDemoModal()" class="group cursor-pointer">
+            <div class="relative aspect-[2/3] rounded-md overflow-hidden border border-white/10 bg-gray-900 card-hover-shadow group-hover:scale-[1.04] group-hover:border-amber-500/50 group-hover:shadow-2xl group-hover:shadow-amber-500/15">
+              <img src="https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover">
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3.5 flex flex-col justify-between">
+                <div class="flex justify-end">
+                  <span class="bg-black/70 backdrop-blur-md border border-amber-500/30 text-amber-400 font-bold text-[11px] px-2 py-0.5 rounded-sm">★ 8.8</span>
+                </div>
+                <div class="space-y-2">
+                  <div class="w-10 h-10 rounded-sm bg-amber-500 text-black flex items-center justify-center font-bold text-sm shadow-lg shadow-amber-500/40">▶</div>
+                  <p class="text-xs font-bold text-white line-clamp-1">Inception</p>
+                  <p class="text-[10px] text-gray-300">Sci-Fi • 2h 28m</p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2.5">
+              <p class="text-xs font-semibold text-gray-200 truncate group-hover:text-amber-400 transition-colors">Inception</p>
+              <p class="text-[11px] text-gray-500">2010 • Sci-Fi</p>
+            </div>
+          </div>
+
+          <!-- CARD 5 -->
+          <div onclick="openDemoModal()" class="group cursor-pointer">
+            <div class="relative aspect-[2/3] rounded-md overflow-hidden border border-white/10 bg-gray-900 card-hover-shadow group-hover:scale-[1.04] group-hover:border-amber-500/50 group-hover:shadow-2xl group-hover:shadow-amber-500/15">
+              <img src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover">
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3.5 flex flex-col justify-between">
+                <div class="flex justify-end">
+                  <span class="bg-black/70 backdrop-blur-md border border-amber-500/30 text-amber-400 font-bold text-[11px] px-2 py-0.5 rounded-sm">★ 8.7</span>
+                </div>
+                <div class="space-y-2">
+                  <div class="w-10 h-10 rounded-sm bg-amber-500 text-black flex items-center justify-center font-bold text-sm shadow-lg shadow-amber-500/40">▶</div>
+                  <p class="text-xs font-bold text-white line-clamp-1">Cyberpunk: Edgerunners</p>
+                  <p class="text-[10px] text-gray-300">Anime • 10 Ep</p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2.5">
+              <p class="text-xs font-semibold text-gray-200 truncate group-hover:text-amber-400 transition-colors">Edgerunners</p>
+              <p class="text-[11px] text-gray-500">2022 • Série Anime</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ROW 2: FILTROS & GÊNEROS -->
+      <section class="space-y-4">
+        <h2 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+          <span class="w-2 h-5 bg-amber-500 rounded-sm inline-block"></span>
+          Explorar por Gênero
+        </h2>
+        <div class="flex flex-wrap gap-2.5">
+          <button class="px-4 py-2 rounded-sm bg-amber-500 text-black font-bold text-xs shadow-md shadow-amber-500/20">Todos (124)</button>
+          <button class="px-4 py-2 rounded-sm bg-white/5 border border-white/10 hover:border-amber-500/40 text-gray-300 hover:text-white text-xs transition-colors">Ficção Científica (42)</button>
+          <button class="px-4 py-2 rounded-sm bg-white/5 border border-white/10 hover:border-amber-500/40 text-gray-300 hover:text-white text-xs transition-colors">Ação & Aventura (38)</button>
+          <button class="px-4 py-2 rounded-sm bg-white/5 border border-white/10 hover:border-amber-500/40 text-gray-300 hover:text-white text-xs transition-colors">Drama (29)</button>
+          <button class="px-4 py-2 rounded-sm bg-white/5 border border-white/10 hover:border-amber-500/40 text-gray-300 hover:text-white text-xs transition-colors">Animação & Anime (19)</button>
+          <button class="px-4 py-2 rounded-sm bg-white/5 border border-white/10 hover:border-amber-500/40 text-gray-300 hover:text-white text-xs transition-colors">Suspense / Thriller (15)</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- MODAL DE DETALHES CLEAN -->
+  <div id="demo-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-[#121017] border border-white/10 rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl relative">
+      <button onclick="closeDemoModal()" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-sm bg-black/60 border border-white/10 text-white flex items-center justify-center hover:bg-amber-500 hover:text-black transition-colors">✕</button>
+      
+      <div class="relative h-64 sm:h-80 w-full overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1600&auto=format&fit=crop" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-[#121017] via-[#121017]/50 to-transparent"></div>
+        <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+          <div>
+            <span class="text-amber-400 font-bold text-xs uppercase tracking-wider">Filme • 2024</span>
+            <h2 class="text-3xl font-extrabold text-white">Dune: Parte Dois</h2>
+          </div>
+          <button class="w-14 h-14 rounded-sm bg-amber-500 text-black flex items-center justify-center text-xl font-bold shadow-lg shadow-amber-500/30 hover:scale-110 transition-transform">▶</button>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs text-gray-300">
+        <div class="flex items-center gap-4 text-gray-400">
+          <span class="text-amber-400 font-bold">★ 8.6 TMDB</span>
+          <span>•</span>
+          <span>2h 46m</span>
+          <span>•</span>
+          <span class="px-2 py-0.5 border border-white/20 rounded text-[10px]">14 anos</span>
+        </div>
+        <p class="leading-relaxed text-gray-300 text-sm">
+          A jornada lendária de Paul Atreides continua enquanto ele se une a Chani e aos Fremen em uma guerra de vingança contra os conspiradores que destruíram sua família.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openDemoModal() {
+      const modal = document.getElementById('demo-modal');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+    }
+    function closeDemoModal() {
+      const modal = document.getElementById('demo-modal');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+    }
+  </script>
+</body>
+</html>
