@@ -245,12 +245,12 @@ body::after {
 .hero-section {
     position: relative;
     width: 100%;
-    height: 58vh;
-    min-height: 420px;
-    max-height: 600px;
+    height: 64vh;
+    min-height: 480px;
+    max-height: 660px;
     overflow: hidden;
     margin-bottom: 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .hero-section.hidden { display: none; }
@@ -267,15 +267,18 @@ body::after {
     height: 100%;
     object-fit: cover;
     object-position: center 20%;
-    transition: opacity 0.5s ease;
+    filter: brightness(1.1) contrast(1.06);
+    transition: opacity 0.4s ease;
 }
 
 .hero-overlay-gradient {
     position: absolute;
     inset: 0;
     background:
-        linear-gradient(180deg, rgba(12,11,11,0.2) 0%, rgba(12,11,11,0.7) 65%, var(--bg-color) 100%),
-        linear-gradient(90deg, var(--bg-color) 0%, rgba(12,11,11,0.85) 40%, rgba(12,11,11,0.2) 75%, transparent 100%);
+        /* Gradiente vertical: topo totalmente transparente para a imagem brilhar; escurece suavemente apenas na base */
+        linear-gradient(180deg, rgba(12,11,11,0.02) 0%, rgba(12,11,11,0.12) 45%, rgba(12,11,11,0.7) 82%, var(--bg-color) 100%),
+        /* Gradiente horizontal: escurece a coluna da esquerda onde fica o texto, mantendo o centro e a direita bem nítidos e vibrantes */
+        linear-gradient(90deg, rgba(12,11,11,0.92) 0%, rgba(12,11,11,0.75) 35%, rgba(12,11,11,0.2) 65%, transparent 85%);
 }
 
 .hero-content-wrapper {
@@ -283,12 +286,133 @@ body::after {
     max-width: 1500px;
     height: 100%;
     margin: 0 auto;
-    padding: 0 4% 40px;
+    padding: 0 4% 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 36px;
+    z-index: 10;
+}
+
+/* Lado Esquerdo do Hero (Título, Sinopse, Ações) */
+.hero-left-column {
+    max-width: 720px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    gap: 14px;
-    z-index: 10;
+    gap: 12px;
+}
+
+/* Lado Direito do Hero (Card Flutuante de Descoberta) */
+.hero-right-column {
+    flex-shrink: 0;
+    width: 330px;
+    max-width: 100%;
+}
+
+.hero-discovery-card {
+    background: rgba(16, 14, 13, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hero-discovery-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 8px;
+}
+
+.hero-discovery-title-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hero-discovery-icon {
+    color: var(--accent-color);
+    font-size: 0.95rem;
+}
+
+.hero-discovery-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.2px;
+}
+
+.hero-discovery-subtitle {
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+}
+
+.hero-mood-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.hero-mood-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    color: rgba(255, 255, 255, 0.75);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 4px 9px;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.hero-mood-btn:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.hero-mood-btn.active {
+    background: var(--accent-color);
+    color: #000;
+    font-weight: 700;
+    border-color: var(--accent-color);
+    box-shadow: 0 2px 8px rgba(232, 124, 3, 0.35);
+}
+
+.hero-shuffle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    background: rgba(232, 124, 3, 0.1);
+    border: 1px solid rgba(232, 124, 3, 0.35);
+    color: var(--accent-color);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.hero-shuffle-btn:hover {
+    background: var(--accent-color);
+    color: #000;
+    box-shadow: 0 4px 14px rgba(232, 124, 3, 0.35);
+}
+
+.hero-shuffle-btn:active svg {
+    transform: rotate(180deg);
+    transition: transform 0.25s ease;
 }
 
 .hero-meta-badges {
@@ -1175,8 +1299,10 @@ body::after {
 
 @media (max-width: 900px) {
     .content-grid { grid-template-columns: repeat(3, 1fr); gap: 16px 14px; }
+    .hero-content-wrapper { flex-direction: column; align-items: stretch; gap: 20px; padding-bottom: 24px; }
+    .hero-right-column { width: 100%; }
     .hero-title { font-size: 2.2rem; }
-    .hero-section { height: 48vh; min-height: 380px; }
+    .hero-section { height: auto; min-height: 480px; }
     .details-view { flex-direction: column; padding: 24px; }
     .details-poster-wrapper { width: 160px; margin: 0 auto 12px; }
     .details-info { text-align: center; align-items: center; }
@@ -1192,5 +1318,6 @@ body::after {
     .content-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .hero-title { font-size: 1.7rem; }
     .hero-synopsis { -webkit-line-clamp: 2; font-size: 0.88rem; }
-    .hero-section { height: 42vh; min-height: 340px; }
+    .hero-section { height: auto; min-height: 380px; }
+    .hero-discovery-card { padding: 12px; }
 }

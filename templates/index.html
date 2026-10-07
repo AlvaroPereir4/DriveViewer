@@ -42,32 +42,53 @@
         </div>
     </header>
 
-    <!-- HERO BILLBOARD (Destaque Principal) -->
+    <!-- HERO BILLBOARD (Destaque Principal com Descoberta Interativa) -->
     <section id="hero-billboard" class="hero-section hidden">
         <div class="hero-backdrop-wrapper">
             <img id="hero-backdrop" src="" alt="Hero Backdrop" class="hero-backdrop-img">
             <div class="hero-overlay-gradient"></div>
         </div>
         <div class="hero-content-wrapper">
-            <div class="hero-meta-badges">
-                <span class="hero-tag-badge">Destaque</span>
-                <span id="hero-genre" class="hero-meta-genre"></span>
-                <span class="hero-bullet">•</span>
-                <span id="hero-year" class="hero-meta-year"></span>
-                <span class="hero-bullet">•</span>
-                <span id="hero-rating" class="hero-meta-rating"></span>
+            <!-- LADO ESQUERDO: Filme / Série em Destaque -->
+            <div class="hero-left-column">
+                <div class="hero-meta-badges">
+                    <span class="hero-tag-badge">Destaque</span>
+                    <span id="hero-genre" class="hero-meta-genre"></span>
+                    <span class="hero-bullet">•</span>
+                    <span id="hero-year" class="hero-meta-year"></span>
+                    <span class="hero-bullet">•</span>
+                    <span id="hero-rating" class="hero-meta-rating"></span>
+                </div>
+                <h1 id="hero-title" class="hero-title"></h1>
+                <p id="hero-synopsis" class="hero-synopsis"></p>
+                <div class="hero-actions">
+                    <button id="hero-play-btn" class="btn btn-primary">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        <span>Assistir</span>
+                    </button>
+                    <button id="hero-details-btn" class="btn btn-secondary">
+                        <svg class="btn-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        <span>Detalhes</span>
+                    </button>
+                </div>
             </div>
-            <h1 id="hero-title" class="hero-title"></h1>
-            <p id="hero-synopsis" class="hero-synopsis"></p>
-            <div class="hero-actions">
-                <button id="hero-play-btn" class="btn btn-primary">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                    <span>Assistir</span>
-                </button>
-                <button id="hero-details-btn" class="btn btn-secondary">
-                    <svg class="btn-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    <span>Detalhes</span>
-                </button>
+
+            <!-- LADO DIREITO: Card Interativo de Descoberta -->
+            <div class="hero-right-column">
+                <div class="hero-discovery-card">
+                    <div class="hero-discovery-header">
+                        <div class="hero-discovery-title-group">
+                            <span class="hero-discovery-icon">✦</span>
+                            <span class="hero-discovery-title">O que assistir hoje?</span>
+                        </div>
+                        <span class="hero-discovery-subtitle">Escolha uma vibe ou sorteie um filme</span>
+                    </div>
+                    <div id="hero-mood-pills" class="hero-mood-pills"></div>
+                    <button id="hero-shuffle-btn" class="hero-shuffle-btn" title="Sortear outro título">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        <span>Sortear Outro Título</span>
+                    </button>
+                </div>
             </div>
         </div>
     </section>

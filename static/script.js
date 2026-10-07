@@ -190,32 +190,115 @@ function loadHome() { navigateTo('/'); }
 function loadCategory(name, filterTag, type = 'main') { navigateTo(`/category/${filterTag}`); }
 function loadFolder(folderId) { navigateTo(`/folder/${folderId}`); }
 
-// --- HERO BILLBOARD ---
-function renderHeroBillboard(items) {
+// --- HERO BILLBOARD & DESCOBERTA INTERATIVA ---
+let currentHeroGenreFilter = null;
+
+function renderHeroBillboard(items, initialGenre = null) {
     if (!heroBillboard) return;
+    pickAndDisplayHero(initialGenre, false);
+}
 
-    // Encontra os melhores candidatos para o destaque (tem backdrop, nota alta ou popularidade)
-    const candidates = items.filter(i => i.backdrop && i.synopsis && i.synopsis.length > 30);
-    const heroItem = candidates.length > 0 
-        ? (candidates.find(i => i.rating >= 7.5) || candidates[0])
-        : items.find(i => i.backdrop) || items[0];
+function renderHeroMoodPills(genres) {
+    const pillsContainer = document.getElementById('hero-mood-pills');
+    const shuffleBtn = document.getElementById('hero-shuffle-btn');
+    if (!pillsContainer) return;
+    pillsContainer.innerHTML = '';
 
-    if (!heroItem) {
+    const priorityPills = [
+        { label: 'Surpreenda-me', value: null },
+        { label: 'Absolute Cinema', value: 'Absolute Cinema' },
+        { label: 'Studio Ghibli', value: 'Studio Ghibli' },
+        { label: 'Animação', value: 'Animação' },
+        { label: 'Ação', value: 'Ação' },
+        { label: 'Drama', value: 'Drama' },
+        { label: 'Terror', value: 'Terror' }
+    ];
+
+    priorityPills.forEach(pill => {
+        const btn = document.createElement('button');
+        btn.className = `hero-mood-btn ${currentHeroGenreFilter === pill.value ? 'active' : ''}`;
+        btn.textContent = pill.label;
+        btn.onclick = () => setHeroMood(pill.value);
+        pillsContainer.appendChild(btn);
+    });
+
+    if (shuffleBtn) {
+        shuffleBtn.onclick = () => pickAndDisplayHero(currentHeroGenreFilter, true);
+    }
+}
+
+function setHeroMood(genreTitle) {
+    currentHeroGenreFilter = genreTitle;
+    document.querySelectorAll('.hero-mood-btn').forEach(btn => {
+        if (!genreTitle && btn.textContent === 'Surpreenda-me') {
+            btn.classList.add('active');
+        } else if (genreTitle && btn.textContent === genreTitle) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    pickAndDisplayHero(genreTitle, true);
+}
+
+function pickAndDisplayHero(genre = null, isShuffle = false) {
+    if (!heroBillboard || !allHomeData || allHomeData.length === 0) return;
+
+    let candidates = allHomeData.filter(i => (i.backdrop || i.poster) && i.title);
+    if (genre) {
+        const gNorm = genre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (gNorm.includes('absolute')) {
+            candidates = candidates.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('absolute'))) || (i.rating && i.rating >= 8.0));
+        } else if (gNorm.includes('ghibli')) {
+            candidates = candidates.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('ghibli'))) || (i.title && i.title.toLowerCase().includes('ghibli')));
+        } else {
+            candidates = candidates.filter(i => i.genres && i.genres.some(g => g.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(gNorm)));
+        }
+    }
+
+    if (candidates.length === 0) {
+        candidates = allHomeData.filter(i => i.backdrop || i.poster);
+    }
+
+    if (candidates.length === 0) {
         heroBillboard.classList.add('hidden');
         return;
     }
+
+    // Se for shuffle/troca e houver mais opções, evita repetir o item atual
+    let available = candidates;
+    if (isShuffle && candidates.length > 1 && currentFeaturedHero) {
+        available = candidates.filter(i => i.id !== currentFeaturedHero.id);
+        if (available.length === 0) available = candidates;
+    }
+
+    // Escolhe aleatoriamente entre os disponíveis
+    const randomIndex = Math.floor(Math.random() * available.length);
+    const heroItem = available[randomIndex] || candidates[0];
 
     currentFeaturedHero = heroItem;
     heroBillboard.classList.remove('hidden');
 
     const backdropImg = document.getElementById('hero-backdrop');
-    if (backdropImg) backdropImg.src = heroItem.backdrop || heroItem.poster || '';
+    if (backdropImg) {
+        const newSrc = heroItem.backdrop || heroItem.poster || '';
+        const tempImg = new Image();
+        tempImg.src = newSrc;
+        tempImg.onload = () => {
+            backdropImg.src = newSrc;
+            backdropImg.style.opacity = '1';
+        };
+        tempImg.onerror = () => {
+            backdropImg.src = newSrc;
+            backdropImg.style.opacity = '1';
+        };
+    }
 
     const heroTitle = document.getElementById('hero-title');
     if (heroTitle) heroTitle.textContent = heroItem.title || '';
 
     const heroSynopsis = document.getElementById('hero-synopsis');
-    if (heroSynopsis) heroSynopsis.textContent = heroItem.synopsis || '';
+    if (heroSynopsis) heroSynopsis.textContent = heroItem.synopsis || 'Nenhuma sinopse disponível.';
 
     const heroGenre = document.getElementById('hero-genre');
     if (heroGenre) heroGenre.textContent = (heroItem.genres && heroItem.genres[0]) || (heroItem.tag === 'series' ? 'Série' : 'Filme');
@@ -259,9 +342,6 @@ function renderGenreQuickbar(genres, activeGenre = null) {
 function renderHomeView(items) {
     appContainer.innerHTML = '';
     itemsCountLabel.innerText = '';
-    
-    // Renderiza Hero
-    renderHeroBillboard(items);
 
     // Processa Gêneros
     const movies = items.filter(i => i.tag === 'movie');
@@ -277,39 +357,62 @@ function renderHomeView(items) {
     });
     const sortedGenres = Object.values(genreMap).sort((a, b) => b.count - a.count);
 
+    // Inicializa Descoberta Interativa no Hero & Quickbar
+    renderHeroMoodPills(sortedGenres);
+    renderHeroBillboard(items);
     renderGenreQuickbar(sortedGenres, null);
 
-    // Seção 1: Adicionados Recentemente / Destaques
-    const recentItems = [...items].reverse().slice(0, 10);
-    if (recentItems.length > 0) {
-        const secHeader = document.createElement('div');
-        secHeader.className = 'swimlane-section';
-        secHeader.innerHTML = `
+    // Helper para renderizar uma sessão swimlane
+    function renderHomeSection(title, filterKey, filterType, itemList, limit = 5) {
+        if (!itemList || itemList.length === 0) return;
+
+        const sec = document.createElement('div');
+        sec.className = 'swimlane-section';
+        sec.innerHTML = `
             <div class="swimlane-header">
                 <div class="swimlane-title">
                     <span class="swimlane-indicator"></span>
-                    <span>Adicionados Recentemente</span>
+                    <span>${esc(title)}</span>
+                    <span style="font-size:0.75rem;font-weight:500;color:var(--text-secondary);margin-left:4px;">(${itemList.length})</span>
                 </div>
-                <a href="#" onclick="event.preventDefault(); loadCategory('Filmes', 'movie', 'main');" class="swimlane-more-link">Ver catálogo completo →</a>
+                <a href="#" onclick="event.preventDefault(); loadCategory('${esc(title)}', '${esc(filterKey)}', '${filterType}');" class="swimlane-more-link">Ver catálogo completo →</a>
             </div>`;
-        appContainer.appendChild(secHeader);
-        recentItems.forEach((item, idx) => renderCard(item, idx, false));
+        appContainer.appendChild(sec);
+
+        itemList.slice(0, limit).forEach((item, idx) => renderCard(item, idx, false));
     }
 
-    // Seção 2: Séries (se houver)
+    // 1. Adicionados Recentemente
+    const recentItems = [...items].reverse();
+    renderHomeSection('Adicionados Recentemente', 'movie', 'main', recentItems, 5);
+
+    // 2. Absolute Cinema
+    const absoluteCinemaList = items.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('absolute'))) || (i.rating && i.rating >= 8.0 && i.tag === 'movie'));
+    renderHomeSection('Absolute Cinema', 'Absolute Cinema', 'curated', absoluteCinemaList, 5);
+
+    // 3. Studio Ghibli
+    const ghibliList = items.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('ghibli'))) || (i.title && i.title.toLowerCase().includes('ghibli')));
+    renderHomeSection('Studio Ghibli', 'Studio Ghibli', 'curated', ghibliList, 5);
+
+    // 4. Animação
+    const animacaoList = items.filter(i => i.genres && i.genres.some(g => g.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes('animac')));
+    renderHomeSection('Animação', 'Animação', 'genre', animacaoList, 5);
+
+    // 5. Ação & Aventura
+    const acaoList = items.filter(i => i.genres && i.genres.some(g => g.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes('aca') || g.toLowerCase().includes('aventura')));
+    renderHomeSection('Ação & Aventura', 'Ação', 'genre', acaoList, 5);
+
+    // 6. Drama
+    const dramaList = items.filter(i => i.genres && i.genres.some(g => g.toLowerCase().includes('drama')));
+    renderHomeSection('Drama', 'Drama', 'genre', dramaList, 5);
+
+    // 7. Terror & Suspense
+    const terrorList = items.filter(i => i.genres && i.genres.some(g => g.toLowerCase().includes('terror') || g.toLowerCase().includes('horror') || g.toLowerCase().includes('thriller')));
+    renderHomeSection('Terror', 'Terror', 'genre', terrorList, 5);
+
+    // 8. Séries de TV
     if (series.length > 0) {
-        const secSeries = document.createElement('div');
-        secSeries.className = 'swimlane-section';
-        secSeries.innerHTML = `
-            <div class="swimlane-header">
-                <div class="swimlane-title">
-                    <span class="swimlane-indicator"></span>
-                    <span>Séries de TV & Minisséries</span>
-                </div>
-                <a href="#" onclick="event.preventDefault(); loadCategory('Séries', 'series', 'main');" class="swimlane-more-link">Ver todas →</a>
-            </div>`;
-        appContainer.appendChild(secSeries);
-        series.slice(0, 5).forEach((item, idx) => renderCard(item, idx, false));
+        renderHomeSection('Séries de TV & Minisséries', 'series', 'main', series, 5);
     }
 }
 
@@ -324,8 +427,15 @@ function _renderCategoryView(name, filterTag, type) {
     }
     renderBreadcrumbs();
 
-    if (type === 'genre') {
-        currentList = allHomeData.filter(i => i.tag === 'movie' && i.genres && i.genres.includes(filterTag));
+    const tagNorm = filterTag.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (type === 'genre' || type === 'curated') {
+        if (tagNorm.includes('absolute')) {
+            currentList = allHomeData.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('absolute'))) || (i.rating && i.rating >= 8.0 && i.tag === 'movie'));
+        } else if (tagNorm.includes('ghibli')) {
+            currentList = allHomeData.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('ghibli'))) || (i.title && i.title.toLowerCase().includes('ghibli')));
+        } else {
+            currentList = allHomeData.filter(i => i.tag === 'movie' && i.genres && i.genres.some(g => g.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(tagNorm)));
+        }
     } else {
         currentList = filterTag === 'movie'
             ? allHomeData.filter(i => i.tag === 'movie')
@@ -502,7 +612,8 @@ function renderCard(item, index, skipAnimation = false) {
 const SVG_CALENDAR = `<svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
 const SVG_STAR     = `<svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
 const SVG_CLOCK    = `<svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
-const SVG_LB       = `<svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>`;
+const SVG_TV      = `<svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>`;
+const SVG_LB      = `<svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="3.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="19" cy="12" r="3.5"/></svg>`;
 
 function formatMoney(val) {
     if (!val || val === 0) return null;
@@ -514,18 +625,20 @@ function formatMoney(val) {
 function applyModalBackdrop(item) {
     modalContent.classList.remove('loading');
     modalContent.style.backgroundImage = 'none';
-    modalContent.style.background = '#110f0e';
+    modalContent.style.backgroundColor = '#110f0e';
 
     if (item.backdrop) {
         const img = new Image();
         img.src = item.backdrop;
         img.onload = () => {
             modalContent.style.backgroundImage =
-                `linear-gradient(to right, rgba(17,15,14,0.96) 30%, rgba(17,15,14,0.7) 65%, rgba(17,15,14,0.4) 100%),
-                 linear-gradient(to top, rgba(17,15,14,0.98) 0%, transparent 40%),
+                `linear-gradient(to right, #110f0e 0%, #110f0e 22%, rgba(17,15,14,0.94) 42%, rgba(17,15,14,0.6) 70%, rgba(17,15,14,0.2) 100%),
+                 linear-gradient(to top, #110f0e 0%, #110f0e 14%, rgba(17,15,14,0.88) 38%, transparent 68%),
+                 linear-gradient(to bottom, #110f0e 0%, transparent 16%),
                  url('${item.backdrop}')`;
             modalContent.style.backgroundSize = 'cover';
             modalContent.style.backgroundPosition = 'center 20%';
+            modalContent.style.backgroundRepeat = 'no-repeat';
         };
     }
 }
@@ -588,7 +701,7 @@ async function openDetailsModal(item, updateUrl = true) {
     if (item.rating)  metaHtml += `<div class="meta-item" title="${item.vote_count ? item.vote_count.toLocaleString() + ' votos' : ''}">
                                         ${SVG_STAR} ${item.rating.toFixed(1)}
                                    </div>`;
-    if (item.number_of_seasons) metaHtml += `<div class="meta-item">📺 ${item.number_of_seasons} Temporada${item.number_of_seasons > 1 ? 's' : ''}</div>`;
+    if (item.number_of_seasons) metaHtml += `<div class="meta-item">${SVG_TV} ${esc(String(item.number_of_seasons))} Temporada${item.number_of_seasons > 1 ? 's' : ''}</div>`;
     metaHtml += `<a href="https://letterboxd.com/film/${lbSlug}/" target="_blank" class="meta-item letterboxd-link" title="Ver no Letterboxd">${SVG_LB} Letterboxd</a>`;
     modalMeta.innerHTML = metaHtml;
 
