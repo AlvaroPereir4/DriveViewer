@@ -248,7 +248,7 @@ function pickAndDisplayHero(genre = null, isShuffle = false) {
     if (genre) {
         const gNorm = genre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         if (gNorm.includes('absolute')) {
-            candidates = candidates.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('absolute'))) || (i.rating && i.rating >= 8.0));
+            candidates = candidates.filter(i => i.genres && i.genres.some(g => g.toLowerCase().includes('absolute')));
         } else if (gNorm.includes('ghibli')) {
             candidates = candidates.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('ghibli'))) || (i.title && i.title.toLowerCase().includes('ghibli')));
         } else {
@@ -387,7 +387,7 @@ function renderHomeView(items) {
     renderHomeSection('Adicionados Recentemente', 'movie', 'main', recentItems, 5);
 
     // 2. Absolute Cinema
-    const absoluteCinemaList = items.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('absolute'))) || (i.rating && i.rating >= 8.0 && i.tag === 'movie'));
+    const absoluteCinemaList = items.filter(i => i.genres && i.genres.some(g => g.toLowerCase().includes('absolute')));
     renderHomeSection('Absolute Cinema', 'Absolute Cinema', 'curated', absoluteCinemaList, 5);
 
     // 3. Studio Ghibli
@@ -430,7 +430,7 @@ function _renderCategoryView(name, filterTag, type) {
     const tagNorm = filterTag.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     if (type === 'genre' || type === 'curated') {
         if (tagNorm.includes('absolute')) {
-            currentList = allHomeData.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('absolute'))) || (i.rating && i.rating >= 8.0 && i.tag === 'movie'));
+            currentList = allHomeData.filter(i => i.genres && i.genres.some(g => g.toLowerCase().includes('absolute')));
         } else if (tagNorm.includes('ghibli')) {
             currentList = allHomeData.filter(i => (i.genres && i.genres.some(g => g.toLowerCase().includes('ghibli'))) || (i.title && i.title.toLowerCase().includes('ghibli')));
         } else {

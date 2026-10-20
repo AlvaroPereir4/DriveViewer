@@ -821,6 +821,27 @@ def run_migrations():
     except Exception as e:
         print(f"Erro ao verificar/executar migrações: {e}")
 
+# ── Keep-alive ping (prevents Supabase free-tier standby) ──────────
+@app.route('/api/keep-alive')
+def keep_alive():
+    """Vercel Cron hits this endpoint daily to keep the Supabase DB active."""
+    # Validate cron secret to prevent external abuse
+    cron_secret = os.environ.get('CRON_SECRET')
+    if cron_secret:
+        auth = request.headers.get('Authorization')
+        if auth != f'Bearer {cron_secret}':
+            return jsonify({'error': 'unauthorized'}), 401
+
+    import time, random
+    time.sleep(random.uniform(0, 5))  # jitter to vary query timestamp
+
+    try:
+        db.session.execute(text('SELECT 1'))
+        db.session.commit()
+        return jsonify({'status': 'ok', 'timestamp': datetime.utcnow().isoformat()}), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'detail': str(e)}), 500
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
