@@ -436,6 +436,36 @@ body::after {
     font-weight: 700;
 }
 
+.hero-quality-badge {
+    padding: 2px 8px;
+    border-radius: var(--radius-xs);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    text-transform: uppercase;
+}
+.hero-quality-badge.q-1080p {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #7dd3fc;
+}
+.hero-quality-badge.q-720p {
+    background: rgba(52, 211, 153, 0.12);
+    border-color: rgba(52, 211, 153, 0.35);
+    color: #6ee7b7;
+}
+.hero-quality-badge.q-4k {
+    background: rgba(232, 124, 3, 0.15);
+    border-color: rgba(232, 124, 3, 0.4);
+    color: var(--accent-color);
+}
+.hero-quality-badge.hidden {
+    display: none;
+}
+
 .hero-bullet {
     color: rgba(255, 255, 255, 0.3);
 }
@@ -565,18 +595,86 @@ body::after {
 }
 
 /* ============================================================
-   GRID DE CONTEÚDO & CARDS
+   TOOLBAR DE FILTROS & ORDENAÇÃO (Estilo Minimalista e Funcional)
    ============================================================ */
 
-.items-count {
-    padding: 0 4%;
+.catalog-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 4% 16px;
     max-width: 1500px;
-    margin: 0 auto 10px;
+    margin: 0 auto;
     width: 100%;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.catalog-filter-bar.hidden {
+    display: none;
+}
+
+.filter-controls-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-secondary);
+}
+
+.filter-select {
+    background: #141211;
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    outline: none;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.filter-select:hover {
+    border-color: rgba(255, 255, 255, 0.28);
+    background: #1a1817;
+}
+
+.filter-select:focus {
+    border-color: var(--accent-color);
+}
+
+.filter-select option {
+    background: #141211;
+    color: #fff;
+}
+
+.items-count {
     font-size: 0.8rem;
     color: var(--text-secondary);
-    text-align: right;
+    font-weight: 500;
+    white-space: nowrap;
 }
+
+/* ============================================================
+   GRID DE CONTEÚDO & CARDS
+   ============================================================ */
 
 .content-grid {
     display: grid;
@@ -707,11 +805,30 @@ body::after {
 }
 
 .card-type {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 0.72rem;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.4px;
 }
+
+.card-quality-tag {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: var(--radius-xs);
+    letter-spacing: 0.3px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.1;
+}
+.card-quality-tag.q-4k { border-color: rgba(232, 124, 3, 0.45); color: var(--accent-color); }
+.card-quality-tag.q-1080p { border-color: rgba(56, 189, 248, 0.4); color: #7dd3fc; }
+.card-quality-tag.q-720p { border-color: rgba(52, 211, 153, 0.35); color: #6ee7b7; }
+.card-quality-tag.q-480p, .card-quality-tag.q-sd { border-color: rgba(255, 255, 255, 0.12); color: #94a3b8; }
 
 /* Detalhes overlay que aparecem ao pousar o mouse (Hover Intent) */
 .card-hover-overlay {
@@ -735,8 +852,33 @@ body::after {
 
 .card-hover-top {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
+
+.card-quality-chip {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    background: rgba(12, 11, 11, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e2e8f0;
+    backdrop-filter: blur(4px);
+}
+.card-quality-chip.q-4k { border-color: rgba(232, 124, 3, 0.5); color: var(--accent-color); }
+.card-quality-chip.q-1080p { border-color: rgba(56, 189, 248, 0.45); color: #7dd3fc; }
+.card-quality-chip.q-720p { border-color: rgba(52, 211, 153, 0.4); color: #6ee7b7; }
+.card-quality-chip.q-480p, .card-quality-chip.q-sd { border-color: rgba(255, 255, 255, 0.15); color: #94a3b8; }
+
+.hover-quality { font-weight: 600; }
+.hover-quality.q-1080p { color: #7dd3fc; }
+.hover-quality.q-720p { color: #6ee7b7; }
+.hover-quality.q-480p, .hover-quality.q-sd { color: #94a3b8; }
+.hover-quality.q-4k { color: var(--accent-color); }
 
 .card-rating-chip {
     background: rgba(0, 0, 0, 0.75);
@@ -1039,6 +1181,40 @@ body::after {
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: rgba(255, 255, 255, 0.8);
     background: rgba(255, 255, 255, 0.06);
+}
+
+.quality-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: var(--radius-xs);
+    padding: 2px 7px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.08);
+}
+.quality-badge.q-4k {
+    border-color: rgba(232, 124, 3, 0.5);
+    background: rgba(232, 124, 3, 0.15);
+    color: var(--accent-color);
+}
+.quality-badge.q-1080p {
+    border-color: rgba(56, 189, 248, 0.45);
+    background: rgba(56, 189, 248, 0.15);
+    color: #7dd3fc;
+}
+.quality-badge.q-720p {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.12);
+    color: #6ee7b7;
+}
+.quality-badge.q-480p, .quality-badge.q-sd {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
 }
 
 .modal-crew {

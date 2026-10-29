@@ -23,7 +23,7 @@ import requests
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
-SERVICE_ACCOUNT_FILE = 'api_key.json'
+SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), 'api_key.json')
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -89,6 +89,8 @@ class Media(db.Model):
     popularity = db.Column(db.Float)
     belongs_to_collection = db.Column(db.String(200))
     certification = db.Column(db.String(10))
+    quality = db.Column(db.String(20))
+    resolution = db.Column(db.String(20))
 
 GENRE_MAP = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
@@ -162,13 +164,28 @@ def fetch_certification(tmdb_id, media_type, api_key):
         pass
     return None
 
+def classify_quality(width, height):
+    """Classifica resolução em qualidade reconhecendo aspect ratios de cinema com faixas pretas recortadas."""
+    if not width or not height:
+        return None
+    if width >= 3800 or height >= 2100:
+        return '4K'
+    if width >= 1900 or height >= 1050 or (width >= 1400 and height >= 1000):
+        return '1080p'
+    if width >= 1200 or height >= 700 or (width >= 950 and height >= 700):
+        return '720p'
+    if width >= 700 or height >= 480 or (width >= 640 and height >= 460):
+        return '480p'
+    return 'SD'
+
+
 def get_home_items():
     # Só campos necessários pro grid e categorias — payload leve
     medias = Media.query.with_entities(
         Media.drive_id, Media.title, Media.original_title,
         Media.media_type, Media.poster_path, Media.backdrop_path,
         Media.vote_average, Media.release_date, Media.genres,
-        Media.overview, Media.certification
+        Media.overview, Media.certification, Media.quality, Media.resolution
     ).all()
 
     return [
@@ -186,6 +203,8 @@ def get_home_items():
             "genres": [g.strip() for g in m.genres.split(',')] if m.genres else [],
             "synopsis": m.overview,
             "certification": m.certification,
+            "quality": m.quality,
+            "resolution": m.resolution,
         } for m in medias
     ]
 
@@ -224,6 +243,8 @@ def get_media_detail(drive_id):
         "popularity": m.popularity,
         "belongs_to_collection": m.belongs_to_collection,
         "certification": m.certification,
+        "quality": m.quality,
+        "resolution": m.resolution,
     }
 
 def get_drive_items(service, folder_id):
@@ -504,6 +525,8 @@ def admin_edit(id):
         media.production_countries = request.form.get('production_countries')
         media.spoken_languages = request.form.get('spoken_languages')
         media.belongs_to_collection = request.form.get('belongs_to_collection')
+        media.quality = request.form.get('quality') or None
+        media.resolution = request.form.get('resolution') or None
         try: media.vote_average = float(request.form.get('vote_average'))
         except (ValueError, TypeError): pass
         try: media.vote_count = int(request.form.get('vote_count'))
@@ -534,7 +557,8 @@ def api_update_media(id):
     str_fields = ['title','original_title','drive_id','overview','poster_path','backdrop_path',
                   'release_date','media_type','genres','letterboxd_slug','tagline','status',
                   'runtime','director','cast_list','trailer_key','production_companies',
-                  'production_countries','spoken_languages','belongs_to_collection','certification']
+                  'production_countries','spoken_languages','belongs_to_collection','certification',
+                  'quality','resolution']
     for f in str_fields:
         if f in data:
             setattr(media, f, data[f] or None)
@@ -706,6 +730,23 @@ def add_media():
                 production_countries = ", ".join(c['name'] for c in item.get('production_countries', []))
                 spoken_languages = ", ".join(l.get('english_name', l.get('name', '')) for l in item.get('spoken_languages', []))
 
+                quality = None
+                resolution_str = None
+                if media_type != 'tv' and DRIVE_SERVICE:
+                    try:
+                        meta = DRIVE_SERVICE.files().get(
+                            fileId=drive_id,
+                            fields='videoMediaMetadata',
+                            supportsAllDrives=True
+                        ).execute()
+                        vmm = meta.get('videoMediaMetadata')
+                        if vmm and vmm.get('width') and vmm.get('height'):
+                            w, h = vmm.get('width'), vmm.get('height')
+                            resolution_str = f"{w}x{h}"
+                            quality = classify_quality(w, h)
+                    except Exception as e:
+                        print(f"Aviso ao consultar metadados de vídeo no Drive: {e}")
+
                 new_media = Media(
                     drive_id=drive_id,
                     title=title,
@@ -734,6 +775,8 @@ def add_media():
                     production_countries=production_countries,
                     spoken_languages=spoken_languages,
                     certification=certification,
+                    quality=quality,
+                    resolution=resolution_str,
                 )
                 db.session.add(new_media)
                 db.session.commit()
@@ -811,6 +854,8 @@ def run_migrations():
             'popularity':           'FLOAT',
             'belongs_to_collection':'VARCHAR(200)',
             'certification':        'VARCHAR(10)',
+            'quality':              'VARCHAR(20)',
+            'resolution':           'VARCHAR(20)',
         }
         with db.engine.connect() as conn:
             for col, col_type in new_columns.items():
@@ -820,6 +865,27 @@ def run_migrations():
             conn.commit()
     except Exception as e:
         print(f"Erro ao verificar/executar migrações: {e}")
+
+# ── Keep-alive ping (prevents Supabase free-tier standby) ──────────
+@app.route('/api/keep-alive')
+def keep_alive():
+    """Vercel Cron hits this endpoint daily to keep the Supabase DB active."""
+    # Validate cron secret to prevent external abuse
+    cron_secret = os.environ.get('CRON_SECRET')
+    if cron_secret:
+        auth = request.headers.get('Authorization')
+        if auth != f'Bearer {cron_secret}':
+            return jsonify({'error': 'unauthorized'}), 401
+
+    import time, random
+    time.sleep(random.uniform(0, 5))  # jitter to vary query timestamp
+
+    try:
+        db.session.execute(text('SELECT 1'))
+        db.session.commit()
+        return jsonify({'status': 'ok', 'timestamp': datetime.utcnow().isoformat()}), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'detail': str(e)}), 500
 
 if __name__ == '__main__':
     with app.app_context():

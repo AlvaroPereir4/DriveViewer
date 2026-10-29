@@ -96,8 +96,36 @@
     <!-- GENRE QUICK BAR -->
     <div id="genre-quickbar" class="genre-quickbar hidden"></div>
 
+    <!-- TOOLBAR DE FILTROS & ORDENAÇÃO -->
+    <div id="catalog-filter-bar" class="catalog-filter-bar hidden">
+        <div class="filter-controls-left">
+            <div class="filter-group">
+                <span class="filter-label">Ordenar</span>
+                <select id="sort-select" class="filter-select" onchange="onSortChange(this.value)">
+                    <option value="recent">Mais Recentes</option>
+                    <option value="az">Título (A-Z)</option>
+                    <option value="za">Título (Z-A)</option>
+                    <option value="year_desc">Ano (Mais novo)</option>
+                    <option value="year_asc">Ano (Mais antigo)</option>
+                    <option value="rating_desc">Melhor Avaliados (★)</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <span class="filter-label">Qualidade</span>
+                <select id="quality-select" class="filter-select" onchange="onQualityChange(this.value)">
+                    <option value="all">Todas as Qualidades</option>
+                    <option value="1080p">1080p (Full HD)</option>
+                    <option value="720p">720p (HD)</option>
+                    <option value="480p">480p (SD)</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="items-count" class="items-count"></div>
+    </div>
+
     <!-- MAIN APP CONTAINER -->
-    <div id="items-count" class="items-count"></div>
     <main id="app-container" class="content-grid">
     </main>
 
