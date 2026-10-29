@@ -331,6 +331,14 @@
                                         <label>Classificação Etária</label>
                                         <input type="text" name="certification" value="{{ media.certification or '' }}" placeholder="L, 10, 12, 14, 16, 18">
                                     </div>
+                                    <div class="edit-field">
+                                        <label>Qualidade</label>
+                                        <input type="text" name="quality" value="{{ media.quality or '' }}" placeholder="1080p, 720p, 4K...">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label>Resolução</label>
+                                        <input type="text" name="resolution" value="{{ media.resolution or '' }}" placeholder="1920x1080...">
+                                    </div>
                                     <div class="edit-section-label" style="margin-top:8px;">Avaliações</div>
                                     <div class="edit-field">
                                         <label>Nota (0–10)</label>

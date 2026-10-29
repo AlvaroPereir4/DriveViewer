@@ -24,6 +24,12 @@ const modalFinancials = document.getElementById('modal-financials');
 const modalProduction = document.getElementById('modal-production');
 const heroBillboard = document.getElementById('hero-billboard');
 const genreQuickbar = document.getElementById('genre-quickbar');
+const catalogFilterBar = document.getElementById('catalog-filter-bar');
+const sortSelect = document.getElementById('sort-select');
+const qualitySelect = document.getElementById('quality-select');
+
+let currentSortOrder = 'recent';
+let currentQualityFilter = 'all';
 
 let navigationStack = [];
 let currentModalItem = null;
@@ -156,7 +162,12 @@ function router() {
         let type = 'main', name = filterTag;
         if (filterTag === 'movie') name = 'Filmes';
         else if (filterTag === 'series') name = 'Séries';
-        else type = 'genre';
+        else if (['4k', '1080p', '720p', '480p', 'sd'].includes(filterTag.toLowerCase())) {
+            type = 'quality';
+            name = filterTag;
+        } else {
+            type = 'genre';
+        }
         _renderCategoryView(name, filterTag, type);
     } else if (path.startsWith('/folder/')) {
         _renderFolderView(path.split('/folder/')[1], 'Pasta');
@@ -316,7 +327,56 @@ function pickAndDisplayHero(genre = null, isShuffle = false) {
     if (heroDetailsBtn) heroDetailsBtn.onclick = () => openDetailsModal(heroItem, true);
 }
 
-// --- GENRE QUICKBAR ---
+// --- FILTRAGEM & ORDENAÇÃO DINÂMICA ---
+function applyFiltersAndSort(items) {
+    let result = [...items];
+
+    // Filtro por Qualidade (1080p, 720p, 480p, etc.)
+    if (currentQualityFilter && currentQualityFilter !== 'all') {
+        result = result.filter(i => i.quality && i.quality.toLowerCase() === currentQualityFilter.toLowerCase());
+    }
+
+    // Ordenação
+    switch (currentSortOrder) {
+        case 'az':
+            result.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
+            break;
+        case 'za':
+            result.sort((a, b) => b.title.localeCompare(a.title, undefined, { numeric: true, sensitivity: 'base' }));
+            break;
+        case 'year_desc':
+            result.sort((a, b) => (parseInt(b.year) || 0) - (parseInt(a.year) || 0));
+            break;
+        case 'year_asc':
+            result.sort((a, b) => (parseInt(a.year) || 9999) - (parseInt(b.year) || 9999));
+            break;
+        case 'rating_desc':
+            result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            break;
+        case 'recent':
+        default:
+            // Mantém a ordem do catálogo / recentes
+            break;
+    }
+
+    return result;
+}
+
+function onSortChange(value) {
+    currentSortOrder = value;
+    if (currentList && currentList.length > 0) {
+        renderGrid(currentList);
+    }
+}
+
+function onQualityChange(value) {
+    currentQualityFilter = value;
+    if (currentList && currentList.length > 0) {
+        renderGrid(currentList);
+    }
+}
+
+// --- GENRE QUICKBAR (Apenas Gêneros do Catálogo) ---
 function renderGenreQuickbar(genres, activeGenre = null) {
     if (!genreQuickbar) return;
     genreQuickbar.innerHTML = '';
@@ -324,14 +384,16 @@ function renderGenreQuickbar(genres, activeGenre = null) {
 
     // Botão "Todos"
     const allBtn = document.createElement('button');
-    allBtn.className = `genre-quick-btn ${!activeGenre ? 'active' : ''}`;
+    allBtn.className = `genre-quick-btn ${!activeGenre || activeGenre === 'all' || activeGenre === 'Todos' ? 'active' : ''}`;
     allBtn.textContent = 'Todos';
     allBtn.onclick = () => loadHome();
     genreQuickbar.appendChild(allBtn);
 
-    genres.slice(0, 10).forEach(g => {
+    // Gêneros
+    genres.slice(0, 12).forEach(g => {
         const btn = document.createElement('button');
-        btn.className = `genre-quick-btn ${activeGenre === g.title ? 'active' : ''}`;
+        const isActive = activeGenre && activeGenre.toLowerCase() === g.title.toLowerCase();
+        btn.className = `genre-quick-btn ${isActive ? 'active' : ''}`;
         btn.textContent = `${g.title} (${g.count})`;
         btn.onclick = () => loadCategory(g.title, g.title, 'genre');
         genreQuickbar.appendChild(btn);
@@ -341,7 +403,8 @@ function renderGenreQuickbar(genres, activeGenre = null) {
 // --- HOME VIEW ---
 function renderHomeView(items) {
     appContainer.innerHTML = '';
-    itemsCountLabel.innerText = '';
+    if (itemsCountLabel) itemsCountLabel.innerText = '';
+    if (catalogFilterBar) catalogFilterBar.classList.add('hidden');
 
     // Processa Gêneros
     const movies = items.filter(i => i.tag === 'movie');
@@ -428,7 +491,9 @@ function _renderCategoryView(name, filterTag, type) {
     renderBreadcrumbs();
 
     const tagNorm = filterTag.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    if (type === 'genre' || type === 'curated') {
+    if (type === 'quality') {
+        currentList = allHomeData.filter(i => i.quality && i.quality.toLowerCase() === filterTag.toLowerCase());
+    } else if (type === 'genre' || type === 'curated') {
         if (tagNorm.includes('absolute')) {
             currentList = allHomeData.filter(i => i.genres && i.genres.some(g => g.toLowerCase().includes('absolute')));
         } else if (tagNorm.includes('ghibli')) {
@@ -442,7 +507,10 @@ function _renderCategoryView(name, filterTag, type) {
             : allHomeData.filter(i => i.tag === 'series' || (i.type === 'folder' && i.tag !== 'movie'));
     }
 
-    // Renderiza quickbar para facilitar a troca de gêneros
+    // Exibe a toolbar de filtros (ordenação e qualidade)
+    if (catalogFilterBar) catalogFilterBar.classList.remove('hidden');
+
+    // Renderiza quickbar de gêneros
     const genreMap = {};
     allHomeData.filter(i => i.tag === 'movie').forEach(item => {
         (item.genres || []).forEach(genre => {
@@ -459,6 +527,7 @@ function _renderCategoryView(name, filterTag, type) {
 async function _renderFolderView(folderId, folderName) {
     if (heroBillboard) heroBillboard.classList.add('hidden');
     if (genreQuickbar) genreQuickbar.classList.add('hidden');
+    if (catalogFilterBar) catalogFilterBar.classList.add('hidden');
 
     const lastItem = navigationStack[navigationStack.length - 1];
     if (!lastItem || lastItem.id !== folderId) {
@@ -504,11 +573,16 @@ function setupCardHoverIntent(wrapper) {
 // --- RENDER GRID ---
 function renderGrid(items, skipAnimation = false) {
     appContainer.innerHTML = '';
-    items.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
-    itemsCountLabel.innerText = `Exibindo ${items.length} título(s)`;
+    
+    // Aplica filtros ativos de qualidade e ordenação selecionados
+    const filteredItems = applyFiltersAndSort(items);
 
-    if (items.length === 0) {
-        appContainer.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;color:#8f8681;">Nenhum item encontrado.</p>';
+    if (itemsCountLabel) {
+        itemsCountLabel.innerText = `Exibindo ${filteredItems.length} título(s)`;
+    }
+
+    if (filteredItems.length === 0) {
+        appContainer.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;color:#8f8681;">Nenhum item encontrado com os filtros selecionados.</p>';
         return;
     }
 
@@ -516,7 +590,7 @@ function renderGrid(items, skipAnimation = false) {
     let renderedCount = 0;
 
     function renderBatch(startIndex, skip) {
-        const batch = items.slice(startIndex, startIndex + PAGE_SIZE);
+        const batch = filteredItems.slice(startIndex, startIndex + PAGE_SIZE);
         batch.forEach((item, i) => renderCard(item, startIndex + i, skip));
         renderedCount = startIndex + batch.length;
 
@@ -696,6 +770,7 @@ async function openDetailsModal(item, updateUrl = true) {
     const lbSlug = item.letterboxd_slug || createSlug(item.original_title || item.title);
     let metaHtml = '';
     if (item.certification) metaHtml += `<span class="cert-badge">${esc(item.certification)}</span>`;
+    if (item.quality)       metaHtml += `<span class="quality-badge q-${item.quality.toLowerCase()}" title="${item.resolution ? 'Resolução: ' + esc(item.resolution) : ''}">${esc(item.quality)}</span>`;
     if (item.year)    metaHtml += `<div class="meta-item">${SVG_CALENDAR} ${esc(String(item.year))}</div>`;
     if (item.runtime) metaHtml += `<div class="meta-item">${SVG_CLOCK} ${esc(item.runtime)}</div>`;
     if (item.rating)  metaHtml += `<div class="meta-item" title="${item.vote_count ? item.vote_count.toLocaleString() + ' votos' : ''}">
@@ -784,6 +859,7 @@ function startVideo(item, type = 'drive') {
             ${item.tagline ? `<p class="modal-tagline" style="display:block;">"${esc(item.tagline)}"</p>` : ''}
             ${genresHtml}
             <div class="modal-meta-tags">
+                ${item.quality ? `<span class="quality-badge q-${item.quality.toLowerCase()}">${esc(item.quality)}</span>` : ''}
                 ${item.year    ? `<div class="meta-item">${SVG_CALENDAR} ${esc(String(item.year))}</div>` : ''}
                 ${item.runtime ? `<div class="meta-item">${SVG_CLOCK} ${esc(item.runtime)}</div>` : ''}
                 ${item.rating  ? `<div class="meta-item">${SVG_STAR} ${item.rating.toFixed(1)}</div>` : ''}

@@ -164,6 +164,16 @@
             </div>
 
             <div class="form-group">
+                <label for="quality">Qualidade de Vídeo (Ex: 1080p, 720p, 480p, 4K)</label>
+                <input type="text" id="quality" name="quality" value="{{ media.quality or '' }}" placeholder="Ex: 1080p">
+            </div>
+
+            <div class="form-group">
+                <label for="resolution">Resolução Exata (Ex: 1920x1080, 1280x720)</label>
+                <input type="text" id="resolution" name="resolution" value="{{ media.resolution or '' }}" placeholder="Ex: 1920x1080">
+            </div>
+
+            <div class="form-group">
                 <label for="letterboxd_slug">Letterboxd Slug (Opcional)</label>
                 <input type="text" id="letterboxd_slug" name="letterboxd_slug" value="{{ media.letterboxd_slug or '' }}" placeholder="Ex: o-poderoso-chefao">
                 <small style="color: #666; display: block; margin-top: 5px;">Se preenchido, será usado para gerar o link: https://letterboxd.com/film/<b>slug</b>/</small>
